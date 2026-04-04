@@ -31,10 +31,10 @@
     <div class="controls">
         <div class="control-group">
             <label class="card-label">Selecione o Ativo</label>
-            <select id="assetSelect" onchange="updateDashboard()"><option>Carregando...</option></select>
+            <select id="assetSelect" onchange="updateDashboard()"><option>A carregar ativos...</option></select>
         </div>
         <div class="control-group">
-            <label class="card-label">Selecione o Mes</label>
+            <label class="card-label">Selecione o Mês</label>
             <select id="monthSelect" onchange="updateDashboard()">
                 <option value="Janeiro">Janeiro</option>
                 <option value="Fevereiro">Fevereiro</option>
@@ -48,7 +48,7 @@
 
     <div class="stats-grid">
         <div class="card"><div class="card-label">Total de cotas</div><div id="valcotas" class="card-value">0</div></div>
-        <div class="card"><div class="card-label">Total no Mes</div><div id="valMes" class="card-value">R$ 0,00</div></div>
+        <div class="card"><div class="card-label">Total no Mês</div><div id="valMes" class="card-value">R$ 0,00</div></div>
         <div class="card"><div class="card-label">Total Acumulado</div><div id="valTotal" class="card-value">R$ 0,00</div></div>
         <div class="card"><div class="card-label">Dividendo por Cota</div><div id="valDM" class="card-value">R$ 0,00</div></div>
     </div>
@@ -57,7 +57,7 @@
 </div>
 
 <script>
-   const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
 
     let rawData = [];
     let chart;
@@ -69,11 +69,15 @@
             rawData = parseCSV(csvText);
             
             const select = document.getElementById('assetSelect');
-            // Filtra e remove valores nulos ou vazios
-            const ativosUnicos = [...new Set(rawData.map(item => item.Ativo))].filter(a => a);
             
+            // Procura a coluna 'Ativo' de forma flexível (ignora maiúsculas/minúsculas e espaços)
+            const ativosUnicos = [...new Set(rawData.map(item => {
+                const key = Object.keys(item).find(k => k.toLowerCase().includes('ativo'));
+                return item[key];
+            }))].filter(a => a && a !== "");
+
             if (ativosUnicos.length === 0) {
-                console.error("Nenhum ativo encontrado. Verifique se a coluna se chama 'Ativo'.");
+                select.innerHTML = '<option>Nenhum ativo encontrado</option>';
                 return;
             }
 
@@ -130,19 +134,28 @@
 
         const selectedAtivo = assetSelect.value;
         const selectedMonth = monthSelect.value;
-        const historicoAtivo = rawData.filter(d => d.Ativo === selectedAtivo);
-        const dadosMes = historicoAtivo.find(d => d.Mes === selectedMonth) || { Valor: 0, Cotas: 0, Acumulado: 0, DM: 0 };
+        
+        // Busca as colunas ignorando acentos ou variações de nome
+        const keyAtivo = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('ativo'));
+        const keyMes = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('mes'));
+        const keyValor = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('valor'));
+        const keyCotas = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('cotas'));
+        const keyAcumulado = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('acumulado'));
+        const keyDM = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('dm'));
 
-        document.getElementById('valcotas').innerText = dadosMes.Cotas || 0;
-        document.getElementById('valMes').innerText = `R$ ${parseFloat(dadosMes.Valor || 0).toFixed(2)}`;
-        document.getElementById('valTotal').innerText = `R$ ${parseFloat(dadosMes.Acumulado || 0).toFixed(2)}`;
-        document.getElementById('valDM').innerText = `R$ ${parseFloat(dadosMes.DM || 0).toFixed(2)}`;
+        const historicoAtivo = rawData.filter(d => d[keyAtivo] === selectedAtivo);
+        const dadosMes = historicoAtivo.find(d => d[keyMes] === selectedMonth) || {};
+
+        document.getElementById('valcotas').innerText = dadosMes[keyCotas] || 0;
+        document.getElementById('valMes').innerText = `R$ ${parseFloat(dadosMes[keyValor] || 0).toFixed(2)}`;
+        document.getElementById('valTotal').innerText = `R$ ${parseFloat(dadosMes[keyAcumulado] || 0).toFixed(2)}`;
+        document.getElementById('valDM').innerText = `R$ ${parseFloat(dadosMes[keyDM] || 0).toFixed(2)}`;
 
         if (chart) {
             const mesesLabels = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
             chart.data.datasets[0].data = mesesLabels.map(mes => {
-                const d = historicoAtivo.find(h => h.Mes === mes);
-                return d ? parseFloat(d.Valor || 0) : 0;
+                const d = historicoAtivo.find(h => h[keyMes] === mes);
+                return d ? parseFloat(d[keyValor] || 0) : 0;
             });
             chart.update();
         }
@@ -150,3 +163,5 @@
 
     window.addEventListener('DOMContentLoaded', init);
 </script>
+</body>
+</html>
