@@ -50,7 +50,7 @@
 </div>
 
 <script>
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
 
     let rawData = [];
     let chart;
@@ -71,14 +71,10 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeID
         return isNaN(num) ? 0 : num;
     }
 
-    function normalizeKey(str) {
-        if (!str) return "";
-        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    }
-
-    // Função para converter CSV em Array de Objetos com suporte a ";" e ","
     function parseCSV(csv) {
         const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
+        if (lines.length === 0) return [];
+        
         const separator = lines[0].includes(';') ? ';' : ',';
         const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
         
@@ -98,24 +94,24 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeID
             const csvText = await response.text();
             rawData = parseCSV(csvText);
 
-            if (rawData.length === 0) return;
+            if (rawData.length === 0) {
+                console.error("Nenhum dado encontrado na planilha.");
+                return;
+            }
 
-            // Identificar as chaves reais baseadas no conteúdo
-            const sample = rawData[0];
-            const keys = {};
-            Object.keys(sample).forEach(k => {
-                const norm = normalizeKey(k);
-                if (norm.includes('ativo') || norm === 'ticker') keys.ativo = k;
-                if (norm.includes('mes')) keys.mes = k;
-            });
+            console.log("Dados carregados com sucesso:", rawData[0]); // Log para diagnóstico
 
-            // Popular Select de Ativos
-            const ativosUnicos = [...new Set(rawData.map(item => item[keys.ativo]))].filter(a => a);
+            const colNames = Object.keys(rawData[0]);
+            const keyAtivo = colNames[0];
+            const keyMes = colNames[1];
+
+            // Popular Ativos
+            const ativosUnicos = [...new Set(rawData.map(item => item[keyAtivo]))].filter(a => a);
             const assetSelect = document.getElementById('assetSelect');
             assetSelect.innerHTML = ativosUnicos.map(a => `<option value="${a}">${a}</option>`).join('');
 
-            // Popular Select de Meses
-            const mesesUnicos = [...new Set(rawData.map(item => item[keys.mes]))].filter(m => m);
+            // Popular Meses
+            const mesesUnicos = [...new Set(rawData.map(item => item[keyMes]))].filter(m => m);
             const monthSelect = document.getElementById('monthSelect');
             monthSelect.innerHTML = mesesUnicos.map(m => `<option value="${m}">${m}</option>`).join('');
             monthSelect.selectedIndex = mesesUnicos.length - 1;
@@ -136,60 +132,61 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeID
         });
     }
 
- function updateDashboard() {
-    const selectedAtivo = document.getElementById('assetSelect').value;
-    const selectedMonth = document.getElementById('monthSelect').value;
-    
-    if (!selectedAtivo || rawData.length === 0) return;
+    function updateDashboard() {
+        const selectedAtivo = document.getElementById('assetSelect').value;
+        const selectedMonth = document.getElementById('monthSelect').value;
+        
+        if (!selectedAtivo || rawData.length === 0) return;
 
-    // --- MAPEAMENTO POR ÍNDICE NUMÉRICO (0 a 5) ---
-    // Usamos os nomes reais das chaves baseados na posição que ocupam no objeto
-    const colNames = Object.keys(rawData[0]);
-    
-    const keys = {
-        ativo: colNames[0],     // Coluna 0
-        mes: colNames[1],       // Coluna 1
-        cotas: colNames[2],     // Coluna 2
-        valor: colNames[3],     // Coluna 3 (Valor Total Pago)
-        acumulado: colNames[4], // Coluna 4 (Onde está o 1,23%)
-        dm: colNames[5]         // Coluna 5 (Dividendo Mensal Unitário)
-    };
+        const colNames = Object.keys(rawData[0]);
+        const keys = {
+            ativo: colNames[0],
+            mes: colNames[1],
+            cotas: colNames[2],
+            valor: colNames[3],
+            acumulado: colNames[4],
+            dm: colNames[5]
+        };
 
-    // Filtro do Ativo e do Mês
-    const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
-    const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
+        // Filtro com .trim() para evitar erro de espaços invisíveis
+        const historicoAtivo = rawData.filter(d => 
+            String(d[keys.ativo]).trim() === String(selectedAtivo).trim()
+        );
 
-    // Processamento dos valores numéricos
-    const nCotas = parseNumber(dadosMes[keys.cotas]);
-    const nValorMes = parseNumber(dadosMes[keys.valor]);
-    let nAcumulado = parseNumber(dadosMes[keys.acumulado]);
-    const nDM = parseNumber(dadosMes[keys.dm]);
+        const dadosMes = historicoAtivo.find(d => 
+            String(d[keys.mes]).trim() === String(selectedMonth).trim()
+        ) || {};
 
-    // Lógica para corrigir 0,0123 -> 1,23%
-    // Se o valor for menor que 1, entendemos que o Sheets enviou como decimal
-    if (nAcumulado > 0 && nAcumulado < 1) {
-        nAcumulado = nAcumulado * 100;
+        const nCotas = parseNumber(dadosMes[keys.cotas]);
+        const nValorMes = parseNumber(dadosMes[keys.valor]);
+        let nAcumulado = parseNumber(dadosMes[keys.acumulado]);
+        const nDM = parseNumber(dadosMes[keys.dm]);
+
+        // Correção automática de porcentagem (0.0123 -> 1.23)
+        if (nAcumulado > 0 && nAcumulado < 1) {
+            nAcumulado = nAcumulado * 100;
+        }
+
+        const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+
+        document.getElementById('valcotas').innerText = nCotas;
+        document.getElementById('valMes').innerText = `R$ ${fR$(nValorMes)}`;
+        document.getElementById('valTotal').innerText = fPct(nAcumulado); 
+        document.getElementById('valDM').innerText = `R$ ${fR$(nDM)}`;
+
+        if (chart) {
+            chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
+            chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
+            chart.update();
+        }
     }
-
-    // Formatação para exibição
-    const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
-
-    // Atualização dos elementos na tela
-    document.getElementById('valcotas').innerText = nCotas;
-    document.getElementById('valMes').innerText = `R$ ${fR$(nValorMes)}`;
-    document.getElementById('valTotal').innerText = fPct(nAcumulado); 
-    document.getElementById('valDM').innerText = `R$ ${fR$(nDM)}`;
-
-    // Atualização do Gráfico
-    if (chart) {
-        chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
-        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
-        chart.update();
-    }
-}
 
     window.addEventListener('DOMContentLoaded', init);
-  </script>
+</script>
+
+
+
+
 </body>
 </html>
