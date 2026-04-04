@@ -144,74 +144,63 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
-
-    function updateDashboard() {
+function updateDashboard() {
         const selectedAtivo = document.getElementById('assetSelect').value;
         const selectedMonth = document.getElementById('monthSelect').value;
+        
         if (!selectedAtivo || rawData.length === 0) return;
 
-    const keys = {};
-Object.keys(rawData[0]).forEach(k => {
-    const norm = normalizeKey(k);
-    if (norm === 'ativo') keys.ativo = k;
-    if (norm === 'mes') keys.mes = k;
-    if (norm === 'cotas') keys.cotas = k;
-    if (norm === 'valor') keys.valor = k;
-    // Ajuste aqui para o nome exato da sua coluna de porcentagem na planilha
-    if (norm.includes('acumulado') || norm.includes('yield')) keys.acumulado = k;
-    if (norm.includes('dm')) keys.dm = k;
-});
+        // 1. Mapeia as colunas corretamente
+        const keys = {};
+        Object.keys(rawData[0]).forEach(k => {
+            const norm = normalizeKey(k);
+            if (norm.includes('ativo')) keys.ativo = k;
+            if (norm.includes('mes')) keys.mes = k;
+            if (norm.includes('cotas')) keys.cotas = k;
+            if (norm.includes('valor')) keys.valor = k;
+            if (norm.includes('acumulado') || norm.includes('yield')) keys.acumulado = k;
+            if (norm.includes('dm')) keys.dm = k;
+        });
 
-// LOG DE DIAGNÓSTICO: Abra o console do navegador (F12) para ver se ele achou a coluna certa
-console.log("Coluna identificada como Acumulado:", keys.acumulado);
-console.log("Dados encontrados para o mês:", dadosMes);
-     
-const historicoAtivo = rawData.filter(d => 
-    normalizeKey(d[keys.ativo]) === normalizeKey(selectedAtivo)
-);
+        // 2. Filtra o histórico do ativo selecionado
+        const historicoAtivo = rawData.filter(d => 
+            normalizeKey(d[keys.ativo] || "") === normalizeKey(selectedAtivo)
+        );
 
-const dadosMes = historicoAtivo.find(d => 
-    normalizeKey(d[keys.mes]) === normalizeKey(selectedMonth)
-) || {};
+        // 3. Encontra os dados do mês específico
+        const dadosMes = historicoAtivo.find(d => 
+            normalizeKey(d[keys.mes] || "") === normalizeKey(selectedMonth)
+        ) || {};
 
-        // Processa os números garantindo os decimais
+        // 4. Processa os números (removendo R$ ou % se existirem no texto)
         const nCotas = parseNumber(dadosMes[keys.cotas]);
         const nValorMes = parseNumber(dadosMes[keys.valor]);
         const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
         let nDM = (nCotas > 0) ? (nValorMes / nCotas) : parseNumber(dadosMes[keys.dm]);
 
-        // Formatação PT-BR que obriga a exibição de 2 casas decimais
-       // ... dentro da função updateDashboard()
+        // 5. Funções de formatação
+        const formatCurrency = (num) => {
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
 
-// Formatação para Moeda (R$)
-const formatCurrency = (num) => {
-    return num.toLocaleString('pt-BR', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    });
-};
+        const formatPercent = (num) => {
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+        };
 
-// Nova formatação para Porcentagem (%)
-const formatPercent = (num) => {
-    return num.toLocaleString('pt-BR', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    }) + '%';
-};
+        // 6. Atualiza a Interface
+        document.getElementById('valcotas').innerText = nCotas;
+        document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
+        document.getElementById('valTotal').innerText = formatPercent(nAcumulado); 
+        document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
 
-document.getElementById('valcotas').innerText = nCotas;
-document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
-        
-// Alterado para usar formatPercent e remover o prefixo "R$"
-document.getElementById('valTotal').innerText = formatPercent(nAcumulado); 
-document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
-
+        // 7. Atualiza o Gráfico
         if (chart) {
             chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
             chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
             chart.update();
         }
     }
+
 
     window.addEventListener('DOMContentLoaded', init);
 </script>
