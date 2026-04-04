@@ -62,12 +62,21 @@
     let rawData = [];
     let chart;
 
-    // Função para normalizar nomes de colunas (remove acentos e espaços)
+    // 1. LIMPEZA DE NÚMEROS (Resolve o erro NaN)
+    function cleanNumber(val) {
+        if (!val) return 0;
+        let s = String(val);
+        // Remove R$, pontos de milhar e espaços, depois troca vírgula por ponto
+        s = s.replace(/R\$/g, '')
+             .replace(/\s/g, '')
+             .replace(/\./g, '') 
+             .replace(',', '.');
+        return parseFloat(s) || 0;
+    }
+
+    // 2. NORMALIZAÇÃO DE TEXTO (Para achar as colunas)
     function normalizeKey(str) {
-        return str.toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .trim();
+        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     }
 
     async function init() {
@@ -77,17 +86,10 @@
             rawData = parseCSV(csvText);
             
             const select = document.getElementById('assetSelect');
-            
-            // Procura a coluna de Ativos de forma inteligente
             const ativosUnicos = [...new Set(rawData.map(item => {
                 const key = Object.keys(item).find(k => normalizeKey(k).includes('ativo'));
                 return item[key];
             }))].filter(a => a);
-
-            if (ativosUnicos.length === 0) {
-                select.innerHTML = '<option>Erro nos cabeçalhos</option>';
-                return;
-            }
 
             select.innerHTML = ''; 
             ativosUnicos.forEach(ativo => {
@@ -100,7 +102,7 @@
             setupChart();
             updateDashboard();
         } catch (error) {
-            console.error("Erro:", error);
+            console.error("Erro ao carregar:", error);
         }
     }
 
@@ -141,10 +143,8 @@
         
         if (!selectedAtivo || rawData.length === 0) return;
 
-        // Mapeia as colunas reais da planilha para o código de forma flexível
         const keys = {};
-        const firstRow = rawData[0];
-        Object.keys(firstRow).forEach(k => {
+        Object.keys(rawData[0]).forEach(k => {
             const norm = normalizeKey(k);
             if (norm.includes('ativo')) keys.ativo = k;
             if (norm.includes('mes')) keys.mes = k;
@@ -157,19 +157,22 @@
         const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
         const dadosMes = historicoAtivo.find(d => normalizeKey(d[keys.mes]) === normalizeKey(selectedMonth)) || {};
 
-        // Atualiza os Cards (Trata vírgulas da planilha como pontos para o cálculo)
-        const formatNum = (val) => parseFloat(String(val).replace(',', '.')) || 0;
+        // APLICAÇÃO DA LIMPEZA NOS VALORES
+        const valorMes = cleanNumber(dadosMes[keys.valor]);
+        const valorAcumulado = cleanNumber(dadosMes[keys.acumulado]);
+        const valorDM = cleanNumber(dadosMes[keys.dm]);
+        const cotas = dadosMes[keys.cotas] || 0;
 
-        document.getElementById('valcotas').innerText = dadosMes[keys.cotas] || 0;
-        document.getElementById('valMes').innerText = `R$ ${formatNum(dadosMes[keys.valor]).toFixed(2)}`;
-        document.getElementById('valTotal').innerText = `R$ ${formatNum(dadosMes[keys.acumulado]).toFixed(2)}`;
-        document.getElementById('valDM').innerText = `R$ ${formatNum(dadosMes[keys.dm]).toFixed(2)}`;
+        document.getElementById('valcotas').innerText = cotas;
+        document.getElementById('valMes').innerText = `R$ ${valorMes.toFixed(2).replace('.', ',')}`;
+        document.getElementById('valTotal').innerText = `R$ ${valorAcumulado.toFixed(2).replace('.', ',')}`;
+        document.getElementById('valDM').innerText = `R$ ${valorDM.toFixed(2).replace('.', ',')}`;
 
         if (chart) {
             const mesesLabels = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
             chart.data.datasets[0].data = mesesLabels.map(mes => {
                 const d = historicoAtivo.find(h => normalizeKey(h[keys.mes]) === normalizeKey(mes));
-                return d ? formatNum(d[keys.valor]) : 0;
+                return d ? cleanNumber(d[keys.valor]) : 0;
             });
             chart.update();
         }
