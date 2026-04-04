@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dividend Dashboard Pro - Google Sheets</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-color: #0f172a; --card-bg: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-dim: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 1000px; }
+        header { text-align: center; margin-bottom: 30px; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        select { background: var(--card-bg); border: 1px solid #334155; color: white; padding: 12px; border-radius: 8px; outline: none; cursor: pointer; font-size: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid #334155; }
+        .card-label { color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; }
+        .card-value { font-size: 1.8rem; font-weight: 600; margin-top: 5px; color: var(--accent-color); }
+        .chart-container { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid #334155; height: 400px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Dividendos do Gonça</h1>
+        <p>Conectado via Google Sheets</p>
+    </header>
+
+    <div class="controls">
+        <div class="control-group">
+            <label class="card-label">Selecione o Ativo</label>
+            <select id="assetSelect" onchange="updateDashboard()"><option>Carregando...</option></select>
+        </div>
+        <div class="control-group">
+            <label class="card-label">Selecione o Mês</label>
+            <select id="monthSelect" onchange="updateDashboard()"><option>Carregando...</option></select>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card"><div class="card-label">Total de cotas</div><div id="valcotas" class="card-value">0</div></div>
+        <div class="card"><div class="card-label">Total no Mês</div><div id="valMes" class="card-value">R$ 0,00</div></div>
+        <div class="card"><div class="card-label">Total Acumulado</div><div id="valTotal" class="card-value">R$ 0,00</div></div>
+        <div class="card"><div class="card-label">Dividendo por Cota</div><div id="valDM" class="card-value">R$ 0,00</div></div>
+    </div>
+
+    <div class="chart-container"><canvas id="dividendChart"></canvas></div>
+</div>
+
+<script>
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
+
+    let rawData = [];
+    let chart;
+
+    // Função para converter strings da planilha em números reais (com centavos)
+    function parseNumber(val) {
+        if (!val) return 0;
+        let s = String(val).trim();
+        // Remove símbolos monetários e espaços
+        s = s.replace(/R\$/g, '').replace(/\s/g, '');
+        
+        // Se houver ponto e vírgula (ex: 1.250,50), remove o ponto de milhar
+        if (s.includes('.') && s.includes(',')) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        } 
+        // Se houver apenas vírgula (ex: 1250,50), troca por ponto decimal
+        else if (s.includes(',')) {
+            s = s.replace(',', '.');
+        }
+        
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
+    }
+
+    function normalizeKey(str) {
+        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
+    async function init() {
+        try {
+            const response = await fetch(SHEET_URL);
+            const csvText = await response.text();
+            rawData = parseCSV(csvText);
+            
+            const assetSelect = document.getElementById('assetSelect');
+            const monthSelect = document.getElementById('monthSelect');
+            
+            const ativosUnicos = [...new Set(rawData.map(item => {
+                const key = Object.keys(item).find(k => normalizeKey(k).includes('ativo'));
+                return item[key];
+            }))].filter(a => a);
+
+            assetSelect.innerHTML = ''; 
+            ativosUnicos.forEach(ativo => {
+                let opt = document.createElement('option');
+                opt.value = ativo; opt.innerHTML = ativo;
+                assetSelect.appendChild(opt);
+            });
+
+            const mesesUnicos = [...new Set(rawData.map(item => {
+                const key = Object.keys(item).find(k => normalizeKey(k).includes('mes'));
+                return item[key];
+            }))].filter(m => m);
+
+            monthSelect.innerHTML = '';
+            mesesUnicos.forEach(mes => {
+                let opt = document.createElement('option');
+                opt.value = mes; opt.innerHTML = mes;
+                monthSelect.appendChild(opt);
+            });
+            
+            monthSelect.selectedIndex = mesesUnicos.length - 1;
+
+            setupChart();
+            updateDashboard();
+        } catch (error) {
+            console.error("Erro ao carregar:", error);
+        }
+    }
+
+    function parseCSV(csv) {
+        const lines = csv.split(/\r?\n/);
+        const result = [];
+        const separator = lines[0].includes(';') ? ';' : ',';
+        const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const obj = {};
+            const currentline = lines[i].split(separator);
+            headers.forEach((header, s) => {
+                let value = currentline[s] ? currentline[s].trim() : "";
+                obj[header] = value.replace(/^"|"$/g, '');
+            });
+            result.push(obj);
+        }
+        return result;
+    }
+
+    function setupChart() {
+        const ctx = document.getElementById('dividendChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'R$', backgroundColor: '#38bdf8', borderRadius: 8, data: [] }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+
+    function updateDashboard() {
+        const selectedAtivo = document.getElementById('assetSelect').value;
+        const selectedMonth = document.getElementById('monthSelect').value;
+        if (!selectedAtivo || rawData.length === 0) return;
+
+        const keys = {};
+        Object.keys(rawData[0]).forEach(k => {
+            const norm = normalizeKey(k);
+            if (norm.includes('ativo')) keys.ativo = k;
+            if (norm.includes('mes')) keys.mes = k;
+            if (norm.includes('cota')) keys.cotas = k;
+            if (norm.includes('valor')) keys.valor = k;
+            if (norm.includes('acumulado')) keys.acumulado = k;
+            if (norm.includes('dm')) keys.dm = k;
+        });
+
+        const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
+        const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
+
+        // Processa os números garantindo os decimais
+        const nCotas = parseNumber(dadosMes[keys.cotas]);
+        const nValorMes = parseNumber(dadosMes[keys.valor]);
+        const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
+        let nDM = (nCotas > 0) ? (nValorMes / nCotas) : parseNumber(dadosMes[keys.dm]);
+
+        // Formatação PT-BR que obriga a exibição de 2 casas decimais
+        const formatCurrency = (num) => {
+            return num.toLocaleString('pt-BR', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        };
+
+        document.getElementById('valcotas').innerText = nCotas;
+        document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
+        document.getElementById('valTotal').innerText = `R$ ${formatCurrency(nAcumulado)}`;
+        document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
+
+        if (chart) {
+            chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
+            chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
+            chart.update();
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
