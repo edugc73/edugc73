@@ -55,21 +55,18 @@
     let rawData = [];
     let chart;
 
-    function parseNumber(val) {
-        if (!val) return 0;
-        let s = String(val).trim()
-            .replace(/R\$/g, '')
-            .replace(/%/g, '')
-            .replace(/\s/g, '');
-        
-        if (s.includes('.') && s.includes(',')) {
-            s = s.replace(/\./g, '').replace(',', '.');
-        } else if (s.includes(',')) {
-            s = s.replace(',', '.');
-        }
-        const num = parseFloat(s);
-        return isNaN(num) ? 0 : num;
-    }
+   function parseNumber(val) {
+    if (!val) return 0;
+    // Converte para string e remove espaços
+    let s = String(val).trim();
+    // Se o Sheets exportou com vírgula para decimal, troca por ponto
+    s = s.replace(',', '.');
+    // Remove qualquer caractere que não seja número, ponto ou sinal de menos
+    s = s.replace(/[^\d.-]/g, '');
+    
+    const num = parseFloat(s);
+    return isNaN(num) ? 0 : num;
+}
 
     function parseCSV(csv) {
         const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
@@ -138,52 +135,55 @@ function updateDashboard() {
     
     if (!selectedAtivo || rawData.length === 0) return;
 
-    // Acessamos os dados diretamente pela posição da coluna (0 a 5)
-    // Isso evita o erro de "R$ 1,00" causado por nomes de colunas errados
-    const colNames = Object.keys(rawData[0]);
+    // Pegamos as chaves das colunas (0, 1, 2, 3, 4, 5)
+    const col = Object.keys(rawData[0]);
 
     const historicoAtivo = rawData.filter(d => 
-        String(d[colNames[0]]).trim() === String(selectedAtivo).trim()
+        String(d[col[0]]).trim() === String(selectedAtivo).trim()
     );
 
     const dadosMes = historicoAtivo.find(d => 
-        String(d[colNames[1]]).trim() === String(selectedMonth).trim()
+        String(d[col[1]]).trim() === String(selectedMonth).trim()
     ) || {};
 
-    // 1. Quantidade de Cotas (Coluna 2)
-    const nCotas = parseNumber(dadosMes[colNames[2]]);
+    // --- CAPTURA DOS DADOS ---
+    // Coluna 2: Quantidade (ex: 70)
+    const nCotas = parseNumber(dadosMes[col[2]]);
     
-    // 2. Rendimento por Cota (Coluna 3)
-    const nRendimentoUnidade = parseNumber(dadosMes[colNames[3]]);
+    // Coluna 3: Rendimento por cota (ex: 0.79)
+    const nRendimentoCota = parseNumber(dadosMes[col[3]]);
     
-    // 3. Yield on Cost (Coluna 4) - Multiplicamos por 100 pois 0.0079 = 0.79%
-    let nYOC = parseNumber(dadosMes[colNames[4]]) * 100;
+    // Coluna 4: Yield on Cost (ex: 0.007902...)
+    let nYOC = parseNumber(dadosMes[col[4]]);
     
-    // 4. Valor Total Recebido no Mês (Coluna 5)
-    const nTotalRecebido = parseNumber(dadosMes[colNames[5]]);
+    // Coluna 5: Total Recebido (ex: 55.3)
+    const nTotalMes = parseNumber(dadosMes[col[5]]);
 
-    // Formatação PT-BR
+    // --- LÓGICA DE CORREÇÃO ---
+    // Se o YOC veio como 0.0079, multiplicamos por 100 para virar 0.79%
+    // Se já veio como 0.79, mantemos.
+    if (nYOC > 0 && nYOC < 1) {
+        nYOC = nYOC * 100;
+    }
+
+    // Formatação
     const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 
-    // Atualização dos Cards
+    // --- ATUALIZAÇÃO DA TELA ---
     document.getElementById('valcotas').innerText = nCotas;
-    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalRecebido)}`; // Total do Mês
-    document.getElementById('valTotal').innerText = fPct(nYOC);               // Yield on Cost
-    document.getElementById('valDM').innerText = `R$ ${fR$(nRendimentoUnidade)}`; // Rendimento p/ Cota
+    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalMes)}`; 
+    document.getElementById('valTotal').innerText = fPct(nYOC); 
+    document.getElementById('valDM').innerText = `R$ ${fR$(nRendimentoCota)}`;
 
-    // Atualização do Gráfico (Barras baseadas no valor financeiro total)
     if (chart) {
-        chart.data.labels = historicoAtivo.map(h => h[colNames[1]]);
-        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[colNames[5]]));
+        chart.data.labels = historicoAtivo.map(h => h[col[1]]);
+        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[col[5]]));
         chart.update();
     }
 }
+    
     window.addEventListener('DOMContentLoaded', init);
 </script>
-
-
-
-
 </body>
 </html>
