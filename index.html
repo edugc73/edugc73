@@ -50,30 +50,46 @@
 </div>
 
 <script>
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
 
     let rawData = [];
     let chart;
 
-    // Função para converter strings da planilha em números reais (com centavos)
-  function parseNumber(val) {
-    if (!val) return 0;
-    let s = String(val).trim();
-    // Remove R$, espaços e o símbolo de porcentagem
-    s = s.replace(/R\$/g, '').replace(/%/g, '').replace(/\s/g, '');
-    
-    if (s.includes('.') && s.includes(',')) {
-        s = s.replace(/\./g, '').replace(',', '.');
-    } else if (s.includes(',')) {
-        s = s.replace(',', '.');
+    function parseNumber(val) {
+        if (!val) return 0;
+        let s = String(val).trim()
+            .replace(/R\$/g, '')
+            .replace(/%/g, '')
+            .replace(/\s/g, '');
+        
+        if (s.includes('.') && s.includes(',')) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else if (s.includes(',')) {
+            s = s.replace(',', '.');
+        }
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
     }
-    
-    const num = parseFloat(s);
-    return isNaN(num) ? 0 : num;
-}
 
     function normalizeKey(str) {
+        if (!str) return "";
         return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
+    // Função para converter CSV em Array de Objetos com suporte a ";" e ","
+    function parseCSV(csv) {
+        const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
+        const separator = lines[0].includes(';') ? ';' : ',';
+        const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+        
+        return lines.slice(1).map(line => {
+            const values = line.split(separator);
+            const obj = {};
+            headers.forEach((header, i) => {
+                obj[header] = values[i] ? values[i].trim().replace(/^"|"$/g, '') : "";
+            });
+            return obj;
+        });
     }
 
     async function init() {
@@ -81,138 +97,90 @@
             const response = await fetch(SHEET_URL);
             const csvText = await response.text();
             rawData = parseCSV(csvText);
-            
+
+            if (rawData.length === 0) return;
+
+            // Identificar as chaves reais baseadas no conteúdo
+            const sample = rawData[0];
+            const keys = {};
+            Object.keys(sample).forEach(k => {
+                const norm = normalizeKey(k);
+                if (norm.includes('ativo') || norm === 'ticker') keys.ativo = k;
+                if (norm.includes('mes')) keys.mes = k;
+            });
+
+            // Popular Select de Ativos
+            const ativosUnicos = [...new Set(rawData.map(item => item[keys.ativo]))].filter(a => a);
             const assetSelect = document.getElementById('assetSelect');
+            assetSelect.innerHTML = ativosUnicos.map(a => `<option value="${a}">${a}</option>`).join('');
+
+            // Popular Select de Meses
+            const mesesUnicos = [...new Set(rawData.map(item => item[keys.mes]))].filter(m => m);
             const monthSelect = document.getElementById('monthSelect');
-            
-            const ativosUnicos = [...new Set(rawData.map(item => {
-                const key = Object.keys(item).find(k => normalizeKey(k).includes('ativo'));
-                return item[key];
-            }))].filter(a => a);
-
-            assetSelect.innerHTML = ''; 
-            ativosUnicos.forEach(ativo => {
-                let opt = document.createElement('option');
-                opt.value = ativo; opt.innerHTML = ativo;
-                assetSelect.appendChild(opt);
-            });
-
-            const mesesUnicos = [...new Set(rawData.map(item => {
-                const key = Object.keys(item).find(k => normalizeKey(k).includes('mes'));
-                return item[key];
-            }))].filter(m => m);
-
-            monthSelect.innerHTML = '';
-            mesesUnicos.forEach(mes => {
-                let opt = document.createElement('option');
-                opt.value = mes; opt.innerHTML = mes;
-                monthSelect.appendChild(opt);
-            });
-            
+            monthSelect.innerHTML = mesesUnicos.map(m => `<option value="${m}">${m}</option>`).join('');
             monthSelect.selectedIndex = mesesUnicos.length - 1;
 
             setupChart();
             updateDashboard();
         } catch (error) {
-            console.error("Erro ao carregar:", error);
+            console.error("Erro na inicialização:", error);
         }
     }
-
-   function parseCSV(csv) {
-    const lines = csv.split(/\r?\n/).filter(line => line.trim() !== "");
-    const result = [];
-    // Detecta se o separador é vírgula ou ponto e vírgula
-    const separator = lines[0].includes(';') ? ';' : ',';
-    
-    // Divide os cabeçalhos e remove aspas extras
-    const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
-
-    for (let i = 1; i < lines.length; i++) {
-        const obj = {};
-        // Regex para lidar com valores entre aspas que podem conter o separador
-        const currentline = lines[i].split(separator);
-        
-        headers.forEach((header, index) => {
-            let value = currentline[index] ? currentline[index].trim() : "0";
-            obj[header] = value.replace(/^"|"$/g, '');
-        });
-        result.push(obj);
-    }
-    return result;
-}
 
     function setupChart() {
         const ctx = document.getElementById('dividendChart').getContext('2d');
         chart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: [], datasets: [{ label: 'R$', backgroundColor: '#38bdf8', borderRadius: 8, data: [] }] },
+            data: { labels: [], datasets: [{ label: 'Dividendos R$', backgroundColor: '#38bdf8', borderRadius: 8, data: [] }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
-function updateDashboard() {
-    const selectedAtivo = document.getElementById('assetSelect').value;
-    const selectedMonth = document.getElementById('monthSelect').value;
-    
-    if (!selectedAtivo || rawData.length === 0) return;
 
-    // --- CONFIGURAÇÃO MANUAL DE COLUNAS (AJUSTE OS NÚMEROS ABAIXO) ---
-    // Verifique na sua planilha a posição de cada coluna (0 é a primeira)
-    const idx = {
-        ativo: 0,      // Coluna A
-        mes: 1,        // Coluna B
-        cotas: 2,      // Coluna C
-        valor: 3,      // Coluna D (O valor em R$ do mês)
-        acumulado: 4,  // Coluna E (Onde está o 1,23%)
-        dm: 5          // Coluna F
-    };
+    function updateDashboard() {
+        const selectedAtivo = document.getElementById('assetSelect').value;
+        const selectedMonth = document.getElementById('monthSelect').value;
+        
+        if (!selectedAtivo || rawData.length === 0) return;
 
-    // Pegamos os nomes reais dos cabeçalhos baseados nos índices acima
-    const colNames = Object.keys(rawData[0]);
-    const keys = {
-        ativo: colNames[idx.ativo],
-        mes: colNames[idx.mes],
-        cotas: colNames[idx.cotas],
-        valor: colNames[idx.valor],
-        acumulado: colNames[idx.acumulado],
-        dm: colNames[idx.dm]
-    };
+        // Mapeamento dinâmico de colunas para evitar erros de índice
+        const keys = {};
+        Object.keys(rawData[0]).forEach(k => {
+            const norm = normalizeKey(k);
+            if (norm === 'ativo') keys.ativo = k;
+            if (norm === 'mes') keys.mes = k;
+            if (norm === 'cotas') keys.cotas = k;
+            if (norm === 'valor' || norm === 'pago') keys.valor = k;
+            if (norm.includes('acumulado') || norm.includes('yield') || norm === 'yoc') keys.acumulado = k;
+            if (norm.includes('dm') || norm.includes('dividendo mensal')) keys.dm = k;
+        });
 
-    // Filtros
-    const historicoAtivo = rawData.filter(d => 
-        String(d[keys.ativo]).trim().toUpperCase() === selectedAtivo.toUpperCase()
-    );
+        const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
+        const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
 
-    const dadosMes = historicoAtivo.find(d => 
-        String(d[keys.mes]).trim() === selectedMonth.trim()
-    ) || {};
+        // Extração de valores
+        const nCotas = parseNumber(dadosMes[keys.cotas]);
+        const nValorMes = parseNumber(dadosMes[keys.valor]);
+        const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
+        const nDM = parseNumber(dadosMes[keys.dm]);
 
-    // Processamento
-    const nCotas = parseNumber(dadosMes[keys.cotas]);
-    const nValorMes = parseNumber(dadosMes[keys.valor]);
-    const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
-    let nDM = (nCotas > 0) ? (nValorMes / nCotas) : parseNumber(dadosMes[keys.dm]);
+        // Formatação Brasil
+        const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 
-    // Formatação
-    const formatCurrency = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const formatPercent = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+        // Atualização dos Cards
+        document.getElementById('valcotas').innerText = nCotas;
+        document.getElementById('valMes').innerText = `R$ ${fR$(nValorMes)}`;
+        document.getElementById('valTotal').innerText = fPct(nAcumulado); 
+        document.getElementById('valDM').innerText = `R$ ${fR$(nDM)}`;
 
-    // Update UI
-    document.getElementById('valcotas').innerText = nCotas;
-    document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
-    
-    // Se o valor aparecer como 123,00%, mude nAcumulado para (nAcumulado / 100)
-    // Se aparecer 0,01%, mude nAcumulado para (nAcumulado * 100)
-    document.getElementById('valTotal').innerText = formatPercent(nAcumulado); 
-    
-    document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
-
-    if (chart) {
-        chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
-        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
-        chart.update();
+        if (chart) {
+            chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
+            chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
+            chart.update();
+        }
     }
-}  
+
     window.addEventListener('DOMContentLoaded', init);
-</script>
+  </script>
 </body>
 </html>
