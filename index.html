@@ -235,6 +235,11 @@
     }
 
   function parseNumber(val) {
+const parseNumber = (val) => {
+    if (!val) return 0;
+    let cleanVal = String(val).replace('R$', '').replace('%', '').replace(/\s/g, '').replace(',', '.');
+    return parseFloat(cleanVal) || 0;
+      
     if (!val) return 0;
     // Remove R$, %, espaços e converte vírgula em ponto
     let clean = String(val).replace(/[R$\s%]/g, '').replace(',', '.');
@@ -251,9 +256,9 @@ function updateDashboard() {
     const col = Object.keys(rawData[0]);
 
     // Filtra o histórico do ativo (Coluna 0)
-    const historicoAtivo = rawData.filter(d => 
-        String(d[col[0]]).trim() === String(selectedAtivo).trim()
-    );
+   const historicoAtivo = rawData.filter(d => 
+    String(d[keys.ativo]).trim().toLowerCase() === String(selectedAtivo).trim().toLowerCase()
+);
 
     // Encontra a linha do mês (Coluna 1)
     const dadosMes = historicoAtivo.find(d => 
