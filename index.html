@@ -235,11 +235,6 @@
     }
 
   function parseNumber(val) {
-const parseNumber = (val) => {
-    if (!val) return 0;
-    let cleanVal = String(val).replace('R$', '').replace('%', '').replace(/\s/g, '').replace(',', '.');
-    return parseFloat(cleanVal) || 0;
-      
     if (!val) return 0;
     // Remove R$, %, espaços e converte vírgula em ponto
     let clean = String(val).replace(/[R$\s%]/g, '').replace(',', '.');
