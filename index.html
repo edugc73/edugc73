@@ -56,24 +56,21 @@
     let chart;
 
     // Função para converter strings da planilha em números reais (com centavos)
-    function parseNumber(val) {
-        if (!val) return 0;
-        let s = String(val).trim();
-        // Remove símbolos monetários e espaços
-        s = s.replace(/R\$/g, '').replace(/\s/g, '');
-        
-        // Se houver ponto e vírgula (ex: 1.250,50), remove o ponto de milhar
-        if (s.includes('.') && s.includes(',')) {
-            s = s.replace(/\./g, '').replace(',', '.');
-        } 
-        // Se houver apenas vírgula (ex: 1250,50), troca por ponto decimal
-        else if (s.includes(',')) {
-            s = s.replace(',', '.');
-        }
-        
-        const num = parseFloat(s);
-        return isNaN(num) ? 0 : num;
+  function parseNumber(val) {
+    if (!val) return 0;
+    let s = String(val).trim();
+    // Remove R$, espaços e o símbolo de porcentagem
+    s = s.replace(/R\$/g, '').replace(/%/g, '').replace(/\s/g, '');
+    
+    if (s.includes('.') && s.includes(',')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else if (s.includes(',')) {
+        s = s.replace(',', '.');
     }
+    
+    const num = parseFloat(s);
+    return isNaN(num) ? 0 : num;
+}
 
     function normalizeKey(str) {
         return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -153,19 +150,29 @@
         const selectedMonth = document.getElementById('monthSelect').value;
         if (!selectedAtivo || rawData.length === 0) return;
 
-        const keys = {};
-        Object.keys(rawData[0]).forEach(k => {
-            const norm = normalizeKey(k);
-            if (norm.includes('ativo')) keys.ativo = k;
-            if (norm.includes('mes')) keys.mes = k;
-            if (norm.includes('cota')) keys.cotas = k;
-            if (norm.includes('valor')) keys.valor = k;
-            if (norm.includes('acumulado')) keys.acumulado = k;
-            if (norm.includes('dm')) keys.dm = k;
-        });
+    const keys = {};
+Object.keys(rawData[0]).forEach(k => {
+    const norm = normalizeKey(k);
+    if (norm === 'ativo') keys.ativo = k;
+    if (norm === 'mes') keys.mes = k;
+    if (norm === 'cotas') keys.cotas = k;
+    if (norm === 'valor') keys.valor = k;
+    // Ajuste aqui para o nome exato da sua coluna de porcentagem na planilha
+    if (norm.includes('acumulado') || norm.includes('yield')) keys.acumulado = k;
+    if (norm.includes('dm')) keys.dm = k;
+});
 
-        const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
-        const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
+// LOG DE DIAGNÓSTICO: Abra o console do navegador (F12) para ver se ele achou a coluna certa
+console.log("Coluna identificada como Acumulado:", keys.acumulado);
+console.log("Dados encontrados para o mês:", dadosMes);
+     
+const historicoAtivo = rawData.filter(d => 
+    normalizeKey(d[keys.ativo]) === normalizeKey(selectedAtivo)
+);
+
+const dadosMes = historicoAtivo.find(d => 
+    normalizeKey(d[keys.mes]) === normalizeKey(selectedMonth)
+) || {};
 
         // Processa os números garantindo os decimais
         const nCotas = parseNumber(dadosMes[keys.cotas]);
