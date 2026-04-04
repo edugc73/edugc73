@@ -136,49 +136,58 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeID
         });
     }
 
-    function updateDashboard() {
-        const selectedAtivo = document.getElementById('assetSelect').value;
-        const selectedMonth = document.getElementById('monthSelect').value;
-        
-        if (!selectedAtivo || rawData.length === 0) return;
+ function updateDashboard() {
+    const selectedAtivo = document.getElementById('assetSelect').value;
+    const selectedMonth = document.getElementById('monthSelect').value;
+    
+    if (!selectedAtivo || rawData.length === 0) return;
 
-        // Mapeamento dinâmico de colunas para evitar erros de índice
-        const keys = {};
-        Object.keys(rawData[0]).forEach(k => {
-            const norm = normalizeKey(k);
-            if (norm === 'ativo') keys.ativo = k;
-            if (norm === 'mes') keys.mes = k;
-            if (norm === 'cotas') keys.cotas = k;
-            if (norm === 'valor' || norm === 'pago') keys.valor = k;
-            if (norm.includes('acumulado') || norm.includes('yield') || norm === 'yoc') keys.acumulado = k;
-            if (norm.includes('dm') || norm.includes('dividendo mensal')) keys.dm = k;
-        });
+    // --- MAPEAMENTO POR ÍNDICE NUMÉRICO (0 a 5) ---
+    // Usamos os nomes reais das chaves baseados na posição que ocupam no objeto
+    const colNames = Object.keys(rawData[0]);
+    
+    const keys = {
+        ativo: colNames[0],     // Coluna 0
+        mes: colNames[1],       // Coluna 1
+        cotas: colNames[2],     // Coluna 2
+        valor: colNames[3],     // Coluna 3 (Valor Total Pago)
+        acumulado: colNames[4], // Coluna 4 (Onde está o 1,23%)
+        dm: colNames[5]         // Coluna 5 (Dividendo Mensal Unitário)
+    };
 
-        const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
-        const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
+    // Filtro do Ativo e do Mês
+    const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
+    const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
 
-        // Extração de valores
-        const nCotas = parseNumber(dadosMes[keys.cotas]);
-        const nValorMes = parseNumber(dadosMes[keys.valor]);
-        const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
-        const nDM = parseNumber(dadosMes[keys.dm]);
+    // Processamento dos valores numéricos
+    const nCotas = parseNumber(dadosMes[keys.cotas]);
+    const nValorMes = parseNumber(dadosMes[keys.valor]);
+    let nAcumulado = parseNumber(dadosMes[keys.acumulado]);
+    const nDM = parseNumber(dadosMes[keys.dm]);
 
-        // Formatação Brasil
-        const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
-
-        // Atualização dos Cards
-        document.getElementById('valcotas').innerText = nCotas;
-        document.getElementById('valMes').innerText = `R$ ${fR$(nValorMes)}`;
-        document.getElementById('valTotal').innerText = fPct(nAcumulado); 
-        document.getElementById('valDM').innerText = `R$ ${fR$(nDM)}`;
-
-        if (chart) {
-            chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
-            chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
-            chart.update();
-        }
+    // Lógica para corrigir 0,0123 -> 1,23%
+    // Se o valor for menor que 1, entendemos que o Sheets enviou como decimal
+    if (nAcumulado > 0 && nAcumulado < 1) {
+        nAcumulado = nAcumulado * 100;
     }
+
+    // Formatação para exibição
+    const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+
+    // Atualização dos elementos na tela
+    document.getElementById('valcotas').innerText = nCotas;
+    document.getElementById('valMes').innerText = `R$ ${fR$(nValorMes)}`;
+    document.getElementById('valTotal').innerText = fPct(nAcumulado); 
+    document.getElementById('valDM').innerText = `R$ ${fR$(nDM)}`;
+
+    // Atualização do Gráfico
+    if (chart) {
+        chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
+        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
+        chart.update();
+    }
+}
 
     window.addEventListener('DOMContentLoaded', init);
   </script>
