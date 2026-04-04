@@ -224,9 +224,8 @@
 
     // FUNÇÃO AGORA FORA DA FETCHDATA PARA SER GLOBAL
   function updateDashboard() {
-    // 1. EU MUDEI AQUI IDs corrigidos para bater com seu HTML (selectAtivo e selectMes)
-    const selectedAtivo = document.getElementById('selectAtivo').value;   
-   // const selAtivo = document.getElementById('selectAtivo');
+   
+    const selAtivo = document.getElementById('selectAtivo');
     const selMes = document.getElementById('selectMes');
 
     if (!selAtivo || !selMes || rawData.length === 0) return;
