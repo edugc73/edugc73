@@ -132,56 +132,56 @@
         });
     }
 
-    function updateDashboard() {
-        const selectedAtivo = document.getElementById('assetSelect').value;
-        const selectedMonth = document.getElementById('monthSelect').value;
-        
-        if (!selectedAtivo || rawData.length === 0) return;
+   function updateDashboard() {
+    const selectedAtivo = document.getElementById('assetSelect').value;
+    const selectedMonth = document.getElementById('monthSelect').value;
+    
+    if (!selectedAtivo || rawData.length === 0) return;
 
-        const colNames = Object.keys(rawData[0]);
-        const keys = {
-            ativo: colNames[0],
-            mes: colNames[1],
-            cotas: colNames[2],
-            valor: colNames[3],
-            acumulado: colNames[4],
-            dm: colNames[5]
-        };
+    // MAPEAMENTO EXATO BASEADO NO SEU CSV "APP DIVIDENDOS"
+    const colNames = Object.keys(rawData[0]);
+    const keys = {
+        ativo:     colNames[0], // Coluna 0 (Ativo)
+        mes:       colNames[1], // Coluna 1 (Mês)
+        cotas:     colNames[2], // Coluna 2 (Qdade)
+        dividendo: colNames[3], // Coluna 3 (Valor unitário: 1,45)
+        yoc:       colNames[4], // Coluna 4 (Yield decimal: 0,0122)
+        totalMes:  colNames[5]  // Coluna 5 (Total: 65,25)
+    };
 
-        // Filtro com .trim() para evitar erro de espaços invisíveis
-        const historicoAtivo = rawData.filter(d => 
-            String(d[keys.ativo]).trim() === String(selectedAtivo).trim()
-        );
+    const historicoAtivo = rawData.filter(d => 
+        String(d[keys.ativo]).trim() === String(selectedAtivo).trim()
+    );
 
-        const dadosMes = historicoAtivo.find(d => 
-            String(d[keys.mes]).trim() === String(selectedMonth).trim()
-        ) || {};
+    const dadosMes = historicoAtivo.find(d => 
+        String(d[keys.mes]).trim() === String(selectedMonth).trim()
+    ) || {};
 
-        const nCotas = parseNumber(dadosMes[keys.cotas]);
-        const nValorMes = parseNumber(dadosMes[keys.valor]);
-        let nAcumulado = parseNumber(dadosMes[keys.acumulado]);
-        const nDM = parseNumber(dadosMes[keys.dm]);
+    // PROCESSAMENTO DOS NÚMEROS
+    const nCotas = parseNumber(dadosMes[keys.cotas]);
+    const nValorUnitario = parseNumber(dadosMes[keys.dividendo]); // 1,45
+    const nTotalMes = parseNumber(dadosMes[keys.totalMes]);       // 65,25
+    
+    // Multiplica por 100 pois o CSV envia 0.0122 para representar 1.22%
+    let nYieldOnCost = parseNumber(dadosMes[keys.yoc]) * 100; 
 
-        // Correção automática de porcentagem (0.0123 -> 1.23)
-        if (nAcumulado > 0 && nAcumulado < 1) {
-            nAcumulado = nAcumulado * 100;
-        }
+    // FORMATAÇÃO
+    const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 
-        const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    // ATUALIZAÇÃO DA INTERFACE
+    document.getElementById('valcotas').innerText = nCotas;
+    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalMes)}`;     // Card Total do Mês
+    document.getElementById('valTotal').innerText = fPct(nYieldOnCost);      // Card Yield on Cost
+    document.getElementById('valDM').innerText = `R$ ${fR$(nValorUnitario)}`; // Card Dividendo Mensal
 
-        document.getElementById('valcotas').innerText = nCotas;
-        document.getElementById('valMes').innerText = `R$ ${fR$(nValorMes)}`;
-        document.getElementById('valTotal').innerText = fPct(nAcumulado); 
-        document.getElementById('valDM').innerText = `R$ ${fR$(nDM)}`;
-
-        if (chart) {
-            chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
-            chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
-            chart.update();
-        }
+    // GRÁFICO (Eixo Y mostra o total recebido)
+    if (chart) {
+        chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
+        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.totalMes]));
+        chart.update();
     }
-
+}
     window.addEventListener('DOMContentLoaded', init);
 </script>
 
