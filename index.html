@@ -240,6 +240,51 @@
     let clean = String(val).replace(/[R$\s%]/g, '').replace(',', '.');
     return parseFloat(clean) || 0;
 }
+
+ function updateChart(historico) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        
+        const labels = historico.map(h => h.mes);
+        const values = historico.map(h => parseNumber(h.totalMes));
+
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rendimento Total (R$)',
+                    data: values,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#38bdf8',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        })
+    
     
 function updateDashboard() {
     const selectedAtivo = document.getElementById('ativoSelect').value;
@@ -296,50 +341,7 @@ function updateDashboard() {
         chart.update();
     }
 }
-    
-    function updateChart(historico) {
-        const ctx = document.getElementById('myChart').getContext('2d');
-        
-        const labels = historico.map(h => h.mes);
-        const values = historico.map(h => parseNumber(h.totalMes));
-
-        if (chartInstance) chartInstance.destroy();
-
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Rendimento Total (R$)',
-                    data: values,
-                    borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#38bdf8',
-                    pointRadius: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: '#334155' },
-                        ticks: { color: '#94a3b8' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8' }
-                    }
-                }
-            }
-        });
+       
     }
 
     // Inicia a busca
