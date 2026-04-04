@@ -55,33 +55,27 @@
     let rawData = [];
     let chart;
 
-    // FUNÇÃO MESTRA DE LIMPEZA NUMÉRICA (Resolve centavos e NaN)
-   function cleanNumber(val) {
+    // LIMPEZA TOTAL DE NÚMEROS (Resolve centavos, milhar e NaN)
+    function cleanNumber(val) {
         if (val === undefined || val === null || val === '') return 0;
-        
         let s = String(val).trim();
         
-        // 1. Remove "R$" e espaços
-        s = s.replace(/R\$/g, '').replace(/\s/g, '');
+        // Remove R$, espaços e qualquer caractere que não seja número, vírgula ou ponto
+        s = s.replace(/R\$/g, '').replace(/\s/g, '').replace(/[^-0-9.,]/g, '');
 
-        // 2. Lógica para tratar formatos brasileiros (1.250,50)
-        // Se houver vírgula, assumimos que ela é o decimal.
-        if (s.includes(',')) {
-            // Removemos todos os PONTOS (milhar) e trocamos a VÍRGULA por PONTO (decimal)
+        // Se o número tiver os dois (ex: 1.250,50), removemos o ponto de milhar
+        if (s.includes(',') && s.includes('.')) {
             s = s.replace(/\./g, '').replace(',', '.');
-        } else {
-            // Se não houver vírgula, mas houver mais de um ponto (ex: 1.250.00)
-            // ou se o ponto parecer de milhar, limpamos.
-            // Esta parte garante que números como 1250.50 (formato americano) continuem funcionando.
-            const partes = s.split('.');
-            if (partes.length > 2) {
-                s = s.replace(/\./g, '');
-            }
+        } 
+        // Se tiver apenas vírgula (ex: 1250,50), troca por ponto decimal
+        else if (s.includes(',')) {
+            s = s.replace(',', '.');
         }
         
-        const num = parseFloat(s);
-        return isNaN(num) ? 0 : num;
+        const res = parseFloat(s);
+        return isNaN(res) ? 0 : res;
     }
+
     function normalizeKey(str) {
         return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     }
@@ -95,29 +89,27 @@
             const assetSelect = document.getElementById('assetSelect');
             const monthSelect = document.getElementById('monthSelect');
             
-            const ativosUnicos = [...new Set(rawData.map(item => {
-                const key = Object.keys(item).find(k => normalizeKey(k).includes('ativo'));
-                return item[key];
-            }))].filter(a => a);
+            const firstRow = rawData[0] || {};
+            const keys = {};
+            Object.keys(firstRow).forEach(k => {
+                const norm = normalizeKey(k);
+                if (norm.includes('ativo')) keys.ativo = k;
+                if (norm.includes('mes')) keys.mes = k;
+            });
 
+            const ativosUnicos = [...new Set(rawData.map(item => item[keys.ativo]))].filter(a => a);
             assetSelect.innerHTML = ''; 
             ativosUnicos.forEach(ativo => {
                 let opt = document.createElement('option');
-                opt.value = ativo;
-                opt.innerHTML = ativo;
+                opt.value = ativo; opt.innerHTML = ativo;
                 assetSelect.appendChild(opt);
             });
 
-            const mesesUnicos = [...new Set(rawData.map(item => {
-                const key = Object.keys(item).find(k => normalizeKey(k).includes('mes'));
-                return item[key];
-            }))].filter(m => m);
-
+            const mesesUnicos = [...new Set(rawData.map(item => item[keys.mes]))].filter(m => m);
             monthSelect.innerHTML = '';
             mesesUnicos.forEach(mes => {
                 let opt = document.createElement('option');
-                opt.value = mes;
-                opt.innerHTML = mes;
+                opt.value = mes; opt.innerHTML = mes;
                 monthSelect.appendChild(opt);
             });
             
@@ -176,18 +168,18 @@
         const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
         const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
 
-        // PROCESSAMENTO DOS VALORES
         const nCotas = cleanNumber(dadosMes[keys.cotas]);
         const nValorMes = cleanNumber(dadosMes[keys.valor]);
         const nAcumulado = cleanNumber(dadosMes[keys.acumulado]);
-// ...
-document.getElementById('valTotal').innerText = `R$ ${nAcumulado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        // CÁLCULO MANUAL DO DM (Dividendo por Cota) para garantir precisão
-        // Se houver valor e cotas, ele calcula na hora. Senão, tenta ler da planilha.
         let nDM = (nCotas > 0) ? (nValorMes / nCotas) : cleanNumber(dadosMes[keys.dm]);
 
-        // Formatação para exibição (Moeda Brasileira)
-        const formatBRL = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        // Formatação garantida com centavos (Padrão PT-BR)
+        const formatBRL = (num) => {
+            return num.toLocaleString('pt-BR', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        };
 
         document.getElementById('valcotas').innerText = nCotas;
         document.getElementById('valMes').innerText = `R$ ${formatBRL(nValorMes)}`;
@@ -203,3 +195,5 @@ document.getElementById('valTotal').innerText = `R$ ${nAcumulado.toLocaleString(
 
     window.addEventListener('DOMContentLoaded', init);
 </script>
+</body>
+</html>
