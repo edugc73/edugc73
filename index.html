@@ -118,23 +118,28 @@
         }
     }
 
-    function parseCSV(csv) {
-        const lines = csv.split(/\r?\n/);
-        const result = [];
-        const separator = lines[0].includes(';') ? ';' : ',';
-        const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const obj = {};
-            const currentline = lines[i].split(separator);
-            headers.forEach((header, s) => {
-                let value = currentline[s] ? currentline[s].trim() : "";
-                obj[header] = value.replace(/^"|"$/g, '');
-            });
-            result.push(obj);
-        }
-        return result;
+   function parseCSV(csv) {
+    const lines = csv.split(/\r?\n/).filter(line => line.trim() !== "");
+    const result = [];
+    // Detecta se o separador é vírgula ou ponto e vírgula
+    const separator = lines[0].includes(';') ? ';' : ',';
+    
+    // Divide os cabeçalhos e remove aspas extras
+    const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+
+    for (let i = 1; i < lines.length; i++) {
+        const obj = {};
+        // Regex para lidar com valores entre aspas que podem conter o separador
+        const currentline = lines[i].split(separator);
+        
+        headers.forEach((header, index) => {
+            let value = currentline[index] ? currentline[index].trim() : "0";
+            obj[header] = value.replace(/^"|"$/g, '');
+        });
+        result.push(obj);
     }
+    return result;
+}
 
     function setupChart() {
         const ctx = document.getElementById('dividendChart').getContext('2d');
@@ -144,62 +149,62 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
-function updateDashboard() {
-        const selectedAtivo = document.getElementById('assetSelect').value;
-        const selectedMonth = document.getElementById('monthSelect').value;
-        
-        if (!selectedAtivo || rawData.length === 0) return;
+ function updateDashboard() {
+    const selectedAtivo = document.getElementById('assetSelect').value;
+    const selectedMonth = document.getElementById('monthSelect').value;
+    
+    if (!selectedAtivo || rawData.length === 0) return;
 
-        // 1. Mapeia as colunas corretamente
-        const keys = {};
-        Object.keys(rawData[0]).forEach(k => {
-            const norm = normalizeKey(k);
-            if (norm.includes('ativo')) keys.ativo = k;
-            if (norm.includes('mes')) keys.mes = k;
-            if (norm.includes('cotas')) keys.cotas = k;
-            if (norm.includes('valor')) keys.valor = k;
-            if (norm.includes('acumulado') || norm.includes('yield')) keys.acumulado = k;
-            if (norm.includes('dm')) keys.dm = k;
-        });
+    // 1. Mapeamento rigoroso das colunas
+    const keys = {};
+    const firstRow = rawData[0];
+    Object.keys(firstRow).forEach(k => {
+        const norm = normalizeKey(k);
+        // Busca exata para evitar confusão entre 'valor' e 'valor acumulado'
+        if (norm === 'ativo') keys.ativo = k;
+        if (norm === 'mes') keys.mes = k;
+        if (norm === 'cotas') keys.cotas = k;
+        if (norm === 'valor') keys.valor = k; // Coluna de dinheiro (ex: 25,00)
+        if (norm.includes('acumulado') || norm === 'yoc' || norm === 'yield') keys.acumulado = k;
+        if (norm === 'dm' || norm.includes('mensal')) keys.dm = k;
+    });
 
-        // 2. Filtra o histórico do ativo selecionado
-        const historicoAtivo = rawData.filter(d => 
-            normalizeKey(d[keys.ativo] || "") === normalizeKey(selectedAtivo)
-        );
+    const historicoAtivo = rawData.filter(d => 
+        normalizeKey(d[keys.ativo] || "") === normalizeKey(selectedAtivo)
+    );
 
-        // 3. Encontra os dados do mês específico
-        const dadosMes = historicoAtivo.find(d => 
-            normalizeKey(d[keys.mes] || "") === normalizeKey(selectedMonth)
-        ) || {};
+    const dadosMes = historicoAtivo.find(d => 
+        normalizeKey(d[keys.mes] || "") === normalizeKey(selectedMonth)
+    ) || {};
 
-        // 4. Processa os números (removendo R$ ou % se existirem no texto)
-        const nCotas = parseNumber(dadosMes[keys.cotas]);
-        const nValorMes = parseNumber(dadosMes[keys.valor]);
-        const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
-        let nDM = (nCotas > 0) ? (nValorMes / nCotas) : parseNumber(dadosMes[keys.dm]);
+    // 2. Captura dos valores
+    const nCotas = parseNumber(dadosMes[keys.cotas]);
+    const nValorMes = parseNumber(dadosMes[keys.valor]);
+    
+    // Se o valor vier como 1,23 (em vez de 0,0123), o parseNumber tratará como 1.23
+    let nAcumulado = parseNumber(dadosMes[keys.acumulado]);
 
-        // 5. Funções de formatação
-        const formatCurrency = (num) => {
-            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        };
+    // Cálculo do dividendo por cota
+    let nDM = (nCotas > 0) ? (nValorMes / nCotas) : 0;
 
-        const formatPercent = (num) => {
-            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
-        };
+    // 3. Formatação
+    const formatCurrency = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatPercent = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 
-        // 6. Atualiza a Interface
-        document.getElementById('valcotas').innerText = nCotas;
-        document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
-        document.getElementById('valTotal').innerText = formatPercent(nAcumulado); 
-        document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
+    // 4. Atualização da Tela
+    document.getElementById('valcotas').innerText = nCotas;
+    document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
+    
+    // ATENÇÃO: Se aparecer 0.01% em vez de 1.23%, mude para nAcumulado * 100
+    document.getElementById('valTotal').innerText = formatPercent(nAcumulado); 
+    document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
 
-        // 7. Atualiza o Gráfico
-        if (chart) {
-            chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
-            chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
-            chart.update();
-        }
+    if (chart) {
+        chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
+        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
+        chart.update();
     }
+}
 
 
     window.addEventListener('DOMContentLoaded', init);
