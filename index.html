@@ -174,17 +174,30 @@
         let nDM = (nCotas > 0) ? (nValorMes / nCotas) : parseNumber(dadosMes[keys.dm]);
 
         // Formatação PT-BR que obriga a exibição de 2 casas decimais
-        const formatCurrency = (num) => {
-            return num.toLocaleString('pt-BR', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            });
-        };
+       // ... dentro da função updateDashboard()
 
-        document.getElementById('valcotas').innerText = nCotas;
-        document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
-        document.getElementById('valTotal').innerText = `R$ ${formatCurrency(nAcumulado)}`;
-        document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
+// Formatação para Moeda (R$)
+const formatCurrency = (num) => {
+    return num.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    });
+};
+
+// Nova formatação para Porcentagem (%)
+const formatPercent = (num) => {
+    return num.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    }) + '%';
+};
+
+document.getElementById('valcotas').innerText = nCotas;
+document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
+        
+// Alterado para usar formatPercent e remover o prefixo "R$"
+document.getElementById('valTotal').innerText = formatPercent(nAcumulado); 
+document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
 
         if (chart) {
             chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
