@@ -56,18 +56,25 @@
     let chart;
 
    function parseNumber(val) {
-    if (!val) return 0;
-    // Converte para string e remove espaços
+    if (val === undefined || val === null || val === "") return 0;
+    
+    // Converte para string e remove espaços extras
     let s = String(val).trim();
-    // Se o Sheets exportou com vírgula para decimal, troca por ponto
-    s = s.replace(',', '.');
-    // Remove qualquer caractere que não seja número, ponto ou sinal de menos
+    
+    // Se o valor contiver vírgula e ponto (ex: 1.200,50), removemos o ponto e trocamos a vírgula
+    if (s.includes(',') && s.includes('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+        // Se tiver apenas vírgula, trocamos por ponto
+        s = s.replace(',', '.');
+    }
+    
+    // Remove tudo que não seja número, ponto decimal ou sinal de menos
     s = s.replace(/[^\d.-]/g, '');
     
     const num = parseFloat(s);
     return isNaN(num) ? 0 : num;
 }
-
     function parseCSV(csv) {
         const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
         if (lines.length === 0) return [];
@@ -135,9 +142,10 @@ function updateDashboard() {
     
     if (!selectedAtivo || rawData.length === 0) return;
 
-    // Pegamos as chaves das colunas (0, 1, 2, 3, 4, 5)
+    // Obtém as chaves geradas pelo CSV (independentemente do nome)
     const col = Object.keys(rawData[0]);
 
+    // Filtra pelo Ativo (Coluna 0) e Mês (Coluna 1)
     const historicoAtivo = rawData.filter(d => 
         String(d[col[0]]).trim() === String(selectedAtivo).trim()
     );
@@ -146,36 +154,38 @@ function updateDashboard() {
         String(d[col[1]]).trim() === String(selectedMonth).trim()
     ) || {};
 
-    // --- CAPTURA DOS DADOS ---
-    // Coluna 2: Quantidade (ex: 70)
+    // --- EXTRAÇÃO DOS VALORES PELAS COLUNAS ---
+    
+    // Coluna 2 (Índice 2): Quantidade de Cotas
     const nCotas = parseNumber(dadosMes[col[2]]);
     
-    // Coluna 3: Rendimento por cota (ex: 0.79)
+    // Coluna 3 (Índice 3): Rendimento por Cota (ex: 0.79 ou 1.45)
     const nRendimentoCota = parseNumber(dadosMes[col[3]]);
     
-    // Coluna 4: Yield on Cost (ex: 0.007902...)
+    // Coluna 4 (Índice 4): Yield on Cost (ex: 0.0079)
     let nYOC = parseNumber(dadosMes[col[4]]);
     
-    // Coluna 5: Total Recebido (ex: 55.3)
+    // Coluna 5 (Índice 5): Total Recebido no Mês (ex: 55.30)
     const nTotalMes = parseNumber(dadosMes[col[5]]);
 
-    // --- LÓGICA DE CORREÇÃO ---
-    // Se o YOC veio como 0.0079, multiplicamos por 100 para virar 0.79%
-    // Se já veio como 0.79, mantemos.
+    // --- CORREÇÃO DE ESCALA ---
+    // Se o Yield for 0.0079, vira 0.79%. Se já for 0.79, permanece.
     if (nYOC > 0 && nYOC < 1) {
         nYOC = nYOC * 100;
     }
 
-    // Formatação
+    // Formatação para exibição no padrão brasileiro
     const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 
-    // --- ATUALIZAÇÃO DA TELA ---
+    // --- ATUALIZAÇÃO DOS CARDS NO HTML ---
+    // Certifique-se que os IDs abaixo existem no seu HTML
     document.getElementById('valcotas').innerText = nCotas;
-    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalMes)}`; 
-    document.getElementById('valTotal').innerText = fPct(nYOC); 
-    document.getElementById('valDM').innerText = `R$ ${fR$(nRendimentoCota)}`;
+    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalMes)}`;     // Card: Total do Mês
+    document.getElementById('valTotal').innerText = fPct(nYOC);              // Card: Yield on Cost
+    document.getElementById('valDM').innerText = `R$ ${fR$(nRendimentoCota)}`; // Card: Dividendo Mensal
 
+    // Atualização do Gráfico (Eixo Y com o valor total)
     if (chart) {
         chart.data.labels = historicoAtivo.map(h => h[col[1]]);
         chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[col[5]]));
