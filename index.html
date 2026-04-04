@@ -2,192 +2,315 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Dividend Dashboard Pro - Google Sheets</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Dividendos Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-color: #0f172a; --card-bg: #1e293b; --accent-color: #38bdf8; --text-main: #f8fafc; --text-dim: #94a3b8; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 1000px; }
-        header { text-align: center; margin-bottom: 30px; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .control-group { display: flex; flex-direction: column; gap: 8px; }
-        select { background: var(--card-bg); border: 1px solid #334155; color: white; padding: 12px; border-radius: 8px; outline: none; cursor: pointer; font-size: 1rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid #334155; }
-        .card-label { color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; }
-        .card-value { font-size: 1.8rem; font-weight: 600; margin-top: 5px; color: var(--accent-color); }
-        .chart-container { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid #334155; height: 400px; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-weight: 600;
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: var(--text-dim);
+        }
+
+        /* Controles */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        select {
+            background: var(--card-bg);
+            border: 1px solid #334155;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+        }
+
+        /* Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .card .value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 10px;
+            color: var(--accent-color);
+        }
+
+        /* Gráfico */
+        .chart-container {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            height: 400px;
+        }
+
+        .loading {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
+<div id="loading" class="loading">Sincronizando Dados...</div>
+
 <div class="container">
     <header>
-        <h1>Dividendos do Gonça</h1>
-        <p>Conectado via Google Sheets</p>
+        <h1>Dividend Intelligence</h1>
+        <p>Análise de proventos da carteira FII</p>
     </header>
 
     <div class="controls">
         <div class="control-group">
-            <label class="card-label">Selecione o Ativo</label>
-            <select id="assetSelect" onchange="updateDashboard()"><option>Carregando...</option></select>
+            <label>Selecione o Ativo</label>
+            <select id="selectAtivo" onchange="updateDashboard()"></select>
         </div>
         <div class="control-group">
-            <label class="card-label">Selecione o Mês</label>
-            <select id="monthSelect" onchange="updateDashboard()"><option>Carregando...</option></select>
+            <label>Mês de Referência</label>
+            <select id="selectMes" onchange="updateDashboard()"></select>
         </div>
     </div>
 
     <div class="stats-grid">
-        <div class="card"><div class="card-label">Total de cotas</div><div id="valcotas" class="card-value">0</div></div>
-        <div class="card"><div class="card-label">Total no Mês</div><div id="valMes" class="card-value">R$ 0,00</div></div>
-        <div class="card"><div class="card-label">Yield On Cost</div><div id="valTotal" class="card-value">0</div></div>
-        <div class="card"><div class="card-label">Dividendo Mensal</div><div id="valDM" class="card-value">R$ 0,00</div></div>
+        <div class="card">
+            <h3>Cotas Acumuladas</h3>
+            <div id="valCotas" class="value">0</div>
+        </div>
+        <div class="card">
+            <h3>Rendimento p/ Cota</h3>
+            <div id="valRendimento" class="value">R$ 0,00</div>
+        </div>
+        <div class="card">
+            <h3>Total no Mês</h3>
+            <div id="valTotal" class="value">R$ 0,00</div>
+        </div>
+        <div class="card">
+            <h3>Yield on Cost</h3>
+            <div id="valYOC" class="value">0,00%</div>
+        </div>
     </div>
 
-    <div class="chart-container"><canvas id="dividendChart"></canvas></div>
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
 </div>
 
 <script>
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv';
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv";
 
     let rawData = [];
-    let chart;
+    let chartInstance = null;
 
-  function parseNumber(val) {
-    if (val === undefined || val === null || val === "") return 0;
-    let s = String(val).trim();
-    
-    // Remove R$, espaços e símbolos de porcentagem
-    s = s.replace('R$', '').replace('%', '').replace(/\s/g, '');
-    
-    // Se o CSV usa ponto para decimal (ex: 1.45), o parseFloat entende direto.
-    // Se houver vírgula, trocamos por ponto.
-    s = s.replace(',', '.');
-    
-    const num = parseFloat(s);
-    return isNaN(num) ? 0 : num;
-}
-    
-    function parseCSV(csv) {
-        const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
-        if (lines.length === 0) return [];
-        
-        const separator = lines[0].includes(';') ? ';' : ',';
-        const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
-        
-        return lines.slice(1).map(line => {
-            const values = line.split(separator);
-            const obj = {};
-            headers.forEach((header, i) => {
-                obj[header] = values[i] ? values[i].trim().replace(/^"|"$/g, '') : "";
-            });
-            return obj;
-        });
-    }
-
-    async function init() {
+    async function fetchData() {
+        document.getElementById('loading').style.display = 'block';
         try {
-            const response = await fetch(SHEET_URL);
-            const csvText = await response.text();
-            rawData = parseCSV(csvText);
-
-            if (rawData.length === 0) {
-                console.error("Nenhum dado encontrado na planilha.");
-                return;
+            const response = await fetch(sheetURL);
+            const text = await response.text();
+            
+            // Converte CSV para Objeto
+            const rows = text.split('\n').map(row => row.split(','));
+            const data = [];
+            
+            // Pula o cabeçalho se existir (ajustado para a estrutura do seu arquivo)
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].length < 5) continue;
+                data.push({
+                    ativo: rows[i][0].trim(),
+                    mes: rows[i][1].trim(),
+                    cotas: rows[i][2],
+                    rendimentoCota: rows[i][3],
+                    yoc: rows[i][4],
+                    totalMes: rows[i][5]
+                });
             }
 
-            console.log("Dados carregados com sucesso:", rawData[0]); // Log para diagnóstico
-
-            const colNames = Object.keys(rawData[0]);
-            const keyAtivo = colNames[0];
-            const keyMes = colNames[1];
-
-            // Popular Ativos
-            const ativosUnicos = [...new Set(rawData.map(item => item[keyAtivo]))].filter(a => a);
-            const assetSelect = document.getElementById('assetSelect');
-            assetSelect.innerHTML = ativosUnicos.map(a => `<option value="${a}">${a}</option>`).join('');
-
-            // Popular Meses
-            const mesesUnicos = [...new Set(rawData.map(item => item[keyMes]))].filter(m => m);
-            const monthSelect = document.getElementById('monthSelect');
-            monthSelect.innerHTML = mesesUnicos.map(m => `<option value="${m}">${m}</option>`).join('');
-            monthSelect.selectedIndex = mesesUnicos.length - 1;
-
-            setupChart();
+            rawData = data;
+            populateFilters();
             updateDashboard();
-        } catch (error) {
-            console.error("Erro na inicialização:", error);
+        } catch (e) {
+            console.error("Erro ao carregar dados:", e);
         }
+        document.getElementById('loading').style.display = 'none';
     }
 
-    function setupChart() {
-        const ctx = document.getElementById('dividendChart').getContext('2d');
-        chart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: [], datasets: [{ label: 'Dividendos R$', backgroundColor: '#38bdf8', borderRadius: 8, data: [] }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    function populateFilters() {
+        const ativos = [...new Set(rawData.map(d => d.ativo))].sort();
+        const meses = [...new Set(rawData.map(d => d.mes))];
+
+        const selAtivo = document.getElementById('selectAtivo');
+        const selMes = document.getElementById('selectMes');
+
+        selAtivo.innerHTML = ativos.map(a => `<option value="${a}">${a}</option>`).join('');
+        selMes.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
+    function parseNumber(val) {
+        if (!val) return 0;
+        return parseFloat(val.toString().replace(',', '.').replace(/[^\d.-]/g, '')) || 0;
+    }
+
+    function formatCurrency(n) {
+        return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function updateDashboard() {
+        const selectedAtivo = document.getElementById('selectAtivo').value;
+        const selectedMes = document.getElementById('selectMes').value;
+
+        const historico = rawData.filter(d => d.ativo === selectedAtivo);
+        const dadosMes = historico.find(d => d.mes === selectedMes) || {};
+
+        // Atualiza Cards
+        document.getElementById('valCotas').innerText = dadosMes.cotas || 0;
+        document.getElementById('valRendimento').innerText = formatCurrency(parseNumber(dadosMes.rendimentoCota));
+        document.getElementById('valTotal').innerText = formatCurrency(parseNumber(dadosMes.totalMes));
+        
+        // Ajuste automático de YOC (0.0122 -> 1.22%)
+        let yocVal = parseNumber(dadosMes.yoc);
+        if (yocVal > 0 && yocVal < 1) yocVal *= 100;
+        document.getElementById('valYOC').innerText = yocVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '%';
+
+        updateChart(historico);
+    }
+
+    function updateChart(historico) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        
+        const labels = historico.map(h => h.mes);
+        const values = historico.map(h => parseNumber(h.totalMes));
+
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rendimento Total (R$)',
+                    data: values,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#38bdf8',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
         });
     }
 
-function updateDashboard() {
-    const selectedAtivo = document.getElementById('assetSelect').value;
-    const selectedMonth = document.getElementById('monthSelect').value;
-    
-    if (!selectedAtivo || rawData.length === 0) return;
-
-    // Pegamos as chaves das colunas (que no seu caso são "0", "1", "2"...)
-    const col = Object.keys(rawData[0]);
-
-    // Filtra o ativo na Coluna 0
-    const historicoAtivo = rawData.filter(d => 
-        String(d[col[0]]).trim() === String(selectedAtivo).trim()
-    );
-
-    // Busca o mês na Coluna 1
-    const dadosMes = historicoAtivo.find(d => 
-        String(d[col[1]]).trim() === String(selectedMonth).trim()
-    ) || {};
-
-    // --- MAPEAMENTO DIRETO PELO SEU CSV ---
-    
-    // Coluna 2: Quantidade de Cotas
-    const nCotas = parseNumber(dadosMes[col[2]]);
-    
-    // Coluna 3: Dividendo por Cota (ex: 1.45)
-    const nDividendoCota = parseNumber(dadosMes[col[3]]);
-    
-    // Coluna 4: Yield on Cost (ex: 0.01228)
-    let nYOC = parseNumber(dadosMes[col[4]]);
-    
-    // Coluna 5: Total do Mês (ex: 65.25)
-    const nTotalMes = parseNumber(dadosMes[col[5]]);
-
-    // --- CORREÇÃO DO YIELD ---
-    // Como o seu arquivo traz 0.0122, precisamos multiplicar por 100 para exibir 1.22%
-    if (nYOC > 0 && nYOC < 1) {
-        nYOC = nYOC * 100;
-    }
-
-    // Formatação Brasileira
-    const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
-
-    // --- ATUALIZAÇÃO DOS CARDS ---
-    document.getElementById('valcotas').innerText = nCotas;
-    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalMes)}`;     // Card: Total no Mês
-    document.getElementById('valTotal').innerText = fPct(nYOC);              // Card: Yield on Cost
-    document.getElementById('valDM').innerText = `R$ ${fR$(nDividendoCota)}`; // Card: Dividendo Mensal
-
-    // Atualização do Gráfico usando a Coluna 5 (Total Financeiro)
-    if (chart) {
-        chart.data.labels = historicoAtivo.map(h => h[col[1]]);
-        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[col[5]]));
-        chart.update();
-    }
-}    
-    window.addEventListener('DOMContentLoaded', init);
+    // Inicia a busca
+    fetchData();
 </script>
+
 </body>
 </html>
