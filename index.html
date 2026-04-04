@@ -69,11 +69,11 @@
             rawData = parseCSV(csvText);
             
             const select = document.getElementById('assetSelect');
-            // Remove valores vazios e garante que os nomes estão limpos
+            // Filtra e remove valores nulos ou vazios
             const ativosUnicos = [...new Set(rawData.map(item => item.Ativo))].filter(a => a);
             
             if (ativosUnicos.length === 0) {
-                console.error("Nenhum ativo encontrado. Verifique os cabeçalhos da planilha.");
+                console.error("Nenhum ativo encontrado. Verifique se a coluna se chama 'Ativo'.");
                 return;
             }
 
@@ -93,25 +93,23 @@
     }
 
     function parseCSV(csv) {
-    // Lida com quebras de linha de Windows (\r\n) e Linux (\n)
-    const lines = csv.split(/\r?\n/);
-    const result = [];
-    const separator = lines[0].includes(';') ? ';' : ',';
-    const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
+        const lines = csv.split(/\r?\n/);
+        const result = [];
+        const separator = lines[0].includes(';') ? ';' : ',';
+        const headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
 
-    for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        const obj = {};
-        const currentline = lines[i].split(separator);
-        headers.forEach((header, s) => {
-            let value = currentline[s] ? currentline[s].trim() : "";
-            // Remove aspas que o Google Sheets coloca em valores com texto
-            obj[header] = value.replace(/^"|"$/g, '');
-        });
-        result.push(obj);
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const obj = {};
+            const currentline = lines[i].split(separator);
+            headers.forEach((header, s) => {
+                let value = currentline[s] ? currentline[s].trim() : "";
+                obj[header] = value.replace(/^"|"$/g, '');
+            });
+            result.push(obj);
+        }
+        return result;
     }
-    return result;
-}
 
     function setupChart() {
         const ctx = document.getElementById('dividendChart').getContext('2d');
@@ -151,3 +149,4 @@
     }
 
     window.addEventListener('DOMContentLoaded', init);
+</script>
