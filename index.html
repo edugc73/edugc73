@@ -55,9 +55,19 @@
     let rawData = [];
     let chart;
 
+    // FUNÇÃO MESTRA DE LIMPEZA NUMÉRICA (Resolve centavos e NaN)
     function cleanNumber(val) {
-        if (!val) return 0;
-        let s = String(val).replace(/R\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+        if (val === undefined || val === null || val === '') return 0;
+        let s = String(val);
+        // 1. Remove "R$", símbolos e espaços
+        s = s.replace(/R\$/g, '').replace(/\s/g, '');
+        // 2. Se houver ponto E vírgula (ex: 1.200,50), remove o ponto
+        if (s.includes('.') && s.includes(',')) {
+            s = s.replace(/\./g, '');
+        }
+        // 3. Se houver apenas uma vírgula (ex: 10,50), troca por ponto
+        s = s.replace(',', '.');
+        
         return parseFloat(s) || 0;
     }
 
@@ -74,7 +84,6 @@
             const assetSelect = document.getElementById('assetSelect');
             const monthSelect = document.getElementById('monthSelect');
             
-            // 1. Identifica Ativos Únicos
             const ativosUnicos = [...new Set(rawData.map(item => {
                 const key = Object.keys(item).find(k => normalizeKey(k).includes('ativo'));
                 return item[key];
@@ -88,7 +97,6 @@
                 assetSelect.appendChild(opt);
             });
 
-            // 2. Identifica Meses Únicos presentes na planilha
             const mesesUnicos = [...new Set(rawData.map(item => {
                 const key = Object.keys(item).find(k => normalizeKey(k).includes('mes'));
                 return item[key];
@@ -102,7 +110,6 @@
                 monthSelect.appendChild(opt);
             });
             
-            // Seleciona o último mês por padrão
             monthSelect.selectedIndex = mesesUnicos.length - 1;
 
             setupChart();
@@ -158,13 +165,24 @@
         const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
         const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
 
-        document.getElementById('valcotas').innerText = dadosMes[keys.cotas] || 0;
-        document.getElementById('valMes').innerText = `R$ ${cleanNumber(dadosMes[keys.valor]).toFixed(2).replace('.', ',')}`;
-        document.getElementById('valTotal').innerText = `R$ ${cleanNumber(dadosMes[keys.acumulado]).toFixed(2).replace('.', ',')}`;
-        document.getElementById('valDM').innerText = `R$ ${cleanNumber(dadosMes[keys.dm]).toFixed(2).replace('.', ',')}`;
+        // PROCESSAMENTO DOS VALORES
+        const nCotas = cleanNumber(dadosMes[keys.cotas]);
+        const nValorMes = cleanNumber(dadosMes[keys.valor]);
+        const nAcumulado = cleanNumber(dadosMes[keys.acumulado]);
+        
+        // CÁLCULO MANUAL DO DM (Dividendo por Cota) para garantir precisão
+        // Se houver valor e cotas, ele calcula na hora. Senão, tenta ler da planilha.
+        let nDM = (nCotas > 0) ? (nValorMes / nCotas) : cleanNumber(dadosMes[keys.dm]);
+
+        // Formatação para exibição (Moeda Brasileira)
+        const formatBRL = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        document.getElementById('valcotas').innerText = nCotas;
+        document.getElementById('valMes').innerText = `R$ ${formatBRL(nValorMes)}`;
+        document.getElementById('valTotal').innerText = `R$ ${formatBRL(nAcumulado)}`;
+        document.getElementById('valDM').innerText = `R$ ${formatBRL(nDM)}`;
 
         if (chart) {
-            // O gráfico agora pega TODOS os meses que aquele ativo tem na planilha
             chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
             chart.data.datasets[0].data = historicoAtivo.map(h => cleanNumber(h[keys.valor]));
             chart.update();
@@ -173,5 +191,3 @@
 
     window.addEventListener('DOMContentLoaded', init);
 </script>
-</body>
-</html>
