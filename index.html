@@ -55,25 +55,24 @@
     let rawData = [];
     let chart;
 
-    // LIMPEZA TOTAL DE NÚMEROS (Resolve centavos, milhar e NaN)
-    function cleanNumber(val) {
-        if (val === undefined || val === null || val === '') return 0;
+    // Função para converter strings da planilha em números reais (com centavos)
+    function parseNumber(val) {
+        if (!val) return 0;
         let s = String(val).trim();
+        // Remove símbolos monetários e espaços
+        s = s.replace(/R\$/g, '').replace(/\s/g, '');
         
-        // Remove R$, espaços e qualquer caractere que não seja número, vírgula ou ponto
-        s = s.replace(/R\$/g, '').replace(/\s/g, '').replace(/[^-0-9.,]/g, '');
-
-        // Se o número tiver os dois (ex: 1.250,50), removemos o ponto de milhar
-        if (s.includes(',') && s.includes('.')) {
+        // Se houver ponto e vírgula (ex: 1.250,50), remove o ponto de milhar
+        if (s.includes('.') && s.includes(',')) {
             s = s.replace(/\./g, '').replace(',', '.');
         } 
-        // Se tiver apenas vírgula (ex: 1250,50), troca por ponto decimal
+        // Se houver apenas vírgula (ex: 1250,50), troca por ponto decimal
         else if (s.includes(',')) {
             s = s.replace(',', '.');
         }
         
-        const res = parseFloat(s);
-        return isNaN(res) ? 0 : res;
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
     }
 
     function normalizeKey(str) {
@@ -89,15 +88,11 @@
             const assetSelect = document.getElementById('assetSelect');
             const monthSelect = document.getElementById('monthSelect');
             
-            const firstRow = rawData[0] || {};
-            const keys = {};
-            Object.keys(firstRow).forEach(k => {
-                const norm = normalizeKey(k);
-                if (norm.includes('ativo')) keys.ativo = k;
-                if (norm.includes('mes')) keys.mes = k;
-            });
+            const ativosUnicos = [...new Set(rawData.map(item => {
+                const key = Object.keys(item).find(k => normalizeKey(k).includes('ativo'));
+                return item[key];
+            }))].filter(a => a);
 
-            const ativosUnicos = [...new Set(rawData.map(item => item[keys.ativo]))].filter(a => a);
             assetSelect.innerHTML = ''; 
             ativosUnicos.forEach(ativo => {
                 let opt = document.createElement('option');
@@ -105,7 +100,11 @@
                 assetSelect.appendChild(opt);
             });
 
-            const mesesUnicos = [...new Set(rawData.map(item => item[keys.mes]))].filter(m => m);
+            const mesesUnicos = [...new Set(rawData.map(item => {
+                const key = Object.keys(item).find(k => normalizeKey(k).includes('mes'));
+                return item[key];
+            }))].filter(m => m);
+
             monthSelect.innerHTML = '';
             mesesUnicos.forEach(mes => {
                 let opt = document.createElement('option');
@@ -168,13 +167,14 @@
         const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
         const dadosMes = historicoAtivo.find(d => d[keys.mes] === selectedMonth) || {};
 
-        const nCotas = cleanNumber(dadosMes[keys.cotas]);
-        const nValorMes = cleanNumber(dadosMes[keys.valor]);
-        const nAcumulado = cleanNumber(dadosMes[keys.acumulado]);
-        let nDM = (nCotas > 0) ? (nValorMes / nCotas) : cleanNumber(dadosMes[keys.dm]);
+        // Processa os números garantindo os decimais
+        const nCotas = parseNumber(dadosMes[keys.cotas]);
+        const nValorMes = parseNumber(dadosMes[keys.valor]);
+        const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
+        let nDM = (nCotas > 0) ? (nValorMes / nCotas) : parseNumber(dadosMes[keys.dm]);
 
-        // Formatação garantida com centavos (Padrão PT-BR)
-        const formatBRL = (num) => {
+        // Formatação PT-BR que obriga a exibição de 2 casas decimais
+        const formatCurrency = (num) => {
             return num.toLocaleString('pt-BR', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
@@ -182,13 +182,13 @@
         };
 
         document.getElementById('valcotas').innerText = nCotas;
-        document.getElementById('valMes').innerText = `R$ ${formatBRL(nValorMes)}`;
-        document.getElementById('valTotal').innerText = `R$ ${formatBRL(nAcumulado)}`;
-        document.getElementById('valDM').innerText = `R$ ${formatBRL(nDM)}`;
+        document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
+        document.getElementById('valTotal').innerText = `R$ ${formatCurrency(nAcumulado)}`;
+        document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
 
         if (chart) {
             chart.data.labels = historicoAtivo.map(h => h[keys.mes]);
-            chart.data.datasets[0].data = historicoAtivo.map(h => cleanNumber(h[keys.valor]));
+            chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
             chart.update();
         }
     }
