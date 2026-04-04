@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Dividendos Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -223,7 +223,8 @@
 }
 
     // FUNÇÃO AGORA FORA DA FETCHDATA PARA SER GLOBAL
-   function updateDashboard() {
+  function updateDashboard() {
+    // 1. IDs corrigidos para bater com seu HTML (selectAtivo e selectMes)
     const selAtivo = document.getElementById('selectAtivo');
     const selMes = document.getElementById('selectMes');
 
@@ -232,36 +233,34 @@
     const valAtivo = selAtivo.value;
     const valMes = selMes.value;
 
-    // 1. Filtrar pelo Ativo (Coluna 0)
+    // 2. Filtragem usando índices diretos (0 = Ativo, 1 = Mês)
     const historicoAtivo = rawData.filter(d => 
         d[0] && String(d[0]).trim().toLowerCase() === String(valAtivo).trim().toLowerCase()
     );
 
-    // 2. Encontrar o Mês (Coluna 1)
     const dados = historicoAtivo.find(d => 
         d[1] && String(d[1]).trim() === String(valMes).trim()
     ) || {};
 
-    // 3. Pegar valores pelos índices corretos
-    const nCotas = parseNumber(dados[2]);
-    const nRendimento = parseNumber(dados[3]);
-    let nYOC = parseNumber(dados[4]);
-    const nTotal = parseNumber(dados[5]);
+    // 3. Mapeamento correto das colunas do seu CSV
+    const nCotas = parseNumber(dados[2]);      // Coluna 2: Cotas
+    const nRendimento = parseNumber(dados[3]); // Coluna 3: Rendimento/Cota
+    let nYOC = parseNumber(dados[4]);          // Coluna 4: Yield on Cost
+    const nTotal = parseNumber(dados[5]);      // Coluna 5: Total no Mês
 
-    // Ajuste de Yield (0.0122 -> 1.22%)
+    // 4. Ajuste de escala do Yield (0.0122 -> 1.22%)
     if (nYOC > 0 && nYOC < 1) nYOC *= 100;
 
     const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // 4. Atualizar os IDs EXATOS do seu HTML
+    // 5. Atualização dos Cards (IDs: valCotas, valRendimento, valTotal, valYOC)
     document.getElementById('valCotas').innerText = nCotas;
     document.getElementById('valRendimento').innerText = "R$ " + fR$(nRendimento);
     document.getElementById('valTotal').innerText = "R$ " + fR$(nTotal);
     document.getElementById('valYOC').innerText = nYOC.toFixed(2) + "%";
 
     updateChart(historicoAtivo);
-}
-  
+}  
     function updateChart(historico) {
         const ctx = document.getElementById('myChart').getContext('2d');
         if (chartInstance) chartInstance.destroy();
