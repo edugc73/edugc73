@@ -243,25 +243,53 @@
         return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function updateDashboard() {
-        const selectedAtivo = document.getElementById('selectAtivo').value;
-        const selectedMes = document.getElementById('selectMes').value;
+  function updateDashboard() {
+    const selectedAtivo = document.getElementById('ativoSelect').value;
+    const selectedMonth = document.getElementById('monthSelect').value;
 
-        const historico = rawData.filter(d => d.ativo === selectedAtivo);
-        const dadosMes = historico.find(d => d.mes === selectedMes) || {};
+    if (!selectedAtivo || !selectedMonth) return;
 
-        // Atualiza Cards
-        document.getElementById('valCotas').innerText = dadosMes.cotas || 0;
-        document.getElementById('valRendimento').innerText = formatCurrency(parseNumber(dadosMes.rendimentoCota));
-        document.getElementById('valTotal').innerText = formatCurrency(parseNumber(dadosMes.totalMes));
-        
-        // Ajuste automático de YOC (0.0122 -> 1.22%)
-        let yocVal = parseNumber(dadosMes.yoc);
-        if (yocVal > 0 && yocVal < 1) yocVal *= 100;
-        document.getElementById('valYOC').innerText = yocVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '%';
+    // Filtra o histórico do ativo selecionado
+    const historicoAtivo = rawData.filter(d => 
+        String(d[Object.keys(d)[0]]).trim() === String(selectedAtivo).trim()
+    );
 
-        updateChart(historico);
+    // Encontra os dados específicos do mês
+    const dadosMes = historicoAtivo.find(d => 
+        String(d[Object.keys(d)[1]]).trim() === String(selectedMonth).trim()
+    ) || {};
+
+    // MAPEAMENTO FIXO BASEADO NO SEU CSV
+    const colunas = Object.keys(rawData[0]);
+    
+    // 0: Ativo | 1: Mês | 2: Cotas | 3: Valor Unitário | 4: YoC | 5: Total
+    const nCotas = parseNumber(dadosMes[colunas[2]]);
+    const nRendimentoUnidade = parseNumber(dadosMes[colunas[3]]);
+    let nYOC = parseNumber(dadosMes[colunas[4]]);
+    const nTotalRecebido = parseNumber(dadosMes[colunas[5]]);
+
+    // Correção de escala para o Yield (0.0122 -> 1.22%)
+    if (nYOC > 0 && nYOC < 1) {
+        nYOC = nYOC * 100;
     }
+
+    // Formatação Brasileira
+    const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+
+    // Atualização dos Cards na Interface
+    document.getElementById('valcotas').innerText = nCotas; // Quantidade de Cotas
+    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalRecebido)}`; // Total no Mês
+    document.getElementById('valTotal').innerText = fPct(nYOC); // Yield on Cost
+    document.getElementById('valDM').innerText = `R$ ${fR$(nRendimentoUnidade)}`; // Rendimento por Cota
+
+    // Atualiza o Gráfico com o histórico do ativo
+    if (chart) {
+        chart.data.labels = historicoAtivo.map(h => h[colunas[1]]);
+        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[colunas[5]]));
+        chart.update();
+    }
+}
 
     function updateChart(historico) {
         const ctx = document.getElementById('myChart').getContext('2d');
