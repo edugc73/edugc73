@@ -62,6 +62,14 @@
     let rawData = [];
     let chart;
 
+    // Função para normalizar nomes de colunas (remove acentos e espaços)
+    function normalizeKey(str) {
+        return str.toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    }
+
     async function init() {
         try {
             const response = await fetch(SHEET_URL);
@@ -70,14 +78,14 @@
             
             const select = document.getElementById('assetSelect');
             
-            // Procura a coluna 'Ativo' de forma flexível (ignora maiúsculas/minúsculas e espaços)
+            // Procura a coluna de Ativos de forma inteligente
             const ativosUnicos = [...new Set(rawData.map(item => {
-                const key = Object.keys(item).find(k => k.toLowerCase().includes('ativo'));
+                const key = Object.keys(item).find(k => normalizeKey(k).includes('ativo'));
                 return item[key];
-            }))].filter(a => a && a !== "");
+            }))].filter(a => a);
 
             if (ativosUnicos.length === 0) {
-                select.innerHTML = '<option>Nenhum ativo encontrado</option>';
+                select.innerHTML = '<option>Erro nos cabeçalhos</option>';
                 return;
             }
 
@@ -92,7 +100,7 @@
             setupChart();
             updateDashboard();
         } catch (error) {
-            console.error("Erro ao carregar dados:", error);
+            console.error("Erro:", error);
         }
     }
 
@@ -120,7 +128,7 @@
         chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'],
                 datasets: [{ label: 'R$', backgroundColor: '#38bdf8', borderRadius: 8, data: [] }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
@@ -128,34 +136,40 @@
     }
 
     function updateDashboard() {
-        const assetSelect = document.getElementById('assetSelect');
-        const monthSelect = document.getElementById('monthSelect');
-        if (!assetSelect.value || rawData.length === 0) return;
-
-        const selectedAtivo = assetSelect.value;
-        const selectedMonth = monthSelect.value;
+        const selectedAtivo = document.getElementById('assetSelect').value;
+        const selectedMonth = document.getElementById('monthSelect').value;
         
-        // Busca as colunas ignorando acentos ou variações de nome
-        const keyAtivo = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('ativo'));
-        const keyMes = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('mes'));
-        const keyValor = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('valor'));
-        const keyCotas = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('cotas'));
-        const keyAcumulado = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('acumulado'));
-        const keyDM = Object.keys(rawData[0]).find(k => k.toLowerCase().includes('dm'));
+        if (!selectedAtivo || rawData.length === 0) return;
 
-        const historicoAtivo = rawData.filter(d => d[keyAtivo] === selectedAtivo);
-        const dadosMes = historicoAtivo.find(d => d[keyMes] === selectedMonth) || {};
+        // Mapeia as colunas reais da planilha para o código de forma flexível
+        const keys = {};
+        const firstRow = rawData[0];
+        Object.keys(firstRow).forEach(k => {
+            const norm = normalizeKey(k);
+            if (norm.includes('ativo')) keys.ativo = k;
+            if (norm.includes('mes')) keys.mes = k;
+            if (norm.includes('cota')) keys.cotas = k;
+            if (norm.includes('valor')) keys.valor = k;
+            if (norm.includes('acumulado')) keys.acumulado = k;
+            if (norm.includes('dm')) keys.dm = k;
+        });
 
-        document.getElementById('valcotas').innerText = dadosMes[keyCotas] || 0;
-        document.getElementById('valMes').innerText = `R$ ${parseFloat(dadosMes[keyValor] || 0).toFixed(2)}`;
-        document.getElementById('valTotal').innerText = `R$ ${parseFloat(dadosMes[keyAcumulado] || 0).toFixed(2)}`;
-        document.getElementById('valDM').innerText = `R$ ${parseFloat(dadosMes[keyDM] || 0).toFixed(2)}`;
+        const historicoAtivo = rawData.filter(d => d[keys.ativo] === selectedAtivo);
+        const dadosMes = historicoAtivo.find(d => normalizeKey(d[keys.mes]) === normalizeKey(selectedMonth)) || {};
+
+        // Atualiza os Cards (Trata vírgulas da planilha como pontos para o cálculo)
+        const formatNum = (val) => parseFloat(String(val).replace(',', '.')) || 0;
+
+        document.getElementById('valcotas').innerText = dadosMes[keys.cotas] || 0;
+        document.getElementById('valMes').innerText = `R$ ${formatNum(dadosMes[keys.valor]).toFixed(2)}`;
+        document.getElementById('valTotal').innerText = `R$ ${formatNum(dadosMes[keys.acumulado]).toFixed(2)}`;
+        document.getElementById('valDM').innerText = `R$ ${formatNum(dadosMes[keys.dm]).toFixed(2)}`;
 
         if (chart) {
             const mesesLabels = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho'];
             chart.data.datasets[0].data = mesesLabels.map(mes => {
-                const d = historicoAtivo.find(h => h[keyMes] === mes);
-                return d ? parseFloat(d[keyValor] || 0) : 0;
+                const d = historicoAtivo.find(h => normalizeKey(h[keys.mes]) === normalizeKey(mes));
+                return d ? formatNum(d[keys.valor]) : 0;
             });
             chart.update();
         }
@@ -163,5 +177,3 @@
 
     window.addEventListener('DOMContentLoaded', init);
 </script>
-</body>
-</html>
