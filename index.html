@@ -186,167 +186,95 @@
 </div>
 
 <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv";
-
     let rawData = [];
     let chartInstance = null;
 
     async function fetchData() {
-        document.getElementById('loading').style.display = 'block';
+        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv";
         try {
             const response = await fetch(sheetURL);
             const text = await response.text();
-            
-            // Converte CSV para Objeto
             const rows = text.split('\n').map(row => row.split(','));
-            const data = [];
             
-            // Pula o cabeçalho se existir (ajustado para a estrutura do seu arquivo)
-            for (let i = 1; i < rows.length; i++) {
-                if (rows[i].length < 5) continue;
-                data.push({
-                    ativo: rows[i][0].trim(),
-                    mes: rows[i][1].trim(),
-                    cotas: rows[i][2],
-                    rendimentoCota: rows[i][3],
-                    yoc: rows[i][4],
-                    totalMes: rows[i][5]
-                });
-            }
+            rawData = rows.slice(1).map(row => ({
+                0: row[0], 1: row[1], 2: row[2], 3: row[3], 4: row[4], 5: row[5]
+            }));
 
-            rawData = data;
             populateFilters();
-            updateDashboard();
+            updateDashboard(); // Agora ela será encontrada
         } catch (e) {
             console.error("Erro ao carregar dados:", e);
         }
-        document.getElementById('loading').style.display = 'none';
     }
 
     function populateFilters() {
-        const ativos = [...new Set(rawData.map(d => d.ativo))].sort();
-        const meses = [...new Set(rawData.map(d => d.mes))];
+        const ativos = [...new Set(rawData.map(d => d[0]))].filter(Boolean).sort();
+        const meses = [...new Set(rawData.map(d => d[1]))].filter(Boolean);
 
+        document.getElementById('selectAtivo').innerHTML = ativos.map(a => `<option value="${a}">${a}</option>`).join('');
+        document.getElementById('selectMes').innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
+    function parseNumber(val) {
+        if (!val) return 0;
+        let clean = String(val).replace(/[R$\s%]/g, '').replace(',', '.');
+        return parseFloat(clean) || 0;
+    }
+
+    // FUNÇÃO AGORA FORA DA FETCHDATA PARA SER GLOBAL
+    function updateDashboard() {
         const selAtivo = document.getElementById('selectAtivo');
         const selMes = document.getElementById('selectMes');
 
-        selAtivo.innerHTML = ativos.map(a => `<option value="${a}">${a}</option>`).join('');
-        selMes.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+        if (!selAtivo || !selMes || rawData.length === 0) return;
+
+        const valAtivo = selAtivo.value;
+        const valMes = selMes.value;
+
+        const historico = rawData.filter(d => String(d[0]).trim() === valAtivo);
+        const dados = historico.find(d => String(d[1]).trim() === valMes) || {};
+
+        // Mapeamento correto das colunas do seu CSV
+        const nCotas = parseNumber(dados[2]);
+        const nRendimento = parseNumber(dados[3]);
+        let nYOC = parseNumber(dados[4]);
+        const nTotal = parseNumber(dados[5]);
+
+        if (nYOC > 0 && nYOC < 1) nYOC *= 100;
+
+        const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Atualiza os IDs que estão nos seus cards (valCotas, valRendimento, valTotal, valYOC)
+        document.getElementById('valCotas').innerText = nCotas;
+        document.getElementById('valRendimento').innerText = "R$ " + fR$(nRendimento);
+        document.getElementById('valTotal').innerText = "R$ " + fR$(nTotal);
+        document.getElementById('valYOC').innerText = nYOC.toFixed(2) + "%";
+
+        updateChart(historico);
     }
 
-  function parseNumber(val) {
-    if (!val) return 0;
-    // Remove R$, %, espaços e converte vírgula em ponto
-    let clean = String(val).replace(/[R$\s%]/g, '').replace(',', '.');
-    return parseFloat(clean) || 0;
-}
-
- function updateChart(historico) {
+    function updateChart(historico) {
         const ctx = document.getElementById('myChart').getContext('2d');
-        
-        const labels = historico.map(h => h.mes);
-        const values = historico.map(h => parseNumber(h.totalMes));
-
         if (chartInstance) chartInstance.destroy();
 
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: historico.map(h => h[1]),
                 datasets: [{
-                    label: 'Rendimento Total (R$)',
-                    data: values,
+                    label: 'Total Mensal',
+                    data: historico.map(h => parseNumber(h[5])),
                     borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#38bdf8',
-                    pointRadius: 5
+                    fill: true,
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)'
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: '#334155' },
-                        ticks: { color: '#94a3b8' }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8' }
-                    }
-                }
-            }
-        })
-    
-    
-function updateDashboard() {
-    const selectedAtivo = document.getElementById('ativoSelect').value;
-    const selectedMonth = document.getElementById('monthSelect').value;
-
-    if (!selectedAtivo || !selectedMonth || rawData.length === 0) return;
-
-    // Pega a lista de nomes das colunas (mesmo que sejam '0', '1', '2'...)
-    const col = Object.keys(rawData[0]);
-
-    // Filtra o histórico do ativo (Coluna 0)
-   const historicoAtivo = rawData.filter(d => 
-    String(d[keys.ativo]).trim().toLowerCase() === String(selectedAtivo).trim().toLowerCase()
-);
-
-    // Encontra a linha do mês (Coluna 1)
-    const dadosMes = historicoAtivo.find(d => 
-        String(d[col[1]]).trim() === String(selectedMonth).trim()
-    ) || {};
-
-    // --- MAPEAMENTO POR POSIÇÃO (ÍNDICE) ---
-    
-    // Coluna 2: Quantidade de Cotas (ex: 45)
-    const nCotas = parseNumber(dadosMes[col[2]]) || 0;
-    
-    // Coluna 3: Rendimento por Cota (ex: 1.45)
-    const nDividendoCota = parseNumber(dadosMes[col[3]]) || 0;
-    
-    // Coluna 4: Yield on Cost (ex: 0.01228)
-    let nYOC = parseNumber(dadosMes[col[4]]) || 0;
-    
-    // Coluna 5: Total do Mês (ex: 65.25)
-    const nTotalMes = parseNumber(dadosMes[col[5]]) || 0;
-
-    // Correção do Yield (transforma 0.0122 em 1.22%)
-    if (nYOC > 0 && nYOC < 1) {
-        nYOC = nYOC * 100;
+            options: { responsive: true, maintainAspectRatio: false }
+        });
     }
 
-    // Funções de Formatação
-    const fR$ = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const fPct = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
-
-    // --- ATUALIZAÇÃO DOS CARDS ---
-    document.getElementById('valcotas').innerText = nCotas;
-    document.getElementById('valMes').innerText = `R$ ${fR$(nTotalMes)}`;     // Total no Mês
-    document.getElementById('valTotal').innerText = fPct(nYOC);              // Yield on Cost
-    document.getElementById('valDM').innerText = `R$ ${fR$(nDividendoCota)}`; // Rendimento p/ Cota
-
-    // --- ATUALIZAÇÃO DO GRÁFICO ---
-    if (chart) {
-        chart.data.labels = historicoAtivo.map(h => h[col[1]]);
-        chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[col[5]]));
-        chart.update();
-    }
-}
-       
-    }
-
-    // Inicia a busca
     fetchData();
 </script>
-
 </body>
 </html>
