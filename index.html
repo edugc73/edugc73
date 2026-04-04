@@ -56,21 +56,32 @@
     let chart;
 
     // FUNÇÃO MESTRA DE LIMPEZA NUMÉRICA (Resolve centavos e NaN)
-    function cleanNumber(val) {
+   function cleanNumber(val) {
         if (val === undefined || val === null || val === '') return 0;
-        let s = String(val);
-        // 1. Remove "R$", símbolos e espaços
-        s = s.replace(/R\$/g, '').replace(/\s/g, '');
-        // 2. Se houver ponto E vírgula (ex: 1.200,50), remove o ponto
-        if (s.includes('.') && s.includes(',')) {
-            s = s.replace(/\./g, '');
-        }
-        // 3. Se houver apenas uma vírgula (ex: 10,50), troca por ponto
-        s = s.replace(',', '.');
         
-        return parseFloat(s) || 0;
-    }
+        let s = String(val).trim();
+        
+        // 1. Remove "R$" e espaços
+        s = s.replace(/R\$/g, '').replace(/\s/g, '');
 
+        // 2. Lógica para tratar formatos brasileiros (1.250,50)
+        // Se houver vírgula, assumimos que ela é o decimal.
+        if (s.includes(',')) {
+            // Removemos todos os PONTOS (milhar) e trocamos a VÍRGULA por PONTO (decimal)
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else {
+            // Se não houver vírgula, mas houver mais de um ponto (ex: 1.250.00)
+            // ou se o ponto parecer de milhar, limpamos.
+            // Esta parte garante que números como 1250.50 (formato americano) continuem funcionando.
+            const partes = s.split('.');
+            if (partes.length > 2) {
+                s = s.replace(/\./g, '');
+            }
+        }
+        
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
+    }
     function normalizeKey(str) {
         return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     }
@@ -169,7 +180,8 @@
         const nCotas = cleanNumber(dadosMes[keys.cotas]);
         const nValorMes = cleanNumber(dadosMes[keys.valor]);
         const nAcumulado = cleanNumber(dadosMes[keys.acumulado]);
-        
+// ...
+document.getElementById('valTotal').innerText = `R$ ${nAcumulado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         // CÁLCULO MANUAL DO DM (Dividendo por Cota) para garantir precisão
         // Se houver valor e cotas, ele calcula na hora. Senão, tenta ler da planilha.
         let nDM = (nCotas > 0) ? (nValorMes / nCotas) : cleanNumber(dadosMes[keys.dm]);
