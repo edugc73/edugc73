@@ -215,10 +215,10 @@
         document.getElementById('selectMes').innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
-   function parseNumber(val) {
+  function parseNumber(val) {
     if (!val) return 0;
-    // Remove R$, espaços e converte para número puro
-    let clean = String(val).replace(/[R$\s%]/g, '').replace(',', '.');
+    // Remove R$, espaços e pontos de milhar, depois troca a vírgula decimal por ponto
+    let clean = String(val).replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.').trim();
     return parseFloat(clean) || 0;
 }
 
@@ -234,13 +234,22 @@
     const valMes = selMes.value;
 
     // 2. Filtragem usando índices diretos (0 = Ativo, 1 = Mês)
+   // MODIFICADO AQUI Filtro do Ativo com limpeza de espaços e caixa baixa
     const historicoAtivo = rawData.filter(d => 
-        d[0] && String(d[0]).trim().toLowerCase() === String(valAtivo).trim().toLowerCase()
-    );
+    String(d[0]).trim().toLowerCase() === String(selectedAtivo).trim().toLowerCase()
+);
+   // Busca do Mês com limpeza de espaços
+    const dadosMes = historicoAtivo.find(d => 
+    String(d[1]).trim() === String(selectedMonth).trim()
+) || {}; 
+      
+//    const historicoAtivo = rawData.filter(d => 
+//        d[0] && String(d[0]).trim().toLowerCase() === String(valAtivo).trim().toLowerCase()
+//    );
 
-    const dados = historicoAtivo.find(d => 
-        d[1] && String(d[1]).trim() === String(valMes).trim()
-    ) || {};
+//    const dados = historicoAtivo.find(d => 
+//        d[1] && String(d[1]).trim() === String(valMes).trim()
+//    ) || {};
 
     // 3. Mapeamento correto das colunas do seu CSV
     const nCotas = parseNumber(dados[2]);      // Coluna 2: Cotas
