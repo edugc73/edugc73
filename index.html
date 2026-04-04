@@ -149,54 +149,61 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
- function updateDashboard() {
+function updateDashboard() {
     const selectedAtivo = document.getElementById('assetSelect').value;
     const selectedMonth = document.getElementById('monthSelect').value;
     
     if (!selectedAtivo || rawData.length === 0) return;
 
-    // 1. Mapeamento rigoroso das colunas
-    const keys = {};
-    const firstRow = rawData[0];
-    Object.keys(firstRow).forEach(k => {
-        const norm = normalizeKey(k);
-        // Busca exata para evitar confusão entre 'valor' e 'valor acumulado'
-        if (norm === 'ativo') keys.ativo = k;
-        if (norm === 'mes') keys.mes = k;
-        if (norm === 'cotas') keys.cotas = k;
-        if (norm === 'valor') keys.valor = k; // Coluna de dinheiro (ex: 25,00)
-        if (norm.includes('acumulado') || norm === 'yoc' || norm === 'yield') keys.acumulado = k;
-        if (norm === 'dm' || norm.includes('mensal')) keys.dm = k;
-    });
+    // --- CONFIGURAÇÃO MANUAL DE COLUNAS (AJUSTE OS NÚMEROS ABAIXO) ---
+    // Verifique na sua planilha a posição de cada coluna (0 é a primeira)
+    const idx = {
+        ativo: 0,      // Coluna A
+        mes: 1,        // Coluna B
+        cotas: 2,      // Coluna C
+        valor: 3,      // Coluna D (O valor em R$ do mês)
+        acumulado: 4,  // Coluna E (Onde está o 1,23%)
+        dm: 5          // Coluna F
+    };
 
+    // Pegamos os nomes reais dos cabeçalhos baseados nos índices acima
+    const colNames = Object.keys(rawData[0]);
+    const keys = {
+        ativo: colNames[idx.ativo],
+        mes: colNames[idx.mes],
+        cotas: colNames[idx.cotas],
+        valor: colNames[idx.valor],
+        acumulado: colNames[idx.acumulado],
+        dm: colNames[idx.dm]
+    };
+
+    // Filtros
     const historicoAtivo = rawData.filter(d => 
-        normalizeKey(d[keys.ativo] || "") === normalizeKey(selectedAtivo)
+        String(d[keys.ativo]).trim().toUpperCase() === selectedAtivo.toUpperCase()
     );
 
     const dadosMes = historicoAtivo.find(d => 
-        normalizeKey(d[keys.mes] || "") === normalizeKey(selectedMonth)
+        String(d[keys.mes]).trim() === selectedMonth.trim()
     ) || {};
 
-    // 2. Captura dos valores
+    // Processamento
     const nCotas = parseNumber(dadosMes[keys.cotas]);
     const nValorMes = parseNumber(dadosMes[keys.valor]);
-    
-    // Se o valor vier como 1,23 (em vez de 0,0123), o parseNumber tratará como 1.23
-    let nAcumulado = parseNumber(dadosMes[keys.acumulado]);
+    const nAcumulado = parseNumber(dadosMes[keys.acumulado]);
+    let nDM = (nCotas > 0) ? (nValorMes / nCotas) : parseNumber(dadosMes[keys.dm]);
 
-    // Cálculo do dividendo por cota
-    let nDM = (nCotas > 0) ? (nValorMes / nCotas) : 0;
-
-    // 3. Formatação
+    // Formatação
     const formatCurrency = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const formatPercent = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 
-    // 4. Atualização da Tela
+    // Update UI
     document.getElementById('valcotas').innerText = nCotas;
     document.getElementById('valMes').innerText = `R$ ${formatCurrency(nValorMes)}`;
     
-    // ATENÇÃO: Se aparecer 0.01% em vez de 1.23%, mude para nAcumulado * 100
+    // Se o valor aparecer como 123,00%, mude nAcumulado para (nAcumulado / 100)
+    // Se aparecer 0,01%, mude nAcumulado para (nAcumulado * 100)
     document.getElementById('valTotal').innerText = formatPercent(nAcumulado); 
+    
     document.getElementById('valDM').innerText = `R$ ${formatCurrency(nDM)}`;
 
     if (chart) {
@@ -204,9 +211,7 @@
         chart.data.datasets[0].data = historicoAtivo.map(h => parseNumber(h[keys.valor]));
         chart.update();
     }
-}
-
-
+}  
     window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
