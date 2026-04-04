@@ -215,11 +215,23 @@
         document.getElementById('selectMes').innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
     }
 
-  function parseNumber(val) {
-    if (!val) return 0;
-    // Remove R$, espaços e pontos de milhar, depois troca a vírgula decimal por ponto
-    let clean = String(val).replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.').trim();
-    return parseFloat(clean) || 0;
+function parseNumber(val) {
+    if (val === undefined || val === null || val === '') return 0;
+    
+    // Converte para string e remove R$, espaços e símbolos de porcentagem
+    let clean = String(val).replace(/R\$\s?/g, '').replace(/%/g, '').trim();
+    
+    // Se o número usa o padrão brasileiro (ex: 1.500,50)
+    if (clean.includes(',') && clean.includes('.')) {
+        clean = clean.replace(/\./g, '').replace(',', '.');
+    } 
+    // Se tem apenas vírgula (ex: 1,45 ou 45,00)
+    else if (clean.includes(',')) {
+        clean = clean.replace(',', '.');
+    }
+    
+    const result = parseFloat(clean);
+    return isNaN(result) ? 0 : result;
 }
 
     // FUNÇÃO AGORA FORA DA FETCHDATA PARA SER GLOBAL
