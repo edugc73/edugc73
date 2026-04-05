@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Estoque Fitwear</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0a192f;
+            --card-bg: #112240;
+            --text-main: #e6f1ff;
+            --accent: #64ffda;
+            --highlight: #f06292;
+            --blue-vibrant: #00d2ff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px -15px rgba(2,12,27,0.7);
+            text-align: center;
+            border-bottom: 3px solid var(--blue-vibrant);
+        }
+
+        .card h3 { font-size: 0.9rem; color: #8892b0; margin: 0; }
+        .card p { font-size: 1.8rem; font-weight: bold; margin: 10px 0 0; color: var(--text-main); }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            min-height: 350px;
+        }
+
+        .status-low { color: var(--highlight); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>CBFITWEAR PERFORMANCE</h1>
+        <p id="update-date">Sincronizado com Google Sheets</p>
+    </div>
+
+    <div class="stats-container">
+        <div class="card">
+            <h3>VALOR EM ESTOQUE (CUSTO)</h3>
+            <p id="total-investido">R$ 0,00</p>
+        </div>
+        <div class="card">
+            <h3>RECEITA PREVISTA</h3>
+            <p id="receita-prevista">R$ 0,00</p>
+        </div>
+        <div class="card">
+            <h3>ITENS VENDIDOS</h3>
+            <p id="total-vendido">0</p>
+        </div>
+        <div class="card">
+            <h3>MARGEM MÉDIA</h3>
+            <p id="margem-media">0%</p>
+        </div>
+    </div>
+
+    <div class="charts-container">
+        <div class="chart-box">
+            <canvas id="chartProdutos"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="chartFornecedores"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // SUBSTITUA O LINK ABAIXO PELO SEU LINK DO GOOGLE SHEETS (PUBLICADO COMO CSV)
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzZH_Y2vjYIClUKSeVBVdfvx8y4b81c66zJoc-wnLbM-mza5hRP-sPPuaQhTloew/pub?gid=1503843495&single=true&output=csv';
+
+        async function fetchData() {
+            Papa.parse(sheetUrl, {
+                download: true,
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    processData(results.data);
+                }
+            });
+        }
+
+        function processData(data) {
+            let totalCusto = 0;
+            let receitaPrevista = 0;
+            let totalVendidos = 0;
+            let produtosMap = {};
+            let fornecedoresMap = {};
+
+            data.forEach(row => {
+                if(!row.PRODUTO) return;
+
+                // Cálculos Financeiros
+                totalCusto += (row.ESTOQUE * (row['VALOR DA COMPRA'] || 0));
+                receitaPrevista += (row.ESTOQUE * (row['VALOR DE VENDA'] || 0));
+                totalVendidos += (row['QTDE VENDIDA'] || 0);
+
+                // Agrupar por Produto para Gráfico
+                produtosMap[row.PRODUTO] = (produtosMap[row.PRODUTO] || 0) + row.ESTOQUE;
+
+                // Agrupar por Fornecedor
+                fornecedoresMap[row.FORNECEDOR] = (fornecedoresMap[row.FORNECEDOR] || 0) + row.ESTOQUE;
+            });
+
+            // Atualizar Cards
+            document.getElementById('total-investido').innerText = `R$ ${totalCusto.toLocaleString('pt-BR')}`;
+            document.getElementById('receita-prevista').innerText = `R$ ${receitaPrevista.toLocaleString('pt-BR')}`;
+            document.getElementById('total-vendido').innerText = totalVendidos;
+            
+            const margem = receitaPrevista > 0 ? ((receitaPrevista - totalCusto) / receitaPrevista) * 100 : 0;
+            document.getElementById('margem-media').innerText = `${margem.toFixed(1)}%`;
+
+            createCharts(produtosMap, fornecedoresMap);
+        }
+
+        function createCharts(produtos, fornecedores) {
+            // Gráfico de Produtos
+            new Chart(document.getElementById('chartProdutos'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(produtos),
+                    datasets: [{
+                        label: 'Estoque por Produto',
+                        data: Object.values(produtos),
+                        backgroundColor: '#00d2ff',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { 
+                        legend: { labels: { color: '#e6f1ff' } },
+                        title: { display: true, text: 'QUANTIDADE POR PRODUTO', color: '#64ffda' }
+                    },
+                    scales: { y: { ticks: { color: '#8892b0' } }, x: { ticks: { color: '#8892b0' } } }
+                }
+            });
+
+            // Gráfico de Fornecedores
+            new Chart(document.getElementById('chartFornecedores'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(fornecedores),
+                    datasets: [{
+                        data: Object.values(fornecedores),
+                        backgroundColor: ['#64ffda', '#f06292', '#00d2ff', '#ff9800'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { color: '#e6f1ff' } },
+                        title: { display: true, text: 'DISTRIBUIÇÃO POR FORNECEDOR', color: '#64ffda' }
+                    }
+                }
+            });
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
