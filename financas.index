@@ -77,7 +77,7 @@
 
 <script>
     // COLE O LINK DO SEU GOOGLE SHEETS (CSV) AQUI:
-    const URL_PLANILHA = 'COLOQUE_SEU_LINK_AQUI';
+    const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
 
     async function fetchData() {
         Papa.parse(URL_PLANILHA, {
