@@ -147,7 +147,7 @@
 <div class="container">
     <header>
         <h1>Dividendos do Gonça</h1>
-        <p>Análise de proventos da carteira FII</p>
+        <p>Análise de proventos da carteira de Investimentos</p>
     </header>
 
     <div class="controls">
@@ -155,6 +155,7 @@
             <label>Selecione o Ativo</label>
             <select id="selectAtivo" onchange="updateDashboard()"></select>
         </div>
+        
         <div class="control-group">
             <label>Mês de Referência</label>
             <select id="selectMes" onchange="updateDashboard()"></select>
@@ -167,7 +168,7 @@
             <div id="valCotas" class="value">0</div>
         </div>
         <div class="card">
-            <h3>Rendimento p/ Cota</h3>
+            <h3>Dividendo Mensal</h3>
             <div id="valRendimento" class="value">R$ 0,00</div>
         </div>
         <div class="card">
@@ -246,22 +247,13 @@ function parseNumber(val) {
     const valMes = selMes.value;
 
     // 2. Filtragem usando índices diretos (0 = Ativo, 1 = Mês)
-   // MODIFICADO AQUI Filtro do Ativo com limpeza de espaços e caixa baixa
     const historicoAtivo = rawData.filter(d => 
-    String(d[0]).trim().toLowerCase() === String(selectedAtivo).trim().toLowerCase()
-);
-   // Busca do Mês com limpeza de espaços
-    const dadosMes = historicoAtivo.find(d => 
-    String(d[1]).trim() === String(selectedMonth).trim()
-) || {}; 
-      
-//    const historicoAtivo = rawData.filter(d => 
-//        d[0] && String(d[0]).trim().toLowerCase() === String(valAtivo).trim().toLowerCase()
-//    );
+    d[0] && String(d[0]).trim().toLowerCase() === String(valAtivo).trim().toLowerCase()
+    );
 
-//    const dados = historicoAtivo.find(d => 
-//        d[1] && String(d[1]).trim() === String(valMes).trim()
-//    ) || {};
+    const dados = historicoAtivo.find(d => 
+    d[1] && String(d[1]).trim() === String(valMes).trim()
+    ) || {};
 
     // 3. Mapeamento correto das colunas do seu CSV
     const nCotas = parseNumber(dados[2]);      // Coluna 2: Cotas
