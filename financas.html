@@ -76,39 +76,48 @@
 </div>
 
 <script>
-    // COLE O LINK DO SEU GOOGLE SHEETS (CSV) AQUI:
+   <script>
     const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
 
     async function fetchData() {
+        if (URL_PLANILHA.includes('COLOQUE_SEU_LINK')) {
+            document.getElementById('loading').innerHTML = '<span style="color: #f43f5e;">Erro: Link não configurado</span>';
+            return;
+        }
+
         Papa.parse(URL_PLANILHA, {
             download: true,
             header: true,
             dynamicTyping: true,
+            skipEmptyLines: true,
             complete: function(results) {
-                renderDashboard(results.data);
-                document.getElementById('loading').innerText = '● Live Data';
+                if (results.data && results.data.length > 0) {
+                    renderDashboard(results.data);
+                    document.getElementById('loading').innerText = '● Dados Atualizados';
+                } else {
+                    document.getElementById('loading').innerText = 'Erro: Planilha vazia';
+                }
+            },
+            error: function(err) {
+                console.error(err);
+                document.getElementById('loading').innerHTML = '<span style="color: #f43f5e;">Erro na conexão com o Google</span>';
             }
         });
     }
 
     function renderDashboard(data) {
-        // Filtrar linhas vazias
-        const cleanData = data.filter(row => row.MÊS);
+        // Mapeamento dos dados (Garante que os nomes batem com o CSV enviado)
+        const labels = data.map(d => d.MÊS);
+        const investimentos = data.map(d => d.Investimentos || 0);
+        const saldoFinal = data.map(d => d["Saldo Final do Mês"] || 0);
         
-        const labels = cleanData.map(d => d.MÊS);
-        const investimentos = cleanData.map(d => d.Investimentos);
-        const saldoFinal = cleanData.map(d => d["Saldo Final do Mês"]);
-        const saldoInicio = cleanData.map(d => d["Saldo Início do Mês"]);
-
-        // Atualizar KPIs (Baseado no último mês)
-        const lastRow = cleanData[cleanData.length - 1];
-        const totalInvest = investimentos.reduce((a, b) => a + b, 0);
+        const lastRow = data[data.length - 1];
         
-        document.getElementById('kpi-invest').innerText = `R$ ${totalInvest.toLocaleString('pt-BR')}`;
-        document.getElementById('kpi-renda').innerText = `R$ ${(lastRow["Salario Aposentadoria"] + lastRow["Salário PTTC"]).toLocaleString('pt-BR')}`;
-        document.getElementById('kpi-saldo').innerText = `R$ ${lastRow["Saldo Final do Mês"].toLocaleString('pt-BR')}`;
+        // Atualizar KPIs
+        document.getElementById('kpi-invest').innerText = `R$ ${investimentos.reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}`;
+        document.getElementById('kpi-renda').innerText = `R$ ${( (lastRow["Salario Aposentadoria"] || 0) + (lastRow["Salário PTTC"] || 0) ).toLocaleString('pt-BR')}`;
+        document.getElementById('kpi-saldo').innerText = `R$ ${(lastRow["Saldo Final do Mês"] || 0).toLocaleString('pt-BR')}`;
 
-        // Configuração Comum
         Chart.defaults.color = '#8892b0';
 
         // Gráfico de Evolução
@@ -117,7 +126,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Fluxo de Saldo (Final)',
+                    label: 'Patrimônio Final (Mês)',
                     data: saldoFinal,
                     borderColor: '#64ffda',
                     backgroundColor: 'rgba(100, 255, 218, 0.1)',
@@ -128,18 +137,27 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // Gráfico de Gastos (Último Mês)
+        // Gráfico de Gastos (Foco no Cartão e Outros)
         new Chart(document.getElementById('expensesPieChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Cartão C6', 'Cartão ML', 'Contas Fixas', 'Outros'],
+                labels: ['Cartão C6', 'Cartão ML', 'Fixos', 'Outros'],
                 datasets: [{
-                    data: [lastRow["Cartão C6"], lastRow["Cartão ML"], (lastRow.Luz + lastRow.Água + lastRow.IPTU), lastRow["Outros Gastos"]],
+                    data: [
+                        lastRow["Cartão C6"] || 0, 
+                        lastRow["Cartão ML"] || 0, 
+                        ((lastRow.Luz || 0) + (lastRow.Água || 0) + (lastRow.IPTU || 0)), 
+                        lastRow["Outros Gastos"] || 0
+                    ],
                     backgroundColor: ['#3b82f6', '#8b5cf6', '#f43f5e', '#64ffda'],
                     borderWidth: 0
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
         });
 
         // Gráfico de Investimentos
@@ -160,6 +178,5 @@
 
     fetchData();
 </script>
-
 </body>
 </html>
