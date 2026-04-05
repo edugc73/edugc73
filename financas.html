@@ -107,141 +107,141 @@
 </div>
 
 <script>
-    const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
+   const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
 
-    // Função para converter strings de moeda brasileira para números (Ex: "1.200,50" -> 1200.50)
     function parseBrValue(val) {
         if (!val) return 0;
         if (typeof val === 'number') return val;
-        let clean = val.replace(/\./g, '').replace(',', '.');
+        let clean = val.toString().replace(/\./g, '').replace(',', '.');
         return parseFloat(clean) || 0;
     }
-async function fetchData() {
-    Papa.parse(URL_PLANILHA, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: true, // Tenta converter números automaticamente
-        complete: function(results) {
-            const data = results.data;
-            
-            // Log para você ver no console (F12) como os nomes chegaram
-            console.log("Colunas detectadas:", Object.keys(data[0]));
 
-            // Verifica se existe a coluna MÊS (mesmo que escrita diferente)
-            const firstRow = data[0];
-            const hasMonth = Object.keys(firstRow).some(key => 
-                key.toUpperCase().includes('MÊS') || key.toUpperCase().includes('MES')
-            );
+    async function fetchData() {
+        Papa.parse(URL_PLANILHA, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                const data = results.data;
+                const firstRow = data[0];
+                const hasMonth = Object.keys(firstRow).some(key => 
+                    key.toUpperCase().includes('MÊS') || key.toUpperCase().includes('MES')
+                );
 
-            if (data.length > 0 && hasMonth) {
-                renderDashboard(data);
-                document.getElementById('loading').innerText = '● Live Data';
-            } else {
-                document.getElementById('loading').innerText = 'Erro: Coluna "MÊS" não encontrada';
-                console.error("Dados recebidos:", data);
+                if (data.length > 0 && hasMonth) {
+                    renderDashboard(data);
+                    document.getElementById('loading').innerText = '● Live Data';
+                } else {
+                    document.getElementById('loading').innerText = 'Erro: Verifique as colunas da planilha';
+                }
             }
-        }
-    });
-}
+        });
+    }
 
-function renderDashboard(rawData) {
-    // Normalizar nomes de colunas (remove espaços e lida com acentos comuns)
-    const data = rawData.map(row => {
-        const newRow = {};
-        for (let key in row) {
-            const normalizedKey = key.trim();
-            newRow[normalizedKey] = row[key];
-        }
-        return newRow;
-    });
+    function renderDashboard(rawData) {
+        const data = rawData.map(row => {
+            const newRow = {};
+            for (let key in row) {
+                newRow[key.trim()] = row[key];
+            }
+            return newRow;
+        });
 
-    // Agora usamos os nomes normalizados
-    const labels = data.map(d => d.MÊS || d.Mes || d.MES);
-    const investimentos = data.map(d => parseBrValue(d.Investimentos));
-    const saldoFinal = data.map(d => parseBrValue(d["Saldo Final do Mês"]));
-    
-    const lastRow = rawData[rawData.length - 1];
+        const lastRow = data[data.length - 1];
+        const labels = data.map(d => d.MÊS || d.Mes || d.MES);
         
-        // Atualizar KPIs
-        const totalInvest = investimentos.reduce((a, b) => a + b, 0);
-        document.getElementById('kpi-invest').innerText = `R$ ${totalInvest.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        // 1. Renda Total do Mês (Soma dos Salários)
+        const rendaTotal = parseBrValue(lastRow["Salario Aposentadoria"]) + parseBrValue(lastRow["Salário PTTC"]);
+        document.querySelector('.stats-grid .stat-card:nth-child(1) .stat-label').innerText = "Renda Total do Mês";
+        document.getElementById('kpi-invest').innerText = `R$ ${rendaTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+        // 2. Total de Despesas (Soma de todos os gastos listados no último mês)
+        const totalDespesas = parseBrValue(lastRow["Cartão C6"]) + 
+                              parseBrValue(lastRow["Cartão ML"]) + 
+                              parseBrValue(lastRow.Luz) + 
+                              parseBrValue(lastRow.Água) + 
+                              parseBrValue(lastRow.IPTU) + 
+                              parseBrValue(lastRow.IPVA) + 
+                              parseBrValue(lastRow["Outros Gastos"]);
         
-        const rendaMensal = parseBrValue(lastRow["Salario Aposentadoria"]) + parseBrValue(lastRow["Salário PTTC"]);
-        document.getElementById('kpi-renda').innerText = `R$ ${rendaMensal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-        
-        document.getElementById('kpi-saldo').innerText = `R$ ${parseBrValue(lastRow["Saldo Final do Mês"]).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.querySelector('.stats-grid .stat-card:nth-child(2) .stat-label').innerText = "Total de Despesas";
+        document.getElementById('kpi-renda').innerText = `R$ ${totalDespesas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+        // 3. Saldo Final do Mês
+        const saldoFinalMes = parseBrValue(lastRow["Saldo Final do Mês"]);
+        document.querySelector('.stats-grid .stat-card:nth-child(3) .stat-label').innerText = "Saldo Final do Mês";
+        document.getElementById('kpi-saldo').innerText = `R$ ${saldoFinalMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
         Chart.defaults.color = '#8892b0';
         Chart.defaults.font.family = "'Inter', sans-serif";
 
-        // 1. Gráfico de Evolução Patrimonial
+        // Gráfico 1: Evolução
         new Chart(document.getElementById('evolutionChart'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Saldo Final do Mês',
-                    data: saldoFinal,
+                    label: 'Saldo Mensal',
+                    data: data.map(d => parseBrValue(d["Saldo Final do Mês"])),
                     borderColor: '#64ffda',
                     backgroundColor: 'rgba(100, 255, 218, 0.1)',
                     fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#64ffda'
+                    tension: 0.4
                 }]
             },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { title: { display: true, text: 'Crescimento de Patrimônio Líquido', color: '#e6f1ff' } }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // 2. Gráfico de Composição de Despesas (Último Mês)
+        // 4. Gráfico de Barras Horizontais (Despesas da maior para a menor)
+        const despesasBrutas = [
+            { nome: 'Cartão C6', valor: parseBrValue(lastRow["Cartão C6"]) },
+            { nome: 'Cartão ML', valor: parseBrValue(lastRow["Cartão ML"]) },
+            { nome: 'Luz/Água/IPTU', valor: (parseBrValue(lastRow.Luz) + parseBrValue(lastRow.Água) + parseBrValue(lastRow.IPTU)) },
+            { nome: 'IPVA/Outros', valor: (parseBrValue(lastRow.IPVA) + parseBrValue(lastRow["Outros Gastos"])) }
+        ];
+
+        // Ordenar do maior para o menor
+        despesasBrutas.sort((a, b) => b.valor - a.valor);
+
         new Chart(document.getElementById('expensesPieChart'), {
-            type: 'doughnut',
+            type: 'bar',
             data: {
-                labels: ['Cartão C6', 'Cartão ML', 'Gastos Fixos', 'Outros/IPVA'],
+                labels: despesasBrutas.map(d => d.nome),
                 datasets: [{
-                    data: [
-                        parseBrValue(lastRow["Cartão C6"]),
-                        parseBrValue(lastRow["Cartão ML"]),
-                        (parseBrValue(lastRow.Luz) + parseBrValue(lastRow.Água) + parseBrValue(lastRow.IPTU)),
-                        (parseBrValue(lastRow.IPVA) + parseBrValue(lastRow["Outros Gastos"]))
-                    ],
-                    backgroundColor: ['#3b82f6', '#8b5cf6', '#f43f5e', '#64ffda'],
-                    borderWidth: 0
+                    label: 'Valor R$',
+                    data: despesasBrutas.map(d => d.valor),
+                    backgroundColor: '#f43f5e',
+                    borderRadius: 5
                 }]
             },
             options: { 
+                indexAxis: 'y', // Transforma em barra horizontal
                 responsive: true, 
                 maintainAspectRatio: false,
-                cutout: '70%',
                 plugins: { 
-                    legend: { position: 'bottom' },
-                    title: { display: true, text: 'Distribuição de Despesas', color: '#e6f1ff' }
+                    title: { display: true, text: 'Ranking de Despesas (Mês Atual)', color: '#e6f1ff' },
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { grid: { color: '#233554' } },
+                    y: { grid: { display: false } }
                 }
             }
         });
 
-        // 3. Gráfico de Aportes de Investimento
+        // Gráfico 3: Aportes
         new Chart(document.getElementById('investBarChart'), {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Valor de Aporte',
-                    data: investimentos,
-                    backgroundColor: '#3b82f6',
-                    borderRadius: 6
+                    label: 'Aportes',
+                    data: data.map(d => parseBrValue(d.Investimentos)),
+                    backgroundColor: '#3b82f6'
                 }]
             },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { title: { display: true, text: 'Aportes em Investimentos', color: '#e6f1ff' } }
-            }
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
