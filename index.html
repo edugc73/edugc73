@@ -288,20 +288,77 @@ function parseNumber(val) {
         const ctx = document.getElementById('myChart').getContext('2d');
         if (chartInstance) chartInstance.destroy();
 
+        // Criando um gradiente para as barras
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, '#38bdf8');      // Azul claro no topo
+        gradient.addColorStop(1, 'rgba(56, 189, 248, 0.3)'); // Transparência na base
+
         chartInstance = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: historico.map(h => h[1]),
                 datasets: [{
-                    label: 'Total Mensal',
+                    label: 'Total Recebido',
                     data: historico.map(h => parseNumber(h[5])),
+                    backgroundColor: gradient,
                     borderColor: '#38bdf8',
-                    tension: 0.4,
-                    fill: true,
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)'
+                    borderWidth: 1,
+                    borderRadius: 8, // Bordas arredondadas para um look moderno
+                    borderSkipped: false,
+                    hoverBackgroundColor: '#7dd3fc', // Cor ao passar o mouse
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false // Remove a legenda para um visual mais limpo
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#38bdf8',
+                        bodyColor: '#f8fafc',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.1)', // Linhas de grade sutis
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#94a3b8',
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false // Remove as linhas verticais
+                        },
+                        ticks: {
+                            color: '#94a3b8'
+                        }
+                    }
+                }
+            }
         });
     }
 
