@@ -116,33 +116,52 @@
         let clean = val.replace(/\./g, '').replace(',', '.');
         return parseFloat(clean) || 0;
     }
+async function fetchData() {
+    Papa.parse(URL_PLANILHA, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true, // Tenta converter números automaticamente
+        complete: function(results) {
+            const data = results.data;
+            
+            // Log para você ver no console (F12) como os nomes chegaram
+            console.log("Colunas detectadas:", Object.keys(data[0]));
 
-    async function fetchData() {
-        Papa.parse(URL_PLANILHA, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                const data = results.data;
-                
-                // Validação básica se os dados chegaram
-                if (data.length > 0 && data[0].MÊS) {
-                    renderDashboard(data);
-                    document.getElementById('loading').innerText = '● Live Data';
-                } else {
-                    document.getElementById('loading').innerText = 'Erro ao ler colunas';
-                }
+            // Verifica se existe a coluna MÊS (mesmo que escrita diferente)
+            const firstRow = data[0];
+            const hasMonth = Object.keys(firstRow).some(key => 
+                key.toUpperCase().includes('MÊS') || key.toUpperCase().includes('MES')
+            );
+
+            if (data.length > 0 && hasMonth) {
+                renderDashboard(data);
+                document.getElementById('loading').innerText = '● Live Data';
+            } else {
+                document.getElementById('loading').innerText = 'Erro: Coluna "MÊS" não encontrada';
+                console.error("Dados recebidos:", data);
             }
-        });
-    }
+        }
+    });
+}
 
-    function renderDashboard(rawData) {
-        // Processar dados limpando os valores brasileiros
-        const labels = rawData.map(d => d.MÊS);
-        const investimentos = rawData.map(d => parseBrValue(d.Investimentos));
-        const saldoFinal = rawData.map(d => parseBrValue(d["Saldo Final do Mês"]));
-        
-        const lastRow = rawData[rawData.length - 1];
+function renderDashboard(rawData) {
+    // Normalizar nomes de colunas (remove espaços e lida com acentos comuns)
+    const data = rawData.map(row => {
+        const newRow = {};
+        for (let key in row) {
+            const normalizedKey = key.trim();
+            newRow[normalizedKey] = row[key];
+        }
+        return newRow;
+    });
+
+    // Agora usamos os nomes normalizados
+    const labels = data.map(d => d.MÊS || d.Mes || d.MES);
+    const investimentos = data.map(d => parseBrValue(d.Investimentos));
+    const saldoFinal = data.map(d => parseBrValue(d["Saldo Final do Mês"]));
+    
+    const lastRow = rawData[rawData.length - 1];
         
         // Atualizar KPIs
         const totalInvest = investimentos.reduce((a, b) => a + b, 0);
