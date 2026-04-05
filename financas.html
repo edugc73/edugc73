@@ -79,11 +79,8 @@
    <script>
     const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
 
-    async function fetchData() {
-        if (URL_PLANILHA.includes('https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv')) {
-            document.getElementById('loading').innerHTML = '<span style="color: #f43f5e;">Erro: Link não configurado</span>';
-            return;
-        }
+   async function fetchData() {
+        const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv'; 
 
         Papa.parse(URL_PLANILHA, {
             download: true,
@@ -91,16 +88,19 @@
             dynamicTyping: true,
             skipEmptyLines: true,
             complete: function(results) {
-                if (results.data && results.data.length > 0) {
+                // LOG PARA DEPURAÇÃO:
+                console.log("Dados recebidos:", results.data);
+                
+                if (results.data && results.data.length > 0 && results.data[0].MÊS) {
                     renderDashboard(results.data);
                     document.getElementById('loading').innerText = '● Dados Atualizados';
                 } else {
-                    document.getElementById('loading').innerText = 'Erro: Planilha vazia';
+                    document.getElementById('loading').innerHTML = 
+                        '<span style="color: #f43f5e;">Erro: O Google enviou uma página em vez de dados. Verifique a publicação CSV.</span>';
                 }
             },
             error: function(err) {
-                console.error(err);
-                document.getElementById('loading').innerHTML = '<span style="color: #f43f5e;">Erro na conexão com o Google</span>';
+                document.getElementById('loading').innerText = 'Erro na requisição.';
             }
         });
     }
