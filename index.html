@@ -190,23 +190,32 @@
     let rawData = [];
     let chartInstance = null;
 
-    async function fetchData() {
-        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv";
-        try {
-            const response = await fetch(sheetURL);
-            const text = await response.text();
-            const rows = text.split('\n').map(row => row.split(','));
-            
-            rawData = rows.slice(1).map(row => ({
-                0: row[0], 1: row[1], 2: row[2], 3: row[3], 4: row[4], 5: row[5]
-            }));
+  async function fetchData() {
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1980124587&single=true&output=csv";
+    try {
+        const response = await fetch(sheetURL);
+        const text = await response.text();
+        
+        // Esta Regex separa por vírgula, mas ignora vírgulas dentro de aspas (ex: "1,45")
+        const rows = text.split('\n').map(row => {
+            return row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+        });
+        
+        rawData = rows.slice(1).map(row => {
+            // Remove as aspas extras que o CSV coloca nos números
+            const cleanRow = row.map(cell => cell.replace(/"/g, '').trim());
+            return {
+                0: cleanRow[0], 1: cleanRow[1], 2: cleanRow[2], 
+                3: cleanRow[3], 4: cleanRow[4], 5: cleanRow[5]
+            };
+        });
 
-            populateFilters();
-            updateDashboard(); // Agora ela será encontrada
-        } catch (e) {
-            console.error("Erro ao carregar dados:", e);
-        }
+        populateFilters();
+        updateDashboard();
+    } catch (e) {
+        console.error("Erro ao carregar dados:", e);
     }
+}
 
     function populateFilters() {
         const ativos = [...new Set(rawData.map(d => d[0]))].filter(Boolean).sort();
@@ -219,22 +228,23 @@
 function parseNumber(val) {
     if (val === undefined || val === null || val === '') return 0;
     
-    // Converte para string e remove R$, espaços e símbolos de porcentagem
-    let clean = String(val).replace(/R\$\s?/g, '').replace(/%/g, '').trim();
+    let clean = String(val)
+        .replace(/R\$/g, '')   // Remove R$
+        .replace(/\s/g, '')    // Remove todos os espaços
+        .replace(/%/g, '')     // Remove %
+        .trim();
     
-    // Se o número usa o padrão brasileiro (ex: 1.500,50)
+    // Se o número tem formato brasileiro (ex: 1.500,50 ou 1,45)
     if (clean.includes(',') && clean.includes('.')) {
         clean = clean.replace(/\./g, '').replace(',', '.');
-    } 
-    // Se tem apenas vírgula (ex: 1,45 ou 45,00)
-    else if (clean.includes(',')) {
+    } else if (clean.includes(',')) {
         clean = clean.replace(',', '.');
     }
     
     const result = parseFloat(clean);
     return isNaN(result) ? 0 : result;
 }
-
+    
     // FUNÇÃO AGORA FORA DA FETCHDATA PARA SER GLOBAL
   function updateDashboard() {
    
