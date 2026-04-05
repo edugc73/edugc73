@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Estoque Fitwear</title>
+    <title>Dashboard Comercial Fitwear</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -14,6 +14,7 @@
             --accent: #64ffda;
             --highlight: #f06292;
             --blue-vibrant: #00d2ff;
+            --success: #4caf50;
         }
 
         body {
@@ -33,6 +34,7 @@
             font-weight: 300;
             letter-spacing: 2px;
             color: var(--accent);
+            text-transform: uppercase;
         }
 
         .stats-container {
@@ -44,160 +46,177 @@
 
         .card {
             background: var(--card-bg);
-            padding: 20px;
+            padding: 25px;
             border-radius: 12px;
             box-shadow: 0 10px 30px -15px rgba(2,12,27,0.7);
             text-align: center;
             border-bottom: 3px solid var(--blue-vibrant);
+            transition: transform 0.3s;
         }
 
-        .card h3 { font-size: 0.9rem; color: #8892b0; margin: 0; }
-        .card p { font-size: 1.8rem; font-weight: bold; margin: 10px 0 0; color: var(--text-main); }
+        .card:hover { transform: translateY(-5px); }
+
+        .card h3 { font-size: 0.85rem; color: #8892b0; margin: 0; text-transform: uppercase; }
+        .card p { font-size: 1.6rem; font-weight: bold; margin: 12px 0 0; color: var(--text-main); }
+        .card .sub-value { color: var(--accent); font-size: 1.1rem; display: block; margin-top: 5px; }
 
         .charts-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
             gap: 20px;
         }
 
         .chart-box {
             background: var(--card-bg);
-            padding: 20px;
+            padding: 25px;
             border-radius: 12px;
-            min-height: 350px;
+            min-height: 400px;
         }
 
-        .status-low { color: var(--highlight); }
+        @media (max-width: 600px) {
+            .charts-container { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>CBFITWEAR PERFORMANCE</h1>
-        <p id="update-date">Sincronizado com Google Sheets</p>
+        <h1>Dashboard de Vendas & Estoque</h1>
+        <p>Análise em tempo real dos dados do Google Sheets</p>
     </div>
 
     <div class="stats-container">
         <div class="card">
-            <h3>VALOR EM ESTOQUE (CUSTO)</h3>
+            <h3>Total Faturado</h3>
+            <p id="total-faturado">R$ 0,00</p>
+        </div>
+        <div class="card">
+            <h3>Peça Mais Vendida</h3>
+            <p id="peca-mais-vendida">-</p>
+            <span class="sub-value" id="qtd-mais-vendida">0 unidades</span>
+        </div>
+        <div class="card">
+            <h3>Estoque Atual (Custo)</h3>
             <p id="total-investido">R$ 0,00</p>
         </div>
         <div class="card">
-            <h3>RECEITA PREVISTA</h3>
-            <p id="receita-prevista">R$ 0,00</p>
-        </div>
-        <div class="card">
-            <h3>ITENS VENDIDOS</h3>
-            <p id="total-vendido">0</p>
-        </div>
-        <div class="card">
-            <h3>MARGEM MÉDIA</h3>
-            <p id="margem-media">0%</p>
+            <h3>Total de Peças Vendidas</h3>
+            <p id="total-pecas-vendidas">0</p>
         </div>
     </div>
 
     <div class="charts-container">
         <div class="chart-box">
-            <canvas id="chartProdutos"></canvas>
+            <canvas id="chartEstoque"></canvas>
         </div>
         <div class="chart-box">
-            <canvas id="chartFornecedores"></canvas>
+            <canvas id="chartVendas"></canvas>
         </div>
     </div>
 
     <script>
-        // SUBSTITUA O LINK ABAIXO PELO SEU LINK DO GOOGLE SHEETS (PUBLICADO COMO CSV)
-        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzZH_Y2vjYIClUKSeVBVdfvx8y4b81c66zJoc-wnLbM-mza5hRP-sPPuaQhTloew/pub?gid=1503843495&single=true&output=csv';
+        // SUBSTITUA PELO SEU LINK CSV DO GOOGLE SHEETS
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzZH_Y2vjYIClUKSeVBVdfvx8y4b81c66zJoc-wnLbM-mza5hRP-sPPuaQhTloew/pubhtml?gid=1503843495&single=true';
 
-        async function fetchData() {
+        async function initDashboard() {
             Papa.parse(sheetUrl, {
                 download: true,
                 header: true,
                 dynamicTyping: true,
                 complete: function(results) {
-                    processData(results.data);
+                    processDashboardData(results.data);
                 }
             });
         }
 
-        function processData(data) {
-            let totalCusto = 0;
-            let receitaPrevista = 0;
-            let totalVendidos = 0;
-            let produtosMap = {};
-            let fornecedoresMap = {};
+        function processDashboardData(data) {
+            let totalFaturado = 0;
+            let totalCustoEstoque = 0;
+            let totalPecasVendidas = 0;
+            
+            let estoquePorProduto = {};
+            let vendasPorProduto = {};
 
             data.forEach(row => {
                 if(!row.PRODUTO) return;
 
-                // Cálculos Financeiros
-                totalCusto += (row.ESTOQUE * (row['VALOR DA COMPRA'] || 0));
-                receitaPrevista += (row.ESTOQUE * (row['VALOR DE VENDA'] || 0));
-                totalVendidos += (row['QTDE VENDIDA'] || 0);
+                const qtdVendida = row['QTDE VENDIDA'] || 0;
+                const valorVenda = row['VALOR DE VENDA'] || 0;
+                const valorCompra = row['VALOR DA COMPRA'] || 0;
+                const estoqueAtual = row['ESTOQUE'] || 0;
 
-                // Agrupar por Produto para Gráfico
-                produtosMap[row.PRODUTO] = (produtosMap[row.PRODUTO] || 0) + row.ESTOQUE;
+                // 1. Cálculos de Faturamento e Custos
+                totalFaturado += (qtdVendida * valorVenda);
+                totalCustoEstoque += (estoqueAtual * valorCompra);
+                totalPecasVendidas += qtdVendida;
 
-                // Agrupar por Fornecedor
-                fornecedoresMap[row.FORNECEDOR] = (fornecedoresMap[row.FORNECEDOR] || 0) + row.ESTOQUE;
+                // 2. Agrupamentos para Gráficos
+                estoquePorProduto[row.PRODUTO] = (estoquePorProduto[row.PRODUTO] || 0) + estoqueAtual;
+                vendasPorProduto[row.PRODUTO] = (vendasPorProduto[row.PRODUTO] || 0) + qtdVendida;
             });
 
-            // Atualizar Cards
-            document.getElementById('total-investido').innerText = `R$ ${totalCusto.toLocaleString('pt-BR')}`;
-            document.getElementById('receita-prevista').innerText = `R$ ${receitaPrevista.toLocaleString('pt-BR')}`;
-            document.getElementById('total-vendido').innerText = totalVendidos;
-            
-            const margem = receitaPrevista > 0 ? ((receitaPrevista - totalCusto) / receitaPrevista) * 100 : 0;
-            document.getElementById('margem-media').innerText = `${margem.toFixed(1)}%`;
+            // Encontrar peça mais vendida
+            let topPeca = Object.keys(vendasPorProduto).reduce((a, b) => vendasPorProduto[a] > vendasPorProduto[b] ? a : b, "-");
 
-            createCharts(produtosMap, fornecedoresMap);
+            // Atualizar Interface
+            document.getElementById('total-faturado').innerText = `R$ ${totalFaturado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('total-investido').innerText = `R$ ${totalCustoEstoque.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('total-pecas-vendidas').innerText = totalPecasVendidas;
+            document.getElementById('peca-mais-vendida').innerText = topPeca;
+            document.getElementById('qtd-mais-vendida').innerText = `${vendasPorProduto[topPeca] || 0} unidades`;
+
+            renderCharts(estoquePorProduto, vendasPorProduto);
         }
 
-        function createCharts(produtos, fornecedores) {
-            // Gráfico de Produtos
-            new Chart(document.getElementById('chartProdutos'), {
+        function renderCharts(estoqueData, vendasData) {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#8892b0', font: { size: 12 } } }
+                },
+                scales: {
+                    y: { grid: { color: '#233554' }, ticks: { color: '#8892b0' } },
+                    x: { grid: { display: false }, ticks: { color: '#8892b0' } }
+                }
+            };
+
+            // Gráfico 1: Disponibilidade em Estoque
+            new Chart(document.getElementById('chartEstoque'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(produtos),
+                    labels: Object.keys(estoqueData),
                     datasets: [{
-                        label: 'Estoque por Produto',
-                        data: Object.values(produtos),
+                        label: 'Itens em Estoque',
+                        data: Object.values(estoqueData),
                         backgroundColor: '#00d2ff',
-                        borderRadius: 5
+                        hoverBackgroundColor: '#64ffda'
                     }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { 
-                        legend: { labels: { color: '#e6f1ff' } },
-                        title: { display: true, text: 'QUANTIDADE POR PRODUTO', color: '#64ffda' }
-                    },
-                    scales: { y: { ticks: { color: '#8892b0' } }, x: { ticks: { color: '#8892b0' } } }
-                }
+                options: { ...chartOptions, plugins: { title: { display: true, text: 'DISPONIBILIDADE EM ESTOQUE', color: '#64ffda', font: { size: 16 } } } }
             });
 
-            // Gráfico de Fornecedores
-            new Chart(document.getElementById('chartFornecedores'), {
-                type: 'doughnut',
+            // Gráfico 2: Performance de Vendas (Peças Vendidas)
+            new Chart(document.getElementById('chartVendas'), {
+                type: 'line',
                 data: {
-                    labels: Object.keys(fornecedores),
+                    labels: Object.keys(vendasData),
                     datasets: [{
-                        data: Object.values(fornecedores),
-                        backgroundColor: ['#64ffda', '#f06292', '#00d2ff', '#ff9800'],
-                        borderWidth: 0
+                        label: 'Total de Vendas',
+                        data: Object.values(vendasData),
+                        borderColor: '#f06292',
+                        backgroundColor: 'rgba(240, 98, 146, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#f06292'
                     }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { color: '#e6f1ff' } },
-                        title: { display: true, text: 'DISTRIBUIÇÃO POR FORNECEDOR', color: '#64ffda' }
-                    }
-                }
+                options: { ...chartOptions, plugins: { title: { display: true, text: 'PEÇAS VENDIDAS POR MODELO', color: '#f06292', font: { size: 16 } } } }
             });
         }
 
-        fetchData();
+        initDashboard();
     </script>
 </body>
 </html>
