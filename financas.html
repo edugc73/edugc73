@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Real-Time</title>
+    <title>Dashboard Financeiro Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -25,39 +25,70 @@
         }
 
         .container { max-width: 1200px; margin: 0 auto; }
-        header { margin-bottom: 30px; border-bottom: 1px solid #233554; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        header { 
+            margin-bottom: 30px; 
+            border-bottom: 1px solid #233554; 
+            padding-bottom: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: var(--card-bg); padding: 20px; border-radius: 12px; border-left: 4px solid var(--accent); }
-        .stat-label { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; }
-        .stat-value { font-size: 1.5rem; font-weight: 600; display: block; margin-top: 5px; }
+        .status-badge {
+            background: #1d2d44;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+
+        .stat-card { 
+            background: var(--card-bg); 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px -15px rgba(2,12,27,0.7);
+        }
+
+        .stat-label { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.6rem; font-weight: 600; display: block; margin-top: 10px; color: #fff; }
 
         .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
         .chart-container { background: var(--card-bg); padding: 25px; border-radius: 15px; min-height: 350px; }
         .full-width { grid-column: span 2; }
-        
-        #loading { color: var(--accent); font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Intelligence Financial Board</h1>
-        <div id="loading">Sincronizando dados...</div>
+        <h1 style="color: var(--accent); font-size: 1.4rem;">Gestão Financeira Estratégica</h1>
+        <div id="loading" class="status-badge">Sincronizando com Google Sheets...</div>
     </header>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <span class="stat-label">Total em Investimentos</span>
+            <span class="stat-label">Investimento Acumulado</span>
             <span class="stat-value" id="kpi-invest">R$ 0,00</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Média Salarial (Total)</span>
+            <span class="stat-label">Renda Mensal Média</span>
             <span class="stat-value" id="kpi-renda">R$ 0,00</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Saldo Atual</span>
+            <span class="stat-label">Saldo em Conta (Último)</span>
             <span class="stat-value" id="kpi-saldo" style="color: var(--accent);">R$ 0,00</span>
         </div>
     </div>
@@ -76,78 +107,89 @@
 </div>
 
 <script>
-   <script>
     const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
 
-   async function fetchData() {
-        const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv'; 
+    // Função para converter strings de moeda brasileira para números (Ex: "1.200,50" -> 1200.50)
+    function parseBrValue(val) {
+        if (!val) return 0;
+        if (typeof val === 'number') return val;
+        let clean = val.replace(/\./g, '').replace(',', '.');
+        return parseFloat(clean) || 0;
+    }
 
+    async function fetchData() {
         Papa.parse(URL_PLANILHA, {
             download: true,
             header: true,
-            dynamicTyping: true,
             skipEmptyLines: true,
             complete: function(results) {
-                // LOG PARA DEPURAÇÃO:
-                console.log("Dados recebidos:", results.data);
+                const data = results.data;
                 
-                if (results.data && results.data.length > 0 && results.data[0].MÊS) {
-                    renderDashboard(results.data);
-                    document.getElementById('loading').innerText = '● Dados Atualizados';
+                // Validação básica se os dados chegaram
+                if (data.length > 0 && data[0].MÊS) {
+                    renderDashboard(data);
+                    document.getElementById('loading').innerText = '● Live Data';
                 } else {
-                    document.getElementById('loading').innerHTML = 
-                        '<span style="color: #f43f5e;">Erro: O Google enviou uma página em vez de dados. Verifique a publicação CSV.</span>';
+                    document.getElementById('loading').innerText = 'Erro ao ler colunas';
                 }
-            },
-            error: function(err) {
-                document.getElementById('loading').innerText = 'Erro na requisição.';
             }
         });
     }
 
-    function renderDashboard(data) {
-        // Mapeamento dos dados (Garante que os nomes batem com o CSV enviado)
-        const labels = data.map(d => d.MÊS);
-        const investimentos = data.map(d => d.Investimentos || 0);
-        const saldoFinal = data.map(d => d["Saldo Final do Mês"] || 0);
+    function renderDashboard(rawData) {
+        // Processar dados limpando os valores brasileiros
+        const labels = rawData.map(d => d.MÊS);
+        const investimentos = rawData.map(d => parseBrValue(d.Investimentos));
+        const saldoFinal = rawData.map(d => parseBrValue(d["Saldo Final do Mês"]));
         
-        const lastRow = data[data.length - 1];
+        const lastRow = rawData[rawData.length - 1];
         
         // Atualizar KPIs
-        document.getElementById('kpi-invest').innerText = `R$ ${investimentos.reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}`;
-        document.getElementById('kpi-renda').innerText = `R$ ${( (lastRow["Salario Aposentadoria"] || 0) + (lastRow["Salário PTTC"] || 0) ).toLocaleString('pt-BR')}`;
-        document.getElementById('kpi-saldo').innerText = `R$ ${(lastRow["Saldo Final do Mês"] || 0).toLocaleString('pt-BR')}`;
+        const totalInvest = investimentos.reduce((a, b) => a + b, 0);
+        document.getElementById('kpi-invest').innerText = `R$ ${totalInvest.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        
+        const rendaMensal = parseBrValue(lastRow["Salario Aposentadoria"]) + parseBrValue(lastRow["Salário PTTC"]);
+        document.getElementById('kpi-renda').innerText = `R$ ${rendaMensal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        
+        document.getElementById('kpi-saldo').innerText = `R$ ${parseBrValue(lastRow["Saldo Final do Mês"]).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
         Chart.defaults.color = '#8892b0';
+        Chart.defaults.font.family = "'Inter', sans-serif";
 
-        // Gráfico de Evolução
+        // 1. Gráfico de Evolução Patrimonial
         new Chart(document.getElementById('evolutionChart'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Patrimônio Final (Mês)',
+                    label: 'Saldo Final do Mês',
                     data: saldoFinal,
                     borderColor: '#64ffda',
                     backgroundColor: 'rgba(100, 255, 218, 0.1)',
                     fill: true,
-                    tension: 0.3
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#64ffda'
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Crescimento de Patrimônio Líquido', color: '#e6f1ff' } }
+            }
         });
 
-        // Gráfico de Gastos (Foco no Cartão e Outros)
+        // 2. Gráfico de Composição de Despesas (Último Mês)
         new Chart(document.getElementById('expensesPieChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Cartão C6', 'Cartão ML', 'Fixos', 'Outros'],
+                labels: ['Cartão C6', 'Cartão ML', 'Gastos Fixos', 'Outros/IPVA'],
                 datasets: [{
                     data: [
-                        lastRow["Cartão C6"] || 0, 
-                        lastRow["Cartão ML"] || 0, 
-                        ((lastRow.Luz || 0) + (lastRow.Água || 0) + (lastRow.IPTU || 0)), 
-                        lastRow["Outros Gastos"] || 0
+                        parseBrValue(lastRow["Cartão C6"]),
+                        parseBrValue(lastRow["Cartão ML"]),
+                        (parseBrValue(lastRow.Luz) + parseBrValue(lastRow.Água) + parseBrValue(lastRow.IPTU)),
+                        (parseBrValue(lastRow.IPVA) + parseBrValue(lastRow["Outros Gastos"]))
                     ],
                     backgroundColor: ['#3b82f6', '#8b5cf6', '#f43f5e', '#64ffda'],
                     borderWidth: 0
@@ -156,27 +198,36 @@
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
+                cutout: '70%',
+                plugins: { 
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: 'Distribuição de Despesas', color: '#e6f1ff' }
+                }
             }
         });
 
-        // Gráfico de Investimentos
+        // 3. Gráfico de Aportes de Investimento
         new Chart(document.getElementById('investBarChart'), {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Aportes Mensais',
+                    label: 'Valor de Aporte',
                     data: investimentos,
                     backgroundColor: '#3b82f6',
-                    borderRadius: 5
+                    borderRadius: 6
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Aportes em Investimentos', color: '#e6f1ff' } }
+            }
         });
     }
 
     fetchData();
 </script>
+
 </body>
 </html>
