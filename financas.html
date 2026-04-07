@@ -25,15 +25,32 @@
         }
 
         .container { max-width: 1200px; margin: 0 auto; }
+        
         header { 
             margin-bottom: 30px; 
             border-bottom: 1px solid #233554; 
-            padding-bottom: 10px; 
+            padding-bottom: 20px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
+            flex-wrap: wrap;
+            gap: 15px;
         }
+
+        /* Estilização do Seletor de Mês */
+        .controls { display: flex; align-items: center; gap: 10px; }
         
+        select {
+            background: var(--card-bg);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            outline: none;
+        }
+
         .status-badge {
             background: #1d2d44;
             padding: 5px 15px;
@@ -50,7 +67,7 @@
             margin-bottom: 30px; 
         }
 
-        .stat-card { 
+        .stat-card {
             background: var(--card-bg); 
             padding: 25px; 
             border-radius: 12px; 
@@ -74,21 +91,29 @@
 
 <div class="container">
     <header>
-        <h1 style="color: var(--accent); font-size: 1.4rem;">Gestão Financeira Estratégica</h1>
-        <div id="loading" class="status-badge">Sincronizando com Google Sheets...</div>
+        <div>
+            <h1 style="color: var(--accent); font-size: 1.4rem; margin: 0;">Gestão Financeira Estratégica</h1>
+            <div id="loading" class="status-badge" style="margin-top: 5px; display: inline-block;">Sincronizando...</div>
+        </div>
+        
+        <div class="controls">
+            <label for="monthSelect" style="font-size: 0.8rem; color: var(--text-dim);">FILTRAR MÊS:</label>
+            <select id="monthSelect">
+                </select>
+        </div>
     </header>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <span class="stat-label">Investimento Acumulado</span>
-            <span class="stat-value" id="kpi-invest">R$ 0,00</span>
+            <span class="stat-label">Renda Total do Mês</span>
+            <span class="stat-value" id="kpi-renda-total">R$ 0,00</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Renda Mensal Média</span>
-            <span class="stat-value" id="kpi-renda">R$ 0,00</span>
+            <span class="stat-label">Total de Despesas</span>
+            <span class="stat-value" id="kpi-despesas">R$ 0,00</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Saldo em Conta (Último)</span>
+            <span class="stat-label">Saldo Final do Mês</span>
             <span class="stat-value" id="kpi-saldo" style="color: var(--accent);">R$ 0,00</span>
         </div>
     </div>
@@ -98,7 +123,7 @@
             <canvas id="evolutionChart"></canvas>
         </div>
         <div class="chart-container">
-            <canvas id="expensesPieChart"></canvas>
+            <canvas id="expensesBarChart"></canvas>
         </div>
         <div class="chart-container">
             <canvas id="investBarChart"></canvas>
@@ -107,7 +132,10 @@
 </div>
 
 <script>
-   const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
+    const URL_PLANILHA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
+    
+    let globalData = [];
+    let charts = {};
 
     function parseBrValue(val) {
         if (!val) return 0;
@@ -121,131 +149,138 @@
             download: true,
             header: true,
             skipEmptyLines: true,
-            dynamicTyping: true,
             complete: function(results) {
-                const data = results.data;
-                const firstRow = data[0];
-                const hasMonth = Object.keys(firstRow).some(key => 
-                    key.toUpperCase().includes('MÊS') || key.toUpperCase().includes('MES')
-                );
+                // Normalizar nomes das colunas (trim)
+                globalData = results.data.map(row => {
+                    const newRow = {};
+                    for (let key in row) { newRow[key.trim()] = row[key]; }
+                    return newRow;
+                });
 
-                if (data.length > 0 && hasMonth) {
-                    renderDashboard(data);
+                if (globalData.length > 0) {
+                    initMonthSelector();
+                    updateDashboard(globalData.length - 1); // Começa com o último mês
                     document.getElementById('loading').innerText = '● Live Data';
-                } else {
-                    document.getElementById('loading').innerText = 'Erro: Verifique as colunas da planilha';
                 }
             }
         });
     }
 
-    function renderDashboard(rawData) {
-        const data = rawData.map(row => {
-            const newRow = {};
-            for (let key in row) {
-                newRow[key.trim()] = row[key];
+    function initMonthSelector() {
+        const select = document.getElementById('monthSelect');
+        select.innerHTML = '';
+        
+        globalData.forEach((row, index) => {
+            const mes = row.MÊS || row.Mes || row.MES;
+            if (mes) {
+                const option = document.createElement('option');
+                option.value = index;
+                option.text = mes;
+                if (index === globalData.length - 1) option.selected = true;
+                select.appendChild(option);
             }
-            return newRow;
         });
 
-        const lastRow = data[data.length - 1];
-        const labels = data.map(d => d.MÊS || d.Mes || d.MES);
-        
-        // 1. Renda Total do Mês (Soma dos Salários)
-        const rendaTotal = parseBrValue(lastRow["Salario Aposentadoria"]) + parseBrValue(lastRow["Salário PTTC"]);
-        document.querySelector('.stats-grid .stat-card:nth-child(1) .stat-label').innerText = "Renda Total do Mês";
-        document.getElementById('kpi-invest').innerText = `R$ ${rendaTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        select.addEventListener('change', (e) => {
+            updateDashboard(parseInt(e.target.value));
+        });
+    }
 
-        // 2. Total de Despesas (Soma de todos os gastos listados no último mês)
-        const totalDespesas = parseBrValue(lastRow["Cartão C6"]) + 
-                              parseBrValue(lastRow["Cartão ML"]) + 
-                              parseBrValue(lastRow.Luz) + 
-                              parseBrValue(lastRow.Água) + 
-                              parseBrValue(lastRow.DESKTOP) + 
-                              parseBrValue(lastRow.IPTU) + 
-                              parseBrValue(lastRow["Internet Mãe"]) + 
-                              parseBrValue(lastRow.Celular) + 
-                              parseBrValue(lastRow["Canção Nova"]) + 
-                              parseBrValue(lastRow.IPVA) + 
-                              parseBrValue(lastRow["Outros Gastos"]);
-        
-        document.querySelector('.stats-grid .stat-card:nth-child(2) .stat-label').innerText = "Total de Despesas";
-        document.getElementById('kpi-renda').innerText = `R$ ${totalDespesas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    function updateDashboard(index) {
+        const row = globalData[index];
+        const labelsEvolucao = globalData.map(d => d.MÊS || d.Mes || d.MES);
 
-        // 3. Saldo Final do Mês
-        const saldoFinalMes = parseBrValue(lastRow["Saldo Final do Mês"]);
-        document.querySelector('.stats-grid .stat-card:nth-child(3) .stat-label').innerText = "Saldo Final do Mês";
-        document.getElementById('kpi-saldo').innerText = `R$ ${saldoFinalMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        // 1. Atualizar KPIs
+        const rendaTotal = parseBrValue(row["Salario Aposentadoria"]) + parseBrValue(row["Salário PTTC"]);
+        const totalDespesas = parseBrValue(row["Cartão C6"]) + 
+                             parseBrValue(row["Cartão ML"]) + 
+                             parseBrValue(row.Luz) + 
+                             parseBrValue(row.Água) + 
+                             parseBrValue(row.DESKTOP) + 
+                             parseBrValue(row.IPTU) + 
+                             parseBrValue(row["Internet Mãe"]) + 
+                             parseBrValue(row.Celular) + 
+                             parseBrValue(row["Canção Nova"]) + 
+                             parseBrValue(row.IPVA) + 
+                             parseBrValue(row["Outros Gastos"]);
+        const saldoFinal = parseBrValue(row["Saldo Final do Mês"]);
+
+        document.getElementById('kpi-renda-total').innerText = rendaTotal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+        document.getElementById('kpi-despesas').innerText = totalDespesas.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+        document.getElementById('kpi-saldo').innerText = saldoFinal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+
+        // 2. Destruir gráficos existentes para recriar com novos dados
+        Object.values(charts).forEach(chart => chart.destroy());
 
         Chart.defaults.color = '#8892b0';
         Chart.defaults.font.family = "'Inter', sans-serif";
 
-        // Gráfico 1: Evolução
-        new Chart(document.getElementById('evolutionChart'), {
+        // Gráfico de Evolução (Mantém o histórico completo, mas destaca o mês atual)
+        charts.evolution = new Chart(document.getElementById('evolutionChart'), {
             type: 'line',
             data: {
-                labels: labels,
+                labels: labelsEvolucao,
                 datasets: [{
                     label: 'Saldo Mensal',
-                    data: data.map(d => parseBrValue(d["Saldo Final do Mês"])),
+                    data: globalData.map(d => parseBrValue(d["Saldo Final do Mês"])),
                     borderColor: '#64ffda',
                     backgroundColor: 'rgba(100, 255, 218, 0.1)',
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointRadius: globalData.map((_, i) => i === index ? 8 : 3),
+                    pointBackgroundColor: globalData.map((_, i) => i === index ? '#64ffda' : '#233554')
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Histórico de Saldo Final', color: '#e6f1ff' } }
+            }
         });
 
-        // 4. Gráfico de Barras Horizontais (Despesas da maior para a menor)
-        const despesasBrutas = [
-            { nome: 'Cartão C6', valor: parseBrValue(lastRow["Cartão C6"]) },
-            { nome: 'Cartão ML', valor: parseBrValue(lastRow["Cartão ML"]) },
-            { nome: 'Luz/Água/IPTU', valor: (parseBrValue(lastRow.Luz) + parseBrValue(lastRow.Água) + parseBrValue(lastRow.IPTU)) },
-            { nome: 'IPVA/Outros', valor: (parseBrValue(lastRow.IPVA) + parseBrValue(lastRow["Outros Gastos"])) }
-        ];
+        // Gráfico de Despesas do Mês Selecionado
+        const despesasData = [
+            { nome: 'C6', valor: parseBrValue(row["Cartão C6"]) },
+            { nome: 'ML', valor: parseBrValue(row["Cartão ML"]) },
+            { nome: 'Fixas (L/A/I)', valor: (parseBrValue(row.Luz) + parseBrValue(row.Água) + parseBrValue(row.IPTU)) },
+            { nome: 'Outros', valor: (parseBrValue(row.IPVA) + parseBrValue(row["Outros Gastos"])) }
+        ].sort((a, b) => b.valor - a.valor);
 
-        // Ordenar do maior para o menor
-        despesasBrutas.sort((a, b) => b.valor - a.valor);
-
-        new Chart(document.getElementById('expensesPieChart'), {
+        charts.expenses = new Chart(document.getElementById('expensesBarChart'), {
             type: 'bar',
             data: {
-                labels: despesasBrutas.map(d => d.nome),
+                labels: despesasData.map(d => d.nome),
                 datasets: [{
                     label: 'Valor R$',
-                    data: despesasBrutas.map(d => d.valor),
+                    data: despesasData.map(d => d.valor),
                     backgroundColor: '#f43f5e',
                     borderRadius: 5
                 }]
             },
             options: { 
-                indexAxis: 'y', // Transforma em barra horizontal
+                indexAxis: 'y',
                 responsive: true, 
                 maintainAspectRatio: false,
-                plugins: { 
-                    title: { display: true, text: 'Ranking de Despesas (Mês Atual)', color: '#e6f1ff' },
-                    legend: { display: false }
-                },
-                scales: {
-                    x: { grid: { color: '#233554' } },
-                    y: { grid: { display: false } }
-                }
+                plugins: { title: { display: true, text: 'Ranking de Gastos: ' + (row.MÊS || row.Mes), color: '#e6f1ff' }, legend: { display: false } }
             }
         });
 
-        // Gráfico 3: Aportes
-        new Chart(document.getElementById('investBarChart'), {
+        // Gráfico de Aportes
+        charts.invest = new Chart(document.getElementById('investBarChart'), {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: labelsEvolucao,
                 datasets: [{
-                    label: 'Aportes',
-                    data: data.map(d => parseBrValue(d.Investimentos)),
-                    backgroundColor: '#3b82f6'
+                    label: 'Investimentos',
+                    data: globalData.map(d => parseBrValue(d.Investimentos)),
+                    backgroundColor: globalData.map((_, i) => i === index ? '#64ffda' : '#3b82f6')
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Evolução de Aportes', color: '#e6f1ff' } }
+            }
         });
     }
 
