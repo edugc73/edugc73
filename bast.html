@@ -3,35 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard GOP - Atualizado</title>
+    <title>Dashboard Financeiro GOP</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #050a1a;
-            --bg-card: #0d1b35;
-            --accent: #00d2ff;
+            --bg-body: #050a1a; /* Azul Escuro Profundo */
+            --bg-card: rgba(13, 27, 53, 0.8); /* Azul Card levemente transparente */
+            --accent: #00d2ff; /* Ciano Vibrante */
             --text: #ffffff;
             --text-dim: #a0b0c5;
+            --negative: #ff4d4d;
+            --positive: #00ff88;
         }
-        body { background-color: var(--bg-body); color: var(--text); font-family: 'Poppins', sans-serif; margin: 0; padding: 30px; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .logo { max-width: 150px; height: auto; }
-        .selectors { display: flex; gap: 15px; }
-        select { background: var(--bg-card); color: var(--text); border: 1px solid var(--accent); padding: 12px 20px; border-radius: 12px; cursor: pointer; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-        .card { background: var(--bg-card); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); border-color: var(--accent); }
-        .card h3 { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; }
-        .card p { font-size: 1.8rem; font-weight: 600; margin: 0; }
-        .status { font-size: 0.75rem; margin-top: 20px; color: var(--accent); font-weight: bold; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* --- LOGO EM FUNDO ESMAECIDO NO CENTRO --- */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%; /* Tamanho do logo no fundo */
+            height: 80%;
+            background-image: url('BAST.png'); /* SEU ARQUIVO DE IMAGEM */
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            opacity: 0.03; /* EXTREMAMENTE ESMAECIDO */
+            z-index: -1; /* Fica atrás de tudo */
+            pointer-events: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: flex-end; /* Seletores alinhados à direita */
+            align-items: center;
+            margin-bottom: 60px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .selectors {
+            display: flex;
+            gap: 15px;
+        }
+
+        select {
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            transition: 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 210, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .card h3 {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .card p {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .status {
+            font-size: 0.8rem;
+            margin-top: auto;
+            color: var(--text-dim);
+            text-align: center;
+            padding-top: 40px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            body { padding: 20px; }
+            header { flex-direction: column; gap: 15px; align-items: flex-start; margin-bottom: 30px; }
+            .selectors { width: 100%; flex-direction: column; }
+            .card { padding: 30px; }
+            .card p { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <img src="BAST.png" alt="Logo" class="logo" onerror="this.alt='Imagem não encontrada - Verifique o nome do arquivo'">
         <div class="selectors">
-            <select id="mesSelect"><option>Carregando meses...</option></select>
+            <select id="mesSelect"><option>Carregando...</option></select>
             <select id="contaSelect">
                 <option value="11">Conta 11</option>
                 <option value="23">Conta 23</option>
@@ -47,60 +173,117 @@
     </header>
 
     <div class="dashboard-grid">
-        <div class="card"><h3>Saldo Anterior</h3><p id="saldoAnterior">R$ 0,00</p></div>
-        <div class="card"><h3>Aquisição</h3><p id="aquisicao">R$ 0,00</p></div>
-        <div class="card"><h3>Consumo</h3><p id="consumo" style="color: #ff4d4d;">R$ 0,00</p></div>
-        <div class="card"><h3>Saldo Atual</h3><p id="saldoAtual" style="color: #00ff88;">R$ 0,00</p></div>
+        <div class="card">
+            <h3>Saldo Anterior</h3>
+            <p id="saldoAnterior">R$ 0,00</p>
+        </div>
+        <div class="card">
+            <h3>Aquisição</h3>
+            <p id="aquisicao">R$ 0,00</p>
+        </div>
+        <div class="card">
+            <h3>Consumo</h3>
+            <p id="consumo" style="color: var(--negative);">R$ 0,00</p>
+        </div>
+        <div class="card">
+            <h3>Saldo Atual</h3>
+            <p id="saldoAtual" style="color: var(--positive);">R$ 0,00</p>
+        </div>
     </div>
 
-    <p class="status" id="lastUpdate">Iniciando conexão...</p>
+    <p class="status" id="lastUpdate">Sincronizando com Google Sheets...</p>
 
     <script>
-        // COLOQUE SEU LINK DO GOOGLE SHEETS (CSV) ABAIXO:
+        // --- COLOQUE SEU LINK DO GOOGLE SHEETS (CSV) ABAIXO ---
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQvr14C0ibyiYOSg9e8bri06iwrvBhSv0bnZNBRhD_2hDIklJbWmRE5KKZAts4uDhbbdFCVvS32SPvX/pub?gid=1190920077&single=true&output=csv'; 
         
         let globalData = {};
 
+        // Função robusta para parsear CSV, lidando com aspas e vírgulas decimais
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            return lines.map(line => {
+                const regex = /(".*?"|[^",\s]+)(?=\s*,|\s*$)/g;
+                let matches = line.match(regex);
+                if (!matches) return [];
+                return matches.map(m => m.replace(/^"|"$/g, '').trim());
+            });
+        }
+
+        // Função para converter string da planilha ("3.664,75") em número (3664.75)
+        function parseFinanceValue(val) {
+            if (!val || val.trim() === "" || val === "0") return 0;
+            // Remove pontos de milhar, substitui vírgula decimal por ponto
+            let cleaned = val.replace(/\./g, '').replace(',', '.');
+            let num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        }
+
         async function fetchData() {
             try {
                 const response = await fetch(SHEET_URL);
+                if (!response.ok) throw new Error('Falha na rede');
                 const csvText = await response.text();
                 processData(csvText);
             } catch (error) {
-                document.getElementById('lastUpdate').innerText = "Erro de conexão. Verifique o link do Sheets.";
+                console.error(error);
+                document.getElementById('lastUpdate').innerText = "Erro ao carregar dados. Verifique o link e a conexão.";
+                document.getElementById('lastUpdate').style.color = 'var(--negative)';
             }
         }
 
-        function processData(csv) {
-            const lines = csv.split('\n');
+        function processData(csvText) {
+            const rows = parseCSV(csvText);
             const months = [];
-            const colMap = { "11": 1, "23": 5, "24": 9, "25": 13, "27": 17, "28": 21, "36": 25, "39": 29, "42": 33 };
+            
+            // Mapeamento de colunas baseado na estrutura da sua planilha (SALDO ANTERIOR de cada conta)
+            const colMap = { 
+                "11": 1, "23": 5, "24": 9, "25": 13, "27": 17, 
+                "28": 21, "36": 25, "39": 29, "42": 33 
+            };
 
-            lines.forEach((line, index) => {
-                const cols = line.split(',');
-                // Ignora cabeçalhos e linhas vazias
+            globalData = {}; // Limpa dados anteriores
+
+            rows.forEach((cols, index) => {
+                // Ignora as duas primeiras linhas de cabeçalho e linhas sem mês definido
                 if (index > 1 && cols[0] && cols[0].trim() !== "") {
                     const mes = cols[0].trim().toUpperCase();
                     months.push(mes);
                     globalData[mes] = {};
                     
-                    for (let c in colMap) {
-                        const idx = colMap[c];
-                        globalData[mes][c] = {
-                            ant: cols[idx] || "0",
-                            aq: cols[idx+1] || "0",
-                            con: cols[idx+2] || "0",
-                            atu: cols[idx+3] || "0"
-                        };
+                    for (let contaId in colMap) {
+                        const startIdx = colMap[contaId];
+                        
+                        // Garante que existem colunas suficientes antes de acessar
+                        if (cols.length > startIdx + 3) {
+                            globalData[mes][contaId] = {
+                                ant: parseFinanceValue(cols[startIdx]),
+                                aq:  parseFinanceValue(cols[startIdx + 1]),
+                                con: parseFinanceValue(cols[startIdx + 2]),
+                                atu: parseFinanceValue(cols[startIdx + 3])
+                            };
+                        } else {
+                            // Dados padrão caso a linha esteja incompleta na planilha
+                            globalData[mes][contaId] = { ant: 0, aq: 0, con: 0, atu: 0 };
+                        }
                     }
                 }
             });
 
             if (months.length > 0) {
-                const select = document.getElementById('mesSelect');
-                select.innerHTML = months.map(m => `<option value="${m}">${m}</option>`).join('');
+                const selectMes = document.getElementById('mesSelect');
+                selectMes.innerHTML = months.map(m => `<option value="${m}">${m}</option>`).join('');
+                
+                // Define o mês atual (último mês da lista) como padrão
+                selectMes.value = months[months.length - 1];
+                
                 updateView();
-                document.getElementById('lastUpdate').innerText = "● Sistema Online - Dados Sincronizados";
+                
+                const agora = new Date().toLocaleTimeString('pt-BR');
+                document.getElementById('lastUpdate').innerText = `● Dados atualizados às ${agora}`;
+                document.getElementById('lastUpdate').style.color = 'var(--positive)';
+            } else {
+                document.getElementById('lastUpdate').innerText = "A planilha parece estar vazia ou mal formatada.";
             }
         }
 
@@ -108,17 +291,19 @@
             const mes = document.getElementById('mesSelect').value;
             const conta = document.getElementById('contaSelect').value;
             
-            if (!globalData[mes] || !globalData[mes][conta]) return;
+            if (!globalData[mes] || !globalData[mes][conta]) {
+                // Caso não encontre dados, zera o display
+                const zero = (0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('saldoAnterior').innerText = zero;
+                document.getElementById('aquisicao').innerText = zero;
+                document.getElementById('consumo').innerText = zero;
+                document.getElementById('saldoAtual').innerText = zero;
+                return;
+            }
 
             const entry = globalData[mes][conta];
 
-            // Função para converter texto em número (trata vírgula e ponto)
-            const parseVal = (v) => {
-                let n = v.replace('R$', '').replace(/\s/g, '').replace('.', '').replace(',', '.');
-                return parseFloat(n) || 0;
-            };
-
-            const format = (val) => parseVal(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const format = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
             document.getElementById('saldoAnterior').innerText = format(entry.ant);
             document.getElementById('aquisicao').innerText = format(entry.aq);
@@ -126,9 +311,11 @@
             document.getElementById('saldoAtual').innerText = format(entry.atu);
         }
 
+        // Event Listeners para os seletores
         document.getElementById('mesSelect').addEventListener('change', updateView);
         document.getElementById('contaSelect').addEventListener('change', updateView);
 
+        // Inicia o carregamento
         fetchData();
     </script>
 </body>
