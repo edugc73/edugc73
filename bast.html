@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Prestação de Contas - BAST</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a192f;
+            --card-bg: #112240;
+            --text-color: #e6f1ff;
+            --accent-color: #64ffda;
+            --chart-blue: #3a86ff;
+            --chart-cyan: #00f5d4;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #233554;
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            color: var(--accent-color);
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px -15px rgba(2, 12, 27, 0.7);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            font-size: 0.9rem;
+            color: #8892b0;
+            margin-top: 0;
+        }
+
+        .card .value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .grid-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            height: 400px;
+        }
+
+        @media (max-width: 600px) {
+            .grid-charts {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>PRESTAÇÃO DE CONTAS - BAST</h1>
+        <p>Referência: Fevereiro / 2026</p>
+    </header>
+
+    <div class="summary-cards">
+        <div class="card">
+            <h3>Faturamento Total HTM</h3>
+            <div class="value">R$ 12.844,00</div>
+        </div>
+        <div class="card">
+            <h3>Estoque Gasolina</h3>
+            <div class="value">4.990 L</div>
+        </div>
+        <div class="card">
+            <h3>Média Consumo Água</h3>
+            <div class="value">R$ 5.923,00</div>
+        </div>
+        <div class="card">
+            <h3>Autonomia Combustível</h3>
+            <div class="value">~ 168 dias</div>
+        </div>
+    </div>
+
+    <div class="grid-charts">
+        <div class="chart-container">
+            <canvas id="aguaChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="htmChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configurações Globais do Chart.js
+    Chart.defaults.color = '#8892b0';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    // Gráfico 1: Comparativo de Água (Baseado nos dados do PDF)
+    const ctxAgua = document.getElementById('aguaChart').getContext('2d');
+    new Chart(ctxAgua, {
+        type: 'bar',
+        data: {
+            labels: ['Jan/26', 'Fev/26'],
+            datasets: [{
+                label: 'Consumo de Água (R$)',
+                data: [6102, 5744], // Valores aproximados do PDF
+                backgroundColor: '#3a86ff',
