@@ -133,22 +133,39 @@
     </div>
 
     <script>
-        // Mock de dados baseado na estrutura do seu Excel
-        const data = {
-            "Janeiro": {
-                labels: ["Químicos", "Uniformes", "Segurança", "Outros"],
-                consumo: [1200, 500, 800, 300],
-                aquisicao: [1500, 200, 900, 100],
-                saldo: [4500, 1200, 3100, 800]
-            },
-            "Fevereiro": {
-                labels: ["Químicos", "Uniformes", "Segurança", "Outros"],
-                consumo: [900, 1100, 600, 400],
-                aquisicao: [0, 1500, 200, 150],
-                saldo: [3600, 1600, 2700, 550]
-            }
-            // ... Adicionar outros meses conforme o Excel
-        };
+        // Substitua o link abaixo pelo link que você copiou no Google Sheets
+const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQvr14C0ibyiYOSg9e8bri06iwrvBhSv0bnZNBRhD_2hDIklJbWmRE5KKZAts4uDhbbdFCVvS32SPvX/pub?output=csv';
+
+async function buscarDadosDoSheets() {
+    try {
+        const response = await fetch(sheetURL);
+        const dataCSV = await response.text();
+        
+        // Converte o CSV em Array de Objetos
+        const linhas = dataCSV.split('\n').map(linha => linha.split(','));
+        
+        // Aqui você processa os dados conforme a estrutura das suas colunas
+        // Exemplo: consolidar os dados por mês para o 'const data'
+        processarDados(linhas);
+        
+    } catch (error) {
+        console.error("Erro ao carregar dados da planilha:", error);
+        alert("Não foi possível carregar os dados do Google Sheets. Verifique se o link está publicado corretamente.");
+    }
+}
+
+// Função para organizar o CSV no formato do dashboard
+function processarDados(linhas) {
+    // Aqui você mapeia qual coluna é Mês, Consumo, Saldo, etc.
+    // O comando 'linhas[0]' contém os cabeçalhos.
+    console.log("Dados carregados com sucesso!", linhas);
+    
+    // Após organizar, chama a função de atualização
+    updateDashboard(); 
+}
+
+// Chame a função ao carregar a página
+window.onload = buscarDadosDoSheets;
 
         let barChart, donutChart;
 
