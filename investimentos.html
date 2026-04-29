@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investimentos do Gonça</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #1a237e;
+            --white: #ffffff;
+            --green: #4caf50;
+            --yellow: #fbc02d;
+            --bg-light: #f4f7fe;
+            --bg-dark: #0f172a;
+            --card-light: #ffffff;
+            --card-dark: #1e293b;
+            --text-light: #1e293b;
+            --text-dark: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.light-mode {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .card {
+            transition: transform 0.2s, background-color 0.3s;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .light-mode .card {
+            background-color: var(--card-light);
+        }
+
+        .dark-mode .card {
+            background-color: var(--card-dark);
+        }
+
+        .kpi-icon {
+            padding: 12px;
+            border-radius: 50%;
+        }
+
+        .btn-filter {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 2px solid var(--navy);
+        }
+
+        .btn-filter.active {
+            background-color: var(--navy);
+            color: white;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 50px;
+            height: 25px;
+            background: var(--navy);
+            border-radius: 25px;
+            position: relative;
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: 0.3s;
+        }
+
+        .dark-mode .theme-toggle::before {
+            left: 27px;
+        }
+
+        canvas {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <nav class="p-6 flex justify-between items-center bg-white dark:bg-slate-900 shadow-md mb-8 transition-colors">
+        <h1 class="text-2xl font-bold text-[#1a237e] dark:text-white">Investimentos do Gonça</h1>
+        <div class="flex items-center gap-4">
+            <span class="text-sm font-semibold uppercase tracking-wider">Modo Escuro</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 pb-12">
+        
+        <!-- Filtros -->
+        <div class="mb-8 overflow-x-auto pb-2">
+            <h3 class="text-lg font-bold mb-4">Filtrar por Ativo</h3>
+            <div id="filter-container" class="flex gap-2 min-w-max">
+                <button class="btn-filter active" onclick="filterData('ALL')">Todos</button>
+                <!-- Gerado via JS -->
+            </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="card p-6 border-l-8 border-[#1a237e]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium opacity-70">Valor Total da Carteira</p>
+                        <h2 id="kpi-total-patrimonio" class="text-3xl font-bold mt-1 text-[#1a237e] dark:text-blue-400">R$ 0,00</h2>
+                    </div>
+                    <div class="kpi-icon bg-blue-100 dark:bg-blue-900">
+                        <svg class="w-8 h-8 text-[#1a237e]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 border-l-8 border-[#fbc02d]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium opacity-70">Valor Total Investido</p>
+                        <h2 id="kpi-total-investido" class="text-3xl font-bold mt-1 text-[#fbc02d]">R$ 0,00</h2>
+                    </div>
+                    <div class="kpi-icon bg-yellow-100 dark:bg-yellow-900">
+                        <svg class="w-8 h-8 text-[#fbc02d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 border-l-8 border-[#4caf50]">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium opacity-70">Proventos Pagos</p>
+                        <h2 id="kpi-total-proventos" class="text-3xl font-bold mt-1 text-[#4caf50]">R$ 0,00</h2>
+                    </div>
+                    <div class="kpi-icon bg-green-100 dark:bg-green-900">
+                        <svg class="w-8 h-8 text-[#4caf50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4">Composição da Carteira (% do Patrimônio)</h3>
+                <canvas id="barChart"></canvas>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4">Proventos vs Rendimento Mensal</h3>
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Detalhamento -->
+        <div class="mt-8 card p-6 overflow-hidden">
+            <h3 class="text-lg font-bold mb-4">Ranking de Rentabilidade (Ativos Selecionados)</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="border-b dark:border-slate-700">
+                        <tr>
+                            <th class="py-3 px-2">Ativo</th>
+                            <th class="py-3 px-2">Quantidade</th>
+                            <th class="py-3 px-2">Preço Médio</th>
+                            <th class="py-3 px-2">Cotação</th>
+                            <th class="py-3 px-2">Ganho/Perda</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Gerado via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Dados Mockados baseados na estrutura do arquivo fornecido
+        // Em um cenário real, poderíamos usar PapaParse para ler a URL CSV diretamente
+        const rawData = [
+            { ativo: 'AFHI11', investido: 5000, atual: 5120, proventos: 450, qtd: 50, pm: 100, cotacao: 102.4 },
+            { ativo: 'HGCR11', investido: 8000, atual: 8400, proventos: 720, qtd: 80, pm: 100, cotacao: 105.0 },
+            { ativo: 'IFRA11', investido: 3000, atual: 2950, proventos: 210, qtd: 30, pm: 100, cotacao: 98.33 },
+            { ativo: 'CDII11', investido: 4500, atual: 4600, proventos: 380, qtd: 45, pm: 100, cotacao: 102.22 },
+            { ativo: 'KNSC11', investido: 6000, atual: 6100, proventos: 540, qtd: 60, pm: 100, cotacao: 101.66 },
+            { ativo: 'VGHF11', investido: 2500, atual: 2400, proventos: 280, qtd: 250, pm: 10, cotacao: 9.6 },
+            { ativo: 'VGIA11', investido: 3200, atual: 3100, proventos: 310, qtd: 320, pm: 10, cotacao: 9.68 }
+        ];
+
+        let barChart, lineChart;
+        let currentFilter = 'ALL';
+
+        function init() {
+            renderFilters();
+            updateDashboard();
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('light-mode')) {
+                body.classList.replace('light-mode', 'dark-mode');
+            } else {
+                body.classList.replace('dark-mode', 'light-mode');
+            }
+            updateChartsTheme();
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('filter-container');
+            const assets = [...new Set(rawData.map(d => d.ativo))];
+            
+            assets.forEach(asset => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-filter';
+                btn.innerText = asset;
+                btn.onclick = () => filterData(asset, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function filterData(asset, btn) {
+            currentFilter = asset;
+            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            else document.querySelector('.btn-filter').classList.add('active');
+            
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const data = currentFilter === 'ALL' ? rawData : rawData.filter(d => d.ativo === currentFilter);
+            
+            // KPIs
+            const totalPatrimonio = data.reduce((acc, curr) => acc + curr.atual, 0);
+            const totalInvestido = data.reduce((acc, curr) => acc + curr.investido, 0);
+            const totalProventos = data.reduce((acc, curr) => acc + curr.proventos, 0);
+
+            animateValue("kpi-total-patrimonio", totalPatrimonio);
+            animateValue("kpi-total-investido", totalInvestido);
+            animateValue("kpi-total-proventos", totalProventos);
+
+            renderTable(data);
+            renderCharts(data, totalPatrimonio);
+        }
+
+        function animateValue(id, value) {
+            const obj = document.getElementById(id);
+            obj.innerHTML = value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const lucro = item.atual - item.investido;
+                const corLucro = lucro >= 0 ? 'text-green-500' : 'text-red-500';
+                
+                tbody.innerHTML += `
+                    <tr class="border-b dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                        <td class="py-4 px-2 font-bold">${item.ativo}</td>
+                        <td class="py-4 px-2">${item.qtd}</td>
+                        <td class="py-4 px-2">R$ ${item.pm.toFixed(2)}</td>
+                        <td class="py-4 px-2">R$ ${item.cotacao.toFixed(2)}</td>
+                        <td class="py-4 px-2 ${corLucro}">R$ ${lucro.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderCharts(data, totalPatrimonio) {
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#f8fafc' : '#1e293b';
+
+            // Gráfico de Barras - % do Patrimônio
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            if (barChart) barChart.destroy();
+            
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.ativo),
+                    datasets: [{
+                        label: '% da Carteira',
+                        data: data.map(d => (d.atual / totalPatrimonio * 100).toFixed(2)),
+                        backgroundColor: '#1a237e',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: textColor }, grid: { display: false } },
+                        x: { ticks: { color: textColor }, grid: { display: false } }
+                    },
+                    plugins: { 
+                        legend: { labels: { color: textColor } },
+                        tooltip: { callbacks: { label: (ctx) => ctx.raw + '%' } }
+                    }
+                }
+            });
+
+            // Gráfico de Linha - Proventos Acumulados (Simulado para visualização)
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            if (lineChart) lineChart.destroy();
+
+            lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                    datasets: [{
+                        label: 'Proventos Mensais',
+                        data: [120, 190, 300, 250, 420, 500],
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { ticks: { color: textColor } },
+                        x: { ticks: { color: textColor } }
+                    },
+                    plugins: { legend: { labels: { color: textColor } } }
+                }
+            });
+        }
+
+        function updateChartsTheme() {
+            if (barChart && lineChart) {
+                updateDashboard();
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
