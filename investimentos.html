@@ -3,118 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Investimentos do Gonça</title>
+    <title>Investimentos do Gonça | Premium Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy: #1a237e;
-            --white: #ffffff;
-            --green: #4caf50;
-            --yellow: #fbc02d;
-            --bg-light: #f4f7fe;
-            --bg-dark: #0f172a;
+            --brand-primary: #6366f1; /* Indigo */
+            --brand-secondary: #f59e0b; /* Amber */
+            --brand-success: #10b981; /* Emerald */
+            --brand-danger: #ef4444; /* Rose */
+            
+            --bg-light: #f8fafc;
             --card-light: #ffffff;
-            --card-dark: #1e293b;
-            --text-light: #1e293b;
-            --text-dark: #f8fafc;
+            --text-light: #0f172a;
+
+            --bg-dark: #0b0f1a;
+            --card-dark: #161e31;
+            --text-dark: #f1f5f9;
         }
 
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, border-color 0.3s; }
+        
         body.light-mode { background-color: var(--bg-light); color: var(--text-light); }
         body.dark-mode { background-color: var(--bg-dark); color: var(--text-dark); }
 
-        .card { border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .light-mode .card { background-color: var(--card-light); }
-        .dark-mode .card { background-color: var(--card-dark); }
+        /* Glassmorphism Effect */
+        .glass-card {
+            border-radius: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .light-mode .glass-card { background-color: var(--card-light); }
+        .dark-mode .glass-card { background-color: var(--card-dark); border-color: rgba(255, 255, 255, 0.05); }
+
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark-mode ::-webkit-scrollbar-thumb { background: #334155; }
 
         .btn-filter {
-            padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600;
-            transition: all 0.2s; border: 2px solid var(--navy); white-space: nowrap;
+            padding: 0.6rem 1.2rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem;
+            transition: all 0.2s; border: 1px solid #e2e8f0; background: white; color: #64748b;
         }
-        .btn-filter.active { background-color: var(--navy); color: white; }
-
-        .theme-toggle {
-            cursor: pointer; width: 50px; height: 25px; background: var(--navy);
-            border-radius: 25px; position: relative;
-        }
-        .theme-toggle::before {
-            content: ''; position: absolute; width: 21px; height: 21px;
-            border-radius: 50%; background: white; top: 2px; left: 2px; transition: 0.3s;
-        }
-        .dark-mode .theme-toggle::before { left: 27px; }
+        .dark-mode .btn-filter { background: #1e293b; border-color: #334155; color: #94a3b8; }
         
+        .btn-filter.active { 
+            background: var(--brand-primary); color: white; border-color: var(--brand-primary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .theme-toggle-wrapper {
+            background: #e2e8f0; padding: 4px; border-radius: 50px; display: flex; align-items: center; gap: 4px;
+        }
+        .dark-mode .theme-toggle-wrapper { background: #1e293b; }
+        .theme-icon { padding: 4px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .theme-icon.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .dark-mode .theme-icon.active { background: #334155; }
+
         #loading-overlay {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.95);
+            position: fixed; inset: 0; background: var(--bg-light);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
+        .dark-mode #loading-overlay { background: var(--bg-dark); }
+        
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .status-positive { background: rgba(16, 185, 129, 0.1); color: var(--brand-success); }
+        .status-negative { background: rgba(239, 68, 68, 0.1); color: var(--brand-danger); }
     </style>
 </head>
 <body class="light-mode">
 
     <div id="loading-overlay">
-        <div class="text-xl font-bold animate-pulse text-[#1a237e] mb-2">Sincronizando Colunas J e K...</div>
-        <div id="status-text" class="text-sm text-gray-600">Ajustando Detalhamento de Ativos...</div>
+        <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+        <div class="text-lg font-bold text-slate-700 dark:text-slate-200">Sincronizando Carteira...</div>
     </div>
 
-    <nav class="p-6 flex justify-between items-center bg-white dark:bg-slate-900 shadow-md mb-8 transition-colors">
-        <h1 class="text-2xl font-bold text-[#1a237e] dark:text-white">Investimentos do Gonça</h1>
-        <div class="flex items-center gap-4">
-            <span class="text-sm font-semibold uppercase tracking-wider">Modo Escuro</span>
-            <div class="theme-toggle" onclick="toggleTheme()"></div>
+    <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Gonça<span class="text-indigo-600">Invest</span></h1>
+                <p class="text-xs text-slate-500 font-medium">Dashboard de Ativos</p>
+            </div>
+        </div>
+        
+        <div class="theme-toggle-wrapper">
+            <div id="sun-icon" class="theme-icon active" onclick="setTheme('light')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.657 7.657l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                </svg>
+            </div>
+            <div id="moon-icon" class="theme-icon" onclick="setTheme('dark')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </div>
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 pb-12">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="card p-6 border-l-8 border-[#1a237e]">
-                <p class="text-sm font-medium opacity-70">Valor Total da Carteira (Patrimônio)</p>
-                <h2 id="kpi-total-patrimonio" class="text-3xl font-bold mt-1 text-[#1a237e] dark:text-blue-400">R$ 0,00</h2>
+    <main class="max-w-7xl mx-auto px-6 pb-20">
+        <!-- KPI Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="glass-card p-6 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-0">
+                <p class="text-indigo-100 text-sm font-semibold mb-1 opacity-80 uppercase tracking-wider">Patrimônio Atual</p>
+                <h2 id="kpi-total-patrimonio" class="text-3xl font-extrabold tracking-tight">R$ 0,00</h2>
+                <div class="mt-4 flex items-center gap-2 text-indigo-100 text-xs font-medium">
+                    <span class="bg-indigo-400/30 px-2 py-1 rounded-md">Coluna K</span>
+                    <span>Total da carteira hoje</span>
+                </div>
             </div>
-            <div class="card p-6 border-l-8 border-[#fbc02d]">
-                <p class="text-sm font-medium opacity-70">Valor Total Investido</p>
-                <h2 id="kpi-total-investido" class="text-3xl font-bold mt-1 text-[#fbc02d]">R$ 0,00</h2>
+            
+            <div class="glass-card p-6 border-l-4 border-amber-500">
+                <p class="text-slate-500 dark:text-slate-400 text-sm font-semibold mb-1 uppercase tracking-wider">Total Investido</p>
+                <h2 id="kpi-total-investido" class="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">R$ 0,00</h2>
+                <p class="mt-4 text-xs font-bold text-amber-600 uppercase">Capital Aplicado (Col J)</p>
             </div>
-            <div class="card p-6 border-l-8 border-[#4caf50]">
-                <p class="text-sm font-medium opacity-70">Lucro/Prejuízo Total</p>
-                <h2 id="kpi-total-proventos" class="text-3xl font-bold mt-1 text-[#4caf50]">R$ 0,00</h2>
+            
+            <div class="glass-card p-6 border-l-4 border-emerald-500">
+                <p class="text-slate-500 dark:text-slate-400 text-sm font-semibold mb-1 uppercase tracking-wider">Lucro / Prejuízo</p>
+                <h2 id="kpi-total-proventos" class="text-3xl font-extrabold tracking-tight">R$ 0,00</h2>
+                <div id="lucro-status" class="mt-4 inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Consolidado</div>
             </div>
         </div>
 
+        <!-- Filters -->
         <div class="mb-8">
-            <h3 class="text-lg font-bold mb-4">Filtrar por Ativo</h3>
-            <div id="filter-container" class="flex gap-2 overflow-x-auto pb-2">
-                <button id="btn-all" class="btn-filter active" onclick="filterData('ALL')">Todos</button>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-extrabold text-slate-400 uppercase tracking-widest">Filtros Rápidos</h3>
+                <span class="text-xs font-bold text-indigo-600 cursor-pointer hover:underline" onclick="filterData('ALL')">Limpar tudo</span>
+            </div>
+            <div id="filter-container" class="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                <button id="btn-all" class="btn-filter active" onclick="filterData('ALL')">Todos Ativos</button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div class="card p-6">
-                <h3 class="text-lg font-bold mb-4">Composição (Valor Atual)</h3>
-                <canvas id="barChart"></canvas>
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="glass-card p-8">
+                <h3 class="text-md font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                    <span class="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
+                    Alocação por Ativo
+                </h3>
+                <div class="h-[300px]">
+                    <canvas id="barChart"></canvas>
+                </div>
             </div>
-            <div class="card p-6">
-                <h3 class="text-lg font-bold mb-4">Comparativo Investido vs Atual</h3>
-                <canvas id="comparisonChart"></canvas>
+            <div class="glass-card p-8">
+                <h3 class="text-md font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                    <span class="w-1.5 h-6 bg-amber-500 rounded-full"></span>
+                    Performance (Inv vs Atual)
+                </h3>
+                <div class="h-[300px]">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <div class="card p-6">
-            <h3 class="text-lg font-bold mb-4">Detalhamento dos Ativos</h3>
+        <!-- Table -->
+        <div class="glass-card overflow-hidden">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 class="text-md font-bold text-slate-800 dark:text-white">Detalhamento dos Ativos</h3>
+                <button onclick="fetchData()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="border-b dark:border-slate-700">
-                        <tr>
-                            <th class="py-3 px-2">Ticker</th>
-                            <th class="py-3 px-2 text-right">Qtd</th>
-                            <th class="py-3 px-2 text-right text-orange-600">Investido (Col J)</th>
-                            <th class="py-3 px-2 text-right text-blue-600">Valor Atual (Col K)</th>
-                            <th class="py-3 px-2 text-right">Resultado</th>
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-900/50 text-[10px] uppercase tracking-widest font-bold text-slate-400">
+                            <th class="py-4 px-6">Ativo</th>
+                            <th class="py-4 px-2 text-right">Qtd</th>
+                            <th class="py-4 px-2 text-right">Investido (J)</th>
+                            <th class="py-4 px-2 text-right">Atual (K)</th>
+                            <th class="py-4 px-6 text-right">Resultado</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body"></tbody>
+                    <tbody id="table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- Dynamic content -->
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -128,19 +207,22 @@
         let charts = {};
 
         async function fetchData() {
+            document.getElementById('loading-overlay').style.display = 'flex';
             Papa.parse(CSV_URL, {
                 download: true,
                 header: true,
                 skipEmptyLines: 'greedy',
                 complete: function(results) {
                     processData(results.data, results.meta.fields);
-                    document.getElementById('loading-overlay').style.display = 'none';
+                    setTimeout(() => {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                    }, 500);
                 }
             });
         }
 
         function parseNumeric(val) {
-            if (val === undefined || val === null || val === '') return 0;
+            if (!val) return 0;
             let str = val.toString().replace(/R\$|\s/g, '').trim();
             if (str.includes(',') && str.includes('.')) {
                 str = str.replace(/\./g, '').replace(',', '.');
@@ -152,19 +234,13 @@
         }
 
         function processData(data, fields) {
-            // Mapeamento por posição caso o nome falhe
-            // Coluna J = Índice 9, Coluna K = Índice 10 (base zero)
             const getFieldName = (index, fallbackTerms) => {
-                // Tenta pelo nome exato primeiro
                 let found = fields.find(f => fallbackTerms.some(t => f.toLowerCase().trim() === t));
-                // Se não achar nome exato, pega pela posição se existir
                 return found || fields[index];
             };
 
             const colAtivo = fields.find(f => f.toLowerCase().includes('ativo') || f.toLowerCase().includes('ticker')) || fields[0];
             const colQtd = fields.find(f => f.toLowerCase().includes('quantidade') || f.toLowerCase().includes('qtd')) || fields[1];
-            
-            // Forçando J e K
             const colInvestido = getFieldName(9, ['valor investido', 'investido']);
             const colValorAtual = getFieldName(10, ['valor atual', 'atual']);
 
@@ -174,11 +250,9 @@
             }).map(row => {
                 const investidoValue = parseNumeric(row[colInvestido]);
                 const atualValue = parseNumeric(row[colValorAtual]);
-                const qtdValue = parseNumeric(row[colQtd]);
-
                 return {
                     ativo: row[colAtivo].toString().trim().toUpperCase(),
-                    qtd: qtdValue,
+                    qtd: parseNumeric(row[colQtd]),
                     investido: investidoValue,
                     atual: atualValue,
                     lucro: atualValue - investidoValue
@@ -191,7 +265,7 @@
 
         function renderFilters() {
             const container = document.getElementById('filter-container');
-            container.innerHTML = '<button id="btn-all" class="btn-filter active" onclick="filterData(\'ALL\')">Todos</button>';
+            container.innerHTML = '<button id="btn-all" class="btn-filter active" onclick="filterData(\'ALL\')">Todos Ativos</button>';
             const assets = [...new Set(fullData.map(d => d.ativo))].sort();
             assets.forEach(asset => {
                 const btn = document.createElement('button');
@@ -220,9 +294,20 @@
 
             document.getElementById('kpi-total-patrimonio').innerText = format(totalPatrimonio);
             document.getElementById('kpi-total-investido').innerText = format(totalInvestido);
-            document.getElementById('kpi-total-proventos').innerText = format(totalLucro);
             
-            document.getElementById('kpi-total-proventos').className = `text-3xl font-bold mt-1 ${totalLucro >= 0 ? 'text-[#4caf50]' : 'text-red-500'}`;
+            const kpiLucro = document.getElementById('kpi-total-proventos');
+            const statusLucro = document.getElementById('lucro-status');
+            kpiLucro.innerText = format(totalLucro);
+            
+            if (totalLucro >= 0) {
+                kpiLucro.className = "text-3xl font-extrabold tracking-tight text-emerald-500";
+                statusLucro.className = "mt-4 inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-emerald-100 text-emerald-600";
+                statusLucro.innerText = "Em Alta";
+            } else {
+                kpiLucro.className = "text-3xl font-extrabold tracking-tight text-rose-500";
+                statusLucro.className = "mt-4 inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-rose-100 text-rose-600";
+                statusLucro.innerText = "Em Queda";
+            }
 
             renderTable();
             renderCharts();
@@ -234,14 +319,26 @@
             const fNum = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             filteredData.forEach(d => {
-                const corLucro = d.lucro >= 0 ? 'text-green-500' : 'text-red-500';
+                const perc = d.investido > 0 ? ((d.lucro / d.investido) * 100).toFixed(1) : 0;
+                const statusClass = d.lucro >= 0 ? 'status-positive' : 'status-negative';
+
                 tbody.innerHTML += `
-                    <tr class="border-b dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800">
-                        <td class="py-4 px-2 font-bold">${d.ativo}</td>
-                        <td class="py-4 px-2 text-right">${d.qtd}</td>
-                        <td class="py-4 px-2 text-right">R$ ${fNum(d.investido)}</td>
-                        <td class="py-4 px-2 text-right font-semibold">R$ ${fNum(d.atual)}</td>
-                        <td class="py-4 px-2 text-right font-semibold ${corLucro}">R$ ${fNum(d.lucro)}</td>
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="py-4 px-6">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-800 dark:text-slate-200">${d.ativo}</span>
+                                <span class="text-[10px] text-slate-400 font-medium">CÓDIGO ATIVO</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-2 text-right font-medium text-slate-500">${d.qtd}</td>
+                        <td class="py-4 px-2 text-right font-semibold text-slate-700 dark:text-slate-300">R$ ${fNum(d.investido)}</td>
+                        <td class="py-4 px-2 text-right font-bold text-indigo-600 dark:text-indigo-400">R$ ${fNum(d.atual)}</td>
+                        <td class="py-4 px-6 text-right">
+                            <div class="flex flex-col items-end">
+                                <span class="font-bold ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${fNum(d.lucro)}</span>
+                                <span class="status-pill ${statusClass} mt-1">${perc}%</span>
+                            </div>
+                        </td>
                     </tr>
                 `;
             });
@@ -249,56 +346,64 @@
 
         function renderCharts() {
             const isDark = document.body.classList.contains('dark-mode');
-            const textColor = isDark ? '#f8fafc' : '#1e293b';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
 
+            const chartConfig = (type, data, options = {}) => ({
+                type, data, options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600', size: 10 } } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } }
+                    },
+                    ...options
+                }
+            });
+
+            // Bar Chart
             const barCtx = document.getElementById('barChart').getContext('2d');
             if (charts.bar) charts.bar.destroy();
-            charts.bar = new Chart(barCtx, {
-                type: 'bar',
-                data: {
-                    labels: filteredData.map(d => d.ativo),
-                    datasets: [{
-                        label: 'Valor Atual (R$)',
-                        data: filteredData.map(d => d.atual),
-                        backgroundColor: '#1a237e',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    scales: {
-                        x: { ticks: { color: textColor } },
-                        y: { ticks: { color: textColor } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
+            charts.bar = new Chart(barCtx, chartConfig('bar', {
+                labels: filteredData.map(d => d.ativo),
+                datasets: [{
+                    data: filteredData.map(d => d.atual),
+                    backgroundColor: '#6366f1',
+                    borderRadius: 8,
+                    maxBarThickness: 32
+                }]
+            }, { indexAxis: 'y' }));
 
+            // Comparison Chart
             const compCtx = document.getElementById('comparisonChart').getContext('2d');
             if (charts.comp) charts.comp.destroy();
-            charts.comp = new Chart(compCtx, {
-                type: 'bar',
-                data: {
-                    labels: filteredData.map(d => d.ativo),
-                    datasets: [
-                        { label: 'Investido', data: filteredData.map(d => d.investido), backgroundColor: '#fbc02d' },
-                        { label: 'Atual', data: filteredData.map(d => d.atual), backgroundColor: '#4caf50' }
-                    ]
-                },
-                options: {
-                    scales: {
-                        x: { ticks: { color: textColor } },
-                        y: { ticks: { color: textColor } }
-                    },
-                    plugins: { legend: { labels: { color: textColor } } }
-                }
-            });
+            charts.comp = new Chart(compCtx, chartConfig('bar', {
+                labels: filteredData.map(d => d.ativo),
+                datasets: [
+                    { label: 'Investido', data: filteredData.map(d => d.investido), backgroundColor: '#f59e0b', borderRadius: 4 },
+                    { label: 'Atual', data: filteredData.map(d => d.atual), backgroundColor: '#10b981', borderRadius: 4 }
+                ]
+            }, { 
+                plugins: { legend: { display: true, position: 'top', align: 'end', labels: { color: textColor, usePointStyle: true, font: { size: 11, weight: '700' } } } }
+            }));
         }
 
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            document.body.classList.toggle('dark-mode');
-            updateUI();
+        function setTheme(theme) {
+            const body = document.body;
+            const sun = document.getElementById('sun-icon');
+            const moon = document.getElementById('moon-icon');
+            
+            if (theme === 'dark') {
+                body.className = 'dark-mode';
+                moon.classList.add('active');
+                sun.classList.remove('active');
+            } else {
+                body.className = 'light-mode';
+                sun.classList.add('active');
+                moon.classList.remove('active');
+            }
+            if (fullData.length > 0) renderCharts();
         }
 
         window.onload = fetchData;
