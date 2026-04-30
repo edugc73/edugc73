@@ -61,8 +61,6 @@
         }
         .light-mode #loading-overlay { background: var(--bg-light); }
 
-        .status-pill { padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
@@ -70,6 +68,28 @@
         .group-header {
             background: rgba(99, 102, 241, 0.05);
             border-left: 4px solid var(--brand-primary);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .group-header:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content.expanded {
+            max-height: 2000px; /* Valor alto o suficiente para acomodar a tabela */
+        }
+
+        .chevron-icon {
+            transition: transform 0.3s;
+        }
+        .expanded + .collapsible-content .chevron-icon, /* Not used this way but for reference */
+        .group-header.active .chevron-icon {
+            transform: rotate(180deg);
         }
     </style>
 </head>
@@ -143,13 +163,13 @@
 
         <!-- Seção de Lista de Ativos Agrupada -->
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ativos Agrupados por Categoria</h3>
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Minha Carteira (Clique para expandir)</h3>
             <div class="flex gap-4 items-center">
                 <input type="text" id="searchInput" placeholder="Filtrar ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-lg px-3 py-1 text-xs outline-none focus:border-indigo-500 w-48">
             </div>
         </div>
 
-        <div id="assetsContainer" class="space-y-8">
+        <div id="assetsContainer" class="space-y-4">
             <!-- As tabelas por tipo serão geradas aqui -->
         </div>
     </main>
@@ -238,19 +258,23 @@
             renderCharts();
         }
 
+        function toggleGroup(header) {
+            const content = header.nextElementSibling;
+            header.classList.toggle('active');
+            content.classList.toggle('expanded');
+        }
+
         function renderAssetGroups() {
             const container = document.getElementById('assetsContainer');
             container.innerHTML = '';
             const searchTerm = document.getElementById('searchInput').value.toUpperCase();
             
-            // Agrupar dados por tipo
             const groups = fullData.reduce((acc, curr) => {
                 if (!acc[curr.tipo]) acc[curr.tipo] = [];
                 if (curr.ativo.includes(searchTerm)) acc[curr.tipo].push(curr);
                 return acc;
             }, {});
 
-            // Ordenar tipos alfabeticamente
             const sortedTypes = Object.keys(groups).sort();
 
             sortedTypes.forEach(tipo => {
@@ -258,9 +282,7 @@
 
                 const assets = groups[tipo].sort((a, b) => b.atual - a.atual);
                 const subtotalAtual = assets.reduce((s, a) => s + a.atual, 0);
-                const subtotalInvestido = assets.reduce((s, a) => s + a.investido, 0);
-                const subtotalLucro = subtotalAtual - subtotalInvestido;
-
+                
                 const section = document.createElement('div');
                 section.className = 'glass-card overflow-hidden shadow-sm border border-black/5 dark:border-white/5';
                 
@@ -278,30 +300,37 @@
                 }).join('');
 
                 section.innerHTML = `
-                    <div class="group-header p-4 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <span class="bg-indigo-600 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">${tipo}</span>
-                            <span class="text-xs font-bold text-slate-500">${assets.length} Ativo(s)</span>
+                    <div class="group-header p-4 flex justify-between items-center" onclick="toggleGroup(this)">
+                        <div class="flex items-center gap-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500 chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                            <div class="flex items-center gap-3">
+                                <span class="bg-indigo-600 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">${tipo}</span>
+                                <span class="text-xs font-bold text-slate-500">${assets.length} Ativo(s)</span>
+                            </div>
                         </div>
                         <div class="text-right">
                             <span class="text-[10px] text-slate-400 font-bold uppercase block">Subtotal</span>
                             <span class="text-sm font-black">${subtotalAtual.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="text-[9px] font-black text-slate-400 uppercase border-b border-black/5 dark:border-white/5">
-                                    <th class="py-3 px-6">Ativo</th>
-                                    <th class="py-3 px-4 text-right">P. Médio</th>
-                                    <th class="py-3 px-4 text-right">P. Atual</th>
-                                    <th class="py-3 px-4 text-right">Total</th>
-                                    <th class="py-3 px-4 text-right">Peso</th>
-                                    <th class="py-3 px-6 text-right">Resultado</th>
-                                </tr>
-                            </thead>
-                            <tbody>${tableRows}</tbody>
-                        </table>
+                    <div class="collapsible-content">
+                        <div class="overflow-x-auto border-t border-black/5 dark:border-white/5">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="text-[9px] font-black text-slate-400 uppercase border-b border-black/5 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/50">
+                                        <th class="py-3 px-6">Ativo</th>
+                                        <th class="py-3 px-4 text-right">P. Médio</th>
+                                        <th class="py-3 px-4 text-right">P. Atual</th>
+                                        <th class="py-3 px-4 text-right">Total</th>
+                                        <th class="py-3 px-4 text-right">Peso</th>
+                                        <th class="py-3 px-6 text-right">Resultado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tableRows}</tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
                 container.appendChild(section);
