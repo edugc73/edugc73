@@ -10,15 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand-primary: #6366f1; /* Indigo */
-            --brand-secondary: #f59e0b; /* Amber */
-            --brand-success: #10b981; /* Emerald */
-            --brand-danger: #ef4444; /* Rose */
-            
+            --brand-primary: #6366f1;
+            --brand-secondary: #f59e0b;
+            --brand-success: #10b981;
+            --brand-danger: #ef4444;
             --bg-light: #f8fafc;
             --card-light: #ffffff;
             --text-light: #0f172a;
-
             --bg-dark: #0b0f1a;
             --card-dark: #161e31;
             --text-dark: #f1f5f9;
@@ -29,35 +27,39 @@
         body.light-mode { background-color: var(--bg-light); color: var(--text-light); }
         body.dark-mode { background-color: var(--bg-dark); color: var(--text-dark); }
 
-        /* Glassmorphism Effect */
         .glass-card {
             border-radius: 1.25rem;
             border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
         }
         .light-mode .glass-card { background-color: var(--card-light); }
         .dark-mode .glass-card { background-color: var(--card-dark); border-color: rgba(255, 255, 255, 0.05); }
 
-        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1); }
-
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark-mode ::-webkit-scrollbar-thumb { background: #334155; }
 
         .btn-filter {
-            padding: 0.6rem 1.2rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem;
+            padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.75rem;
             transition: all 0.2s; border: 1px solid #e2e8f0; background: white; color: #64748b;
+            white-space: nowrap;
         }
         .dark-mode .btn-filter { background: #1e293b; border-color: #334155; color: #94a3b8; }
         
         .btn-filter.active { 
             background: var(--brand-primary); color: white; border-color: var(--brand-primary);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
+
+        .search-input {
+            width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border-radius: 0.75rem;
+            border: 1px solid #e2e8f0; outline: none; font-size: 0.875rem; transition: all 0.2s;
+        }
+        .dark-mode .search-input { background: #1e293b; border-color: #334155; color: white; }
+        .search-input:focus { border-color: var(--brand-primary); ring: 2px; ring-color: #6366f1; }
 
         .theme-toggle-wrapper {
             background: #e2e8f0; padding: 4px; border-radius: 50px; display: flex; align-items: center; gap: 4px;
@@ -73,16 +75,18 @@
         }
         .dark-mode #loading-overlay { background: var(--bg-dark); }
         
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
         .status-positive { background: rgba(16, 185, 129, 0.1); color: var(--brand-success); }
         .status-negative { background: rgba(239, 68, 68, 0.1); color: var(--brand-danger); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="light-mode">
 
     <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-        <div class="text-lg font-bold text-slate-700 dark:text-slate-200">Sincronizando Carteira...</div>
+        <div class="text-lg font-bold text-slate-700 dark:text-slate-200">Carregando seus dados...</div>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
@@ -94,7 +98,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Gonça<span class="text-indigo-600">Invest</span></h1>
-                <p class="text-xs text-slate-500 font-medium">Dashboard de Ativos</p>
+                <p class="text-xs text-slate-500 font-medium">Gestão de Carteira</p>
             </div>
         </div>
         
@@ -113,58 +117,68 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
-        <!-- KPI Row -->
+        <!-- Dashboard Header -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="glass-card p-6 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-0">
-                <p class="text-indigo-100 text-sm font-semibold mb-1 opacity-80 uppercase tracking-wider">Patrimônio Atual</p>
+            <div class="glass-card p-6 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white">
+                <p class="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">Patrimônio Atual</p>
                 <h2 id="kpi-total-patrimonio" class="text-3xl font-extrabold tracking-tight">R$ 0,00</h2>
-                <div class="mt-4 flex items-center gap-2 text-indigo-100 text-xs font-medium">
-                    <span class="bg-indigo-400/30 px-2 py-1 rounded-md">Coluna K</span>
-                    <span>Total da carteira hoje</span>
+                <div class="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase">
+                    <span class="bg-white/20 px-2 py-0.5 rounded">Coluna K</span>
+                    <span>Valor de Mercado</span>
+                </div>
+            </div>
+            <div class="glass-card p-6 border-l-4 border-amber-500">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Investido</p>
+                <h2 id="kpi-total-investido" class="text-3xl font-extrabold tracking-tight">R$ 0,00</h2>
+                <p class="mt-4 text-[10px] font-bold text-amber-600 uppercase">Capital Aplicado (Col J)</p>
+            </div>
+            <div class="glass-card p-6 border-l-4 border-emerald-500">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Resultado Líquido</p>
+                <h2 id="kpi-total-proventos" class="text-3xl font-extrabold tracking-tight">R$ 0,00</h2>
+                <div id="lucro-status" class="mt-4 inline-block text-[10px] px-2 py-0.5 rounded font-bold uppercase">Análise</div>
+            </div>
+        </div>
+
+        <!-- Smart Filter Section -->
+        <div class="glass-card p-6 mb-10">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h3 class="text-sm font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Navegação de Ativos</h3>
+                    <p id="asset-count" class="text-xs text-slate-400 mt-1">Carregando ativos...</p>
+                </div>
+                <div class="relative w-full md:w-64">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input type="text" id="assetSearch" class="search-input" placeholder="Buscar ticker (ex: PETR4)..." oninput="handleSearch()">
                 </div>
             </div>
             
-            <div class="glass-card p-6 border-l-4 border-amber-500">
-                <p class="text-slate-500 dark:text-slate-400 text-sm font-semibold mb-1 uppercase tracking-wider">Total Investido</p>
-                <h2 id="kpi-total-investido" class="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">R$ 0,00</h2>
-                <p class="mt-4 text-xs font-bold text-amber-600 uppercase">Capital Aplicado (Col J)</p>
-            </div>
-            
-            <div class="glass-card p-6 border-l-4 border-emerald-500">
-                <p class="text-slate-500 dark:text-slate-400 text-sm font-semibold mb-1 uppercase tracking-wider">Lucro / Prejuízo</p>
-                <h2 id="kpi-total-proventos" class="text-3xl font-extrabold tracking-tight">R$ 0,00</h2>
-                <div id="lucro-status" class="mt-4 inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Consolidado</div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-extrabold text-slate-400 uppercase tracking-widest">Filtros Rápidos</h3>
-                <span class="text-xs font-bold text-indigo-600 cursor-pointer hover:underline" onclick="filterData('ALL')">Limpar tudo</span>
-            </div>
-            <div id="filter-container" class="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+            <div id="filter-container" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                 <button id="btn-all" class="btn-filter active" onclick="filterData('ALL')">Todos Ativos</button>
+                <!-- Filtros dinâmicos entram aqui -->
             </div>
         </div>
 
-        <!-- Charts -->
+        <!-- Insights -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-            <div class="glass-card p-8">
-                <h3 class="text-md font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                    <span class="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
-                    Alocação por Ativo
+            <div class="glass-card p-6">
+                <h3 class="text-sm font-extrabold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-indigo-600 rounded-full"></span>
+                    Concentração por Ativo
                 </h3>
-                <div class="h-[300px]">
+                <div class="h-72">
                     <canvas id="barChart"></canvas>
                 </div>
             </div>
-            <div class="glass-card p-8">
-                <h3 class="text-md font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                    <span class="w-1.5 h-6 bg-amber-500 rounded-full"></span>
-                    Performance (Inv vs Atual)
+            <div class="glass-card p-6">
+                <h3 class="text-sm font-extrabold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <span class="w-1 h-4 bg-amber-500 rounded-full"></span>
+                    Performance Individual
                 </h3>
-                <div class="h-[300px]">
+                <div class="h-72">
                     <canvas id="comparisonChart"></canvas>
                 </div>
             </div>
@@ -172,27 +186,28 @@
 
         <!-- Table -->
         <div class="glass-card overflow-hidden">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 class="text-md font-bold text-slate-800 dark:text-white">Detalhamento dos Ativos</h3>
-                <button onclick="fetchData()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20">
+                <h3 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-widest">Detalhamento Financeiro</h3>
+                <button onclick="fetchData()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
+                    Sincronizar
                 </button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="bg-slate-50 dark:bg-slate-900/50 text-[10px] uppercase tracking-widest font-bold text-slate-400">
+                        <tr class="text-[10px] uppercase tracking-tighter font-black text-slate-400 border-b border-slate-100 dark:border-slate-800">
                             <th class="py-4 px-6">Ativo</th>
                             <th class="py-4 px-2 text-right">Qtd</th>
                             <th class="py-4 px-2 text-right">Investido (J)</th>
-                            <th class="py-4 px-2 text-right">Atual (K)</th>
+                            <th class="py-4 px-2 text-right">Valor Atual (K)</th>
                             <th class="py-4 px-6 text-right">Resultado</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-                        <!-- Dynamic content -->
+                    <tbody id="table-body" class="divide-y divide-slate-100 dark:divide-slate-800/50 text-sm">
+                        <!-- Conteúdo Dinâmico -->
                     </tbody>
                 </table>
             </div>
@@ -205,6 +220,7 @@
         let fullData = [];
         let filteredData = [];
         let charts = {};
+        let currentSearch = "";
 
         async function fetchData() {
             document.getElementById('loading-overlay').style.display = 'flex';
@@ -216,7 +232,7 @@
                     processData(results.data, results.meta.fields);
                     setTimeout(() => {
                         document.getElementById('loading-overlay').style.display = 'none';
-                    }, 500);
+                    }, 400);
                 }
             });
         }
@@ -234,28 +250,23 @@
         }
 
         function processData(data, fields) {
-            const getFieldName = (index, fallbackTerms) => {
-                let found = fields.find(f => fallbackTerms.some(t => f.toLowerCase().trim() === t));
-                return found || fields[index];
-            };
-
             const colAtivo = fields.find(f => f.toLowerCase().includes('ativo') || f.toLowerCase().includes('ticker')) || fields[0];
             const colQtd = fields.find(f => f.toLowerCase().includes('quantidade') || f.toLowerCase().includes('qtd')) || fields[1];
-            const colInvestido = getFieldName(9, ['valor investido', 'investido']);
-            const colValorAtual = getFieldName(10, ['valor atual', 'atual']);
+            const colInvestido = fields[9]; // J
+            const colValorAtual = fields[10]; // K
 
             fullData = data.filter(row => {
                 const ticker = row[colAtivo];
                 return ticker && ticker.trim() !== '' && !ticker.toLowerCase().includes('total');
             }).map(row => {
-                const investidoValue = parseNumeric(row[colInvestido]);
-                const atualValue = parseNumeric(row[colValorAtual]);
+                const inv = parseNumeric(row[colInvestido]);
+                const atu = parseNumeric(row[colValorAtual]);
                 return {
                     ativo: row[colAtivo].toString().trim().toUpperCase(),
                     qtd: parseNumeric(row[colQtd]),
-                    investido: investidoValue,
-                    atual: atualValue,
-                    lucro: atualValue - investidoValue
+                    investido: inv,
+                    atual: atu,
+                    lucro: atu - inv
                 };
             }).filter(item => item.ativo !== '' && (item.investido !== 0 || item.atual !== 0));
 
@@ -265,15 +276,40 @@
 
         function renderFilters() {
             const container = document.getElementById('filter-container');
-            container.innerHTML = '<button id="btn-all" class="btn-filter active" onclick="filterData(\'ALL\')">Todos Ativos</button>';
             const assets = [...new Set(fullData.map(d => d.ativo))].sort();
+            
+            document.getElementById('asset-count').innerText = `${assets.length} ativos encontrados na carteira`;
+
+            // Mantém apenas o botão "Todos" e adiciona os novos
+            container.innerHTML = '<button id="btn-all" class="btn-filter active" onclick="filterData(\'ALL\')">Todos Ativos</button>';
+            
             assets.forEach(asset => {
                 const btn = document.createElement('button');
-                btn.className = 'btn-filter';
+                btn.className = 'btn-filter asset-chip';
                 btn.innerText = asset;
+                btn.dataset.ticker = asset;
                 btn.onclick = (e) => filterData(asset, e.target);
                 container.appendChild(btn);
             });
+        }
+
+        function handleSearch() {
+            const term = document.getElementById('assetSearch').value.toUpperCase();
+            const chips = document.querySelectorAll('.asset-chip');
+            
+            chips.forEach(chip => {
+                const ticker = chip.dataset.ticker;
+                if (ticker.includes(term)) {
+                    chip.style.display = 'block';
+                } else {
+                    chip.style.display = 'none';
+                }
+            });
+
+            // Se o usuário apagar tudo e apertar Enter ou limpar, volta ao "ALL" se nada estiver selecionado
+            if (term === "") {
+                // Opcional: Auto-selecionar 'Todos' se limpar a busca?
+            }
         }
 
         function filterData(asset, btnElement) {
@@ -300,13 +336,13 @@
             kpiLucro.innerText = format(totalLucro);
             
             if (totalLucro >= 0) {
-                kpiLucro.className = "text-3xl font-extrabold tracking-tight text-emerald-500";
-                statusLucro.className = "mt-4 inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-emerald-100 text-emerald-600";
-                statusLucro.innerText = "Em Alta";
+                kpiLucro.className = "text-3xl font-extrabold text-emerald-500 tracking-tight";
+                statusLucro.className = "mt-4 inline-block text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-emerald-500/10 text-emerald-500";
+                statusLucro.innerText = "Lucro Total";
             } else {
-                kpiLucro.className = "text-3xl font-extrabold tracking-tight text-rose-500";
-                statusLucro.className = "mt-4 inline-block text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-rose-100 text-rose-600";
-                statusLucro.innerText = "Em Queda";
+                kpiLucro.className = "text-3xl font-extrabold text-rose-500 tracking-tight";
+                statusLucro.className = "mt-4 inline-block text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-rose-500/10 text-rose-500";
+                statusLucro.innerText = "Prejuízo Total";
             }
 
             renderTable();
@@ -323,16 +359,16 @@
                 const statusClass = d.lucro >= 0 ? 'status-positive' : 'status-negative';
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                         <td class="py-4 px-6">
                             <div class="flex flex-col">
-                                <span class="font-bold text-slate-800 dark:text-slate-200">${d.ativo}</span>
-                                <span class="text-[10px] text-slate-400 font-medium">CÓDIGO ATIVO</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-100">${d.ativo}</span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase">Ação / FII</span>
                             </div>
                         </td>
                         <td class="py-4 px-2 text-right font-medium text-slate-500">${d.qtd}</td>
-                        <td class="py-4 px-2 text-right font-semibold text-slate-700 dark:text-slate-300">R$ ${fNum(d.investido)}</td>
-                        <td class="py-4 px-2 text-right font-bold text-indigo-600 dark:text-indigo-400">R$ ${fNum(d.atual)}</td>
+                        <td class="py-4 px-2 text-right text-slate-600 dark:text-slate-300">R$ ${fNum(d.investido)}</td>
+                        <td class="py-4 px-2 text-right font-bold text-slate-800 dark:text-white">R$ ${fNum(d.atual)}</td>
                         <td class="py-4 px-6 text-right">
                             <div class="flex flex-col items-end">
                                 <span class="font-bold ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${fNum(d.lucro)}</span>
@@ -349,60 +385,60 @@
             const textColor = isDark ? '#94a3b8' : '#64748b';
             const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
 
-            const chartConfig = (type, data, options = {}) => ({
-                type, data, options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600', size: 10 } } },
-                        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } }
-                    },
-                    ...options
+            const baseOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: textColor, font: { size: 9, weight: 'bold' } } },
+                    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 9 } } }
                 }
-            });
+            };
 
-            // Bar Chart
             const barCtx = document.getElementById('barChart').getContext('2d');
             if (charts.bar) charts.bar.destroy();
-            charts.bar = new Chart(barCtx, chartConfig('bar', {
-                labels: filteredData.map(d => d.ativo),
-                datasets: [{
-                    data: filteredData.map(d => d.atual),
-                    backgroundColor: '#6366f1',
-                    borderRadius: 8,
-                    maxBarThickness: 32
-                }]
-            }, { indexAxis: 'y' }));
+            charts.bar = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: filteredData.map(d => d.ativo),
+                    datasets: [{
+                        data: filteredData.map(d => d.atual),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6,
+                        maxBarThickness: 30
+                    }]
+                },
+                options: { ...baseOptions, indexAxis: 'y' }
+            });
 
-            // Comparison Chart
             const compCtx = document.getElementById('comparisonChart').getContext('2d');
             if (charts.comp) charts.comp.destroy();
-            charts.comp = new Chart(compCtx, chartConfig('bar', {
-                labels: filteredData.map(d => d.ativo),
-                datasets: [
-                    { label: 'Investido', data: filteredData.map(d => d.investido), backgroundColor: '#f59e0b', borderRadius: 4 },
-                    { label: 'Atual', data: filteredData.map(d => d.atual), backgroundColor: '#10b981', borderRadius: 4 }
-                ]
-            }, { 
-                plugins: { legend: { display: true, position: 'top', align: 'end', labels: { color: textColor, usePointStyle: true, font: { size: 11, weight: '700' } } } }
-            }));
+            charts.comp = new Chart(compCtx, {
+                type: 'bar',
+                data: {
+                    labels: filteredData.map(d => d.ativo),
+                    datasets: [
+                        { label: 'Inv.', data: filteredData.map(d => d.investido), backgroundColor: '#f59e0b', borderRadius: 4 },
+                        { label: 'Atu.', data: filteredData.map(d => d.atual), backgroundColor: '#10b981', borderRadius: 4 }
+                    ]
+                },
+                options: { 
+                    ...baseOptions,
+                    plugins: { 
+                        legend: { 
+                            display: true, 
+                            position: 'top', 
+                            labels: { color: textColor, boxWidth: 10, font: { size: 10, weight: 'bold' } } 
+                        } 
+                    } 
+                }
+            });
         }
 
         function setTheme(theme) {
-            const body = document.body;
-            const sun = document.getElementById('sun-icon');
-            const moon = document.getElementById('moon-icon');
-            
-            if (theme === 'dark') {
-                body.className = 'dark-mode';
-                moon.classList.add('active');
-                sun.classList.remove('active');
-            } else {
-                body.className = 'light-mode';
-                sun.classList.add('active');
-                moon.classList.remove('active');
-            }
+            document.body.className = theme === 'dark' ? 'dark-mode' : 'light-mode';
+            document.getElementById('sun-icon').classList.toggle('active', theme === 'light');
+            document.getElementById('moon-icon').classList.toggle('active', theme === 'dark');
             if (fullData.length > 0) renderCharts();
         }
 
