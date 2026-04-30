@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GonçaInvest | Premium Analytics</title>
+    <title>GonçaInvest | Premium Analytics v4.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -32,31 +32,6 @@
         }
         .light-mode .glass-card { background-color: var(--card-light); border-color: #e2e8f0; }
         .dark-mode .glass-card { background-color: var(--card-dark); }
-
-        .theme-switch {
-            background: #e2e8f0;
-            padding: 4px;
-            border-radius: 50px;
-            display: flex;
-            gap: 4px;
-            cursor: pointer;
-        }
-        .dark-mode .theme-switch { background: #1e293b; }
-        .theme-btn {
-            padding: 6px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .light-mode .sun-icon { background: white; color: #f59e0b; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .dark-mode .moon-icon { background: #334155; color: #818cf8; }
-
-        #loading-overlay {
-            position: fixed; inset: 0; background: var(--bg-dark);
-            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
-        }
-        .light-mode #loading-overlay { background: var(--bg-light); }
 
         .group-header {
             background: rgba(99, 102, 241, 0.05);
@@ -87,20 +62,26 @@
             text-transform: uppercase;
         }
 
-        .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
-        
-        /* Estilo para simular profundidade no gráfico de rosca */
-        .chart-container-3d {
-            position: relative;
-            filter: drop-shadow(0px 10px 8px rgba(0,0,0,0.2));
+        .theme-switch { background: #e2e8f0; padding: 4px; border-radius: 50px; display: flex; gap: 4px; cursor: pointer; }
+        .dark-mode .theme-switch { background: #1e293b; }
+        .theme-btn { padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .light-mode .sun-icon { background: white; color: #f59e0b; }
+        .dark-mode .moon-icon { background: #334155; color: #818cf8; }
+
+        #loading-overlay {
+            position: fixed; inset: 0; background: var(--bg-dark);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
+        .light-mode #loading-overlay { background: var(--bg-light); }
+
+        .chart-container-3d { position: relative; filter: drop-shadow(0px 10px 8px rgba(0,0,0,0.2)); }
     </style>
 </head>
 <body class="dark-mode">
 
     <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Carregando Dashboard 3.0...</p>
+        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">A preparar o seu futuro...</p>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
@@ -112,19 +93,13 @@
             </div>
             <div>
                 <h1 class="text-2xl font-black tracking-tighter">Gonça<span class="text-indigo-500">Invest</span></h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">Asset Management System</p>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">Sistemas de Gestão Avançada</p>
             </div>
         </div>
         
-        <div class="flex items-center gap-4">
-            <div class="theme-switch" onclick="toggleTheme()">
-                <div class="theme-btn sun-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.657 7.657l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                </div>
-                <div class="theme-btn moon-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                </div>
-            </div>
+        <div class="theme-switch" onclick="toggleTheme()">
+            <div class="theme-btn sun-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.657 7.657l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg></div>
+            <div class="theme-btn moon-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg></div>
         </div>
     </nav>
 
@@ -132,109 +107,99 @@
         
         <!-- KPIs Principais -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="glass-card p-6 border-b-4 border-indigo-500 relative glow-indigo">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Líquido</p>
+            <div class="glass-card p-6 border-b-4 border-indigo-500 relative">
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Património Líquido</p>
                 <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
-                <div id="perc-total" class="mt-2 text-[10px] font-bold">Aguardando dados...</div>
+                <div id="perc-total" class="mt-2 text-[10px] font-bold">A carregar...</div>
             </div>
 
             <div class="glass-card p-6 border-b-4 border-slate-400">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total de Aportes</p>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Aportes Totais</p>
                 <h2 id="total-investido" class="text-3xl font-black">R$ 0,00</h2>
-                <p class="mt-2 text-[10px] text-slate-400 font-bold uppercase">Total tirado do bolso</p>
+                <p class="mt-2 text-[10px] text-slate-400 font-bold uppercase">Capital Próprio</p>
             </div>
 
             <div class="glass-card p-6 border-b-4 border-amber-500">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Dividendos 2026</p>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Proventos 2026</p>
                 <h2 id="total-proventos" class="text-3xl font-black text-amber-500">R$ 0,00</h2>
                 <div class="mt-2 flex items-center gap-2">
-                    <span id="yield-on-cost" class="stat-badge bg-amber-500/10 text-amber-500">YoC: 0.00%</span>
-                    <span id="monthly-avg" class="stat-badge bg-slate-500/10 text-slate-500">Média: R$ 0</span>
+                    <span id="monthly-avg" class="stat-badge bg-amber-500/10 text-amber-500">Média: R$ 0</span>
                 </div>
             </div>
 
             <div class="glass-card p-6 border-b-4" id="kpi-resultado-border">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Resultado Líquido</p>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Lucro/Prejuízo</p>
                 <h2 id="total-resultado" class="text-3xl font-black">R$ 0,00</h2>
-                <p id="resultado-label" class="mt-2 text-[10px] font-black uppercase">Saldo da Carteira</p>
+                <p id="resultado-label" class="mt-2 text-[10px] font-black uppercase">Resultado da Carteira</p>
             </div>
         </div>
 
-        <!-- Meta e Snowball -->
+        <!-- Meta e Inteligência -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            <div class="glass-card p-7 lg:col-span-2 flex flex-col justify-center relative overflow-hidden">
-                <div class="relative z-10">
-                    <div class="flex justify-between items-end mb-4">
-                        <div>
-                            <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Rumo à Independência</h4>
-                            <p class="text-3xl font-black">Meta: R$ 1.000.000</p>
-                        </div>
-                        <div class="text-right">
-                            <span id="meta-percent" class="text-2xl font-black text-indigo-500">0%</span>
-                        </div>
+            <div class="glass-card p-7 lg:col-span-2 relative overflow-hidden">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Objetivo Final</h4>
+                        <p class="text-3xl font-black">Meta: R$ 1.000.000</p>
                     </div>
-                    <div class="progress-bar-bg mb-2">
-                        <div id="meta-progress" class="progress-bar-fill" style="width: 0%"></div>
-                    </div>
-                    <p id="meta-restante" class="text-[10px] text-slate-500 font-bold uppercase text-right">Falta R$ 0,00</p>
+                    <span id="meta-percent" class="text-2xl font-black text-indigo-500">0%</span>
                 </div>
+                <div class="progress-bar-bg mb-2"><div id="meta-progress" class="progress-bar-fill" style="width: 0%"></div></div>
+                <p id="meta-restante" class="text-[10px] text-slate-500 font-bold uppercase text-right">A carregar...</p>
             </div>
 
-            <div class="glass-card p-6 flex flex-col justify-center bg-emerald-500/[0.03] border-l-4 border-emerald-500">
-                <h4 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-3">Reinvestimento Automático</h4>
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    </div>
-                    <div>
-                        <p class="text-[11px] text-slate-500 font-bold uppercase">Poder de compra mensal:</p>
-                        <p id="snowball-metric" class="text-xl font-black text-emerald-500 leading-tight">--</p>
-                    </div>
+            <div class="glass-card p-6 bg-emerald-500/[0.03] border-l-4 border-emerald-500 flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase">Efeito Bola de Neve</p>
+                    <p id="snowball-metric" class="text-lg font-black text-emerald-500">A calcular...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Gráficos Principais -->
+        <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <div class="glass-card p-6">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Comparativo de Proventos</h3>
-                        <p class="text-xs font-bold text-slate-400">Análise Temporal Interanual</p>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 bg-indigo-500 rounded-sm"></span><span class="text-[10px] font-bold">2026</span></div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 bg-slate-400 rounded-sm"></span><span class="text-[10px] font-bold">2025</span></div>
-                    </div>
-                </div>
-                <div class="h-80"><canvas id="chartDividendosAnual"></canvas></div>
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Comparativo Anual</h3>
+                <div class="h-72"><canvas id="chartDividendosAnual"></canvas></div>
             </div>
             
             <div class="glass-card p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Alocação de Ativos</h3>
-                        <p class="text-xs font-bold text-slate-400">Distribuição Estratégica</p>
-                    </div>
-                </div>
-                <div class="h-80 chart-container-3d"><canvas id="chartAlocacaoTipo"></canvas></div>
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Alocação Estratégica</h3>
+                <div class="h-72 chart-container-3d"><canvas id="chartAlocacaoTipo"></canvas></div>
             </div>
         </div>
 
-        <!-- Performance Chart -->
-        <div class="glass-card p-6 mb-10">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 text-center md:text-left">Performance Individual dos Ativos</h3>
-            <div class="h-80"><canvas id="chartPerformance"></canvas></div>
+        <!-- Sugestões de Rebalanceamento e Calendário -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="glass-card p-6 border-t-4 border-indigo-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Rebalanceamento Sugerido</h3>
+                    <span class="text-[9px] font-bold text-slate-400">Peso Ideal: 10% por ativo</span>
+                </div>
+                <div id="rebalance-list" class="space-y-3">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <div class="glass-card p-6 border-t-4 border-amber-500">
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Próximos Pagamentos (Expectativa)</h3>
+                <div id="calendar-list" class="grid grid-cols-4 gap-2 text-center">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
         </div>
 
-        <!-- Filtro e Lista -->
+        <!-- Filtro e Lista de Ativos -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-            <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">Meus Ativos</h3>
+            <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">Gestão de Ativos</h3>
             <div class="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                <input type="text" id="searchInput" placeholder="Filtrar por ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30 w-full md:w-64 font-bold">
+                <input type="text" id="searchInput" placeholder="Filtrar ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30 w-full md:w-64 font-bold">
                 <div class="flex gap-2">
-                    <button onclick="expandAll()" class="px-4 py-2.5 text-[10px] font-black uppercase bg-indigo-600/10 text-indigo-500 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">Expandir</button>
-                    <button onclick="collapseAll()" class="px-4 py-2.5 text-[10px] font-black uppercase bg-slate-600/10 text-slate-500 rounded-xl hover:bg-slate-600 hover:text-white transition-all">Recolher</button>
+                    <button onclick="expandAll()" class="px-4 py-2 text-[10px] font-black uppercase bg-indigo-600/10 text-indigo-500 rounded-lg">Expandir</button>
+                    <button onclick="collapseAll()" class="px-4 py-2 text-[10px] font-black uppercase bg-slate-600/10 text-slate-500 rounded-lg">Recolher</button>
                 </div>
             </div>
         </div>
@@ -294,8 +259,7 @@
                 const ano = row[0] ? row[0].toString().trim() : null;
                 if (!ano) return;
                 dividendosHistorico[ano] = NOMES_MESES.map((nome, index) => ({
-                    mes: nome,
-                    valor: parseNum(row[index + 1])
+                    mes: nome, valor: parseNum(row[index + 1])
                 }));
             });
         }
@@ -312,7 +276,8 @@
                     investidoBolso: parseNum(row[9]),
                     atual: parseNum(row[10]),
                     lucro: parseNum(row[10]) - parseNum(row[9]),
-                    peso: 0
+                    peso: 0,
+                    meta: 10 // Meta padrão de 10% para rebalanceamento
                 };
             }).filter(d => d !== null);
             updateDashboard();
@@ -322,45 +287,86 @@
             const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
             const totalDoBolso = fullData.reduce((acc, curr) => acc + curr.investidoBolso, 0);
             
-            // Dados de 2026
             const dados2026 = dividendosHistorico["2026"] || NOMES_MESES.map(m => ({mes: m, valor: 0}));
             const totalProventosAnual = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
-            
-            // Cálculo da média: divide apenas pelos meses que possuem valor cadastrado
             const mesesAtivos = dados2026.filter(d => d.valor > 0).length || 1;
             const mediaMensal = totalProventosAnual / mesesAtivos;
 
             const totalLucro = totalPatrimonio - totalDoBolso;
             const rentabilidadeGlobal = totalDoBolso > 0 ? (totalLucro / totalDoBolso) * 100 : 0;
-            const yocGlobal = totalDoBolso > 0 ? (totalProventosAnual / totalDoBolso) * 100 : 0;
 
+            document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
+            document.getElementById('total-investido').innerText = fmt(totalDoBolso);
+            document.getElementById('total-proventos').innerText = fmt(totalProventosAnual);
+            document.getElementById('total-resultado').innerText = fmt(totalLucro);
+            document.getElementById('monthly-avg').innerText = `Média: R$ ${mediaMensal.toFixed(0)}`;
+            
             const percMeta = Math.min((totalPatrimonio / META_FINAL) * 100, 100);
             document.getElementById('meta-progress').style.width = `${percMeta}%`;
             document.getElementById('meta-percent').innerText = `${percMeta.toFixed(2)}%`;
             document.getElementById('meta-restante').innerText = `Falta R$ ${(META_FINAL - totalPatrimonio).toLocaleString('pt-BR')}`;
 
-            fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
+            const snowballCotas = Math.floor(mediaMensal / 10.50);
+            document.getElementById('snowball-metric').innerText = `+ ${snowballCotas} Cotas por mês`;
 
-            const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            
-            document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
-            document.getElementById('total-investido').innerText = fmt(totalDoBolso);
-            document.getElementById('total-proventos').innerText = fmt(totalProventosAnual);
-            document.getElementById('total-resultado').innerText = fmt(totalLucro);
-            document.getElementById('yield-on-cost').innerText = `YoC: ${yocGlobal.toFixed(2)}%`;
-            document.getElementById('monthly-avg').innerText = `Média: R$ ${mediaMensal.toFixed(0)}`;
-            
-            const snowballCotas = Math.floor(mediaMensal / 10.50); // Média de preço de FIIs Base 10
-            document.getElementById('snowball-metric').innerText = `+ ${snowballCotas} Cotas (Base R$ 10,50)`;
-            
             const percEl = document.getElementById('perc-total');
-            percEl.className = `mt-2 text-[11px] font-black uppercase flex items-center gap-1 ${rentabilidadeGlobal >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
-            percEl.innerHTML = `<span>${rentabilidadeGlobal >= 0 ? '▲' : '▼'} ${rentabilidadeGlobal.toFixed(2)}% de Retorno Total</span>`;
+            percEl.className = `mt-2 text-[10px] font-black uppercase ${rentabilidadeGlobal >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
+            percEl.innerText = `${rentabilidadeGlobal >= 0 ? '▲' : '▼'} ${rentabilidadeGlobal.toFixed(2)}% de Retorno`;
 
-            document.getElementById('kpi-resultado-border').style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
+            fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
 
             renderAssetGroups();
             renderCharts();
+            renderRebalance(totalPatrimonio);
+            renderCalendar();
+        }
+
+        function fmt(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+        function renderRebalance(total) {
+            const list = document.getElementById('rebalance-list');
+            list.innerHTML = '';
+            
+            // Sugestão baseada nos 3 ativos mais "atrasados" em relação ao peso
+            const sorted = [...fullData].sort((a,b) => (a.peso - a.meta) - (b.peso - b.meta)).slice(0, 3);
+            
+            sorted.forEach(d => {
+                const diffPerc = d.meta - d.peso;
+                const valorComprar = (total * (d.meta/100)) - d.atual;
+                
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center p-3 bg-indigo-600/5 rounded-xl border border-indigo-600/10';
+                item.innerHTML = `
+                    <div>
+                        <p class="text-xs font-black text-indigo-500">${d.ativo}</p>
+                        <p class="text-[9px] text-slate-500 font-bold">Peso Atual: ${d.peso.toFixed(1)}% | Meta: ${d.meta}%</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-emerald-500">COMPRAR ${fmt(valorComprar)}</p>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-list');
+            container.innerHTML = '';
+            const currentMonthIndex = new Date().getMonth();
+            
+            // Simulação de calendário para os próximos 4 meses
+            for(let i=0; i<4; i++) {
+                const idx = (currentMonthIndex + i) % 12;
+                const mes = NOMES_MESES[idx];
+                const day = document.createElement('div');
+                day.className = 'p-3 bg-slate-100 dark:bg-slate-900 rounded-xl border border-black/5 dark:border-white/5';
+                day.innerHTML = `
+                    <p class="text-[9px] font-black text-slate-400 uppercase">${mes}</p>
+                    <p class="text-[11px] font-black text-amber-500 mt-1">Previsão</p>
+                    <p class="text-[8px] font-bold text-slate-500">Data Com: 15~20</p>
+                `;
+                container.appendChild(day);
+            }
         }
 
         function renderAssetGroups() {
@@ -375,49 +381,39 @@
             }, {});
 
             Object.keys(groups).sort().forEach(tipo => {
-                if (groups[tipo].length === 0) return;
-                const assets = groups[tipo].sort((a, b) => b.atual - a.atual);
+                const assets = groups[tipo];
+                if (assets.length === 0) return;
                 const subAtual = assets.reduce((s, a) => s + a.atual, 0);
-                const subBolso = assets.reduce((s, a) => s + a.investidoBolso, 0);
-                const subRent = subBolso > 0 ? ((subAtual - subBolso) / subBolso) * 100 : 0;
 
                 const section = document.createElement('div');
                 section.className = 'glass-card overflow-hidden border border-black/5 dark:border-white/5';
                 
                 let rows = assets.map(d => `
                     <tr class="border-b border-black/5 dark:border-white/[0.02] hover:bg-black/5 dark:hover:bg-white/[0.05]">
-                        <td class="py-4 px-6"><div class="font-black text-sm text-indigo-500">${d.ativo}</div></td>
+                        <td class="py-4 px-6 font-black text-sm text-indigo-500">${d.ativo}</td>
                         <td class="py-4 px-4 text-right text-[11px] text-slate-500 font-bold">R$ ${d.pMedio.toFixed(2)}</td>
                         <td class="py-4 px-4 text-right text-sm font-black ${d.pAtual >= d.pMedio ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.pAtual.toFixed(2)}</td>
                         <td class="py-4 px-4 text-right">
                             <div class="text-sm font-black">R$ ${d.atual.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">${d.peso.toFixed(1)}% do Portfólio</div>
+                            <div class="text-[9px] text-slate-500 font-bold uppercase">${d.peso.toFixed(1)}%</div>
                         </td>
-                        <td class="py-4 px-6 text-right">
-                            <div class="text-sm font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-                        </td>
+                        <td class="py-4 px-6 text-right font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
                     </tr>`).join('');
 
                 section.innerHTML = `
                     <div class="group-header p-5 flex justify-between items-center" onclick="toggleGroup(this)">
-                        <div class="flex items-center gap-4">
-                            <div class="p-1.5 bg-indigo-600/10 rounded-lg text-indigo-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></div>
-                            <span class="text-[10px] font-black px-2.5 py-1 bg-indigo-600 text-white rounded uppercase tracking-wider">${tipo}</span>
-                            <span class="stat-badge ${subRent >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">${subRent >= 0 ? '+' : ''}${subRent.toFixed(1)}%</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[9px] font-black px-2 py-1 bg-indigo-600 text-white rounded uppercase">${tipo}</span>
                         </div>
-                        <div class="text-right">
-                            <span class="text-sm font-black">${subAtual.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
-                        </div>
+                        <span class="text-sm font-black">${fmt(subAtual)}</span>
                     </div>
                     <div class="collapsible-content">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-[10px] text-slate-500 uppercase font-black">
-                                    <tr><th class="py-4 px-6">Ativo</th><th class="py-4 px-4 text-right">Custo Médio</th><th class="py-4 px-4 text-right">Cotação Atual</th><th class="py-4 px-4 text-right">Total Investido</th><th class="py-4 px-6 text-right">L/P Absoluto</th></tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 dark:bg-slate-900/50 text-[9px] text-slate-500 uppercase font-black">
+                                <tr><th class="py-3 px-6">Ativo</th><th class="py-3 px-4 text-right">Média</th><th class="py-3 px-4 text-right">Atual</th><th class="py-3 px-4 text-right">Total</th><th class="py-3 px-6 text-right">L/P</th></tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
                     </div>`;
                 container.appendChild(section);
             });
@@ -427,99 +423,35 @@
             const isDark = document.body.classList.contains('dark-mode');
             const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
             const labelColor = isDark ? '#94a3b8' : '#64748b';
-            
             Object.values(charts).forEach(c => c.destroy());
 
-            // 1. Gráfico de Comparação Temporal (Ajustado para Visibilidade)
-            const d2026 = (dividendosHistorico["2026"] || []).map(d => d.valor);
-            const d2025 = (dividendosHistorico["2025"] || []).map(d => d.valor);
-
+            // Histórico
             charts.divs = new Chart(document.getElementById('chartDividendosAnual'), {
                 type: 'bar',
                 data: {
                     labels: NOMES_MESES,
                     datasets: [
-                        {
-                            label: '2026 (Atual)',
-                            data: d2026,
-                            backgroundColor: '#6366f1',
-                            borderRadius: 6,
-                            barPercentage: 0.8,
-                            order: 1
-                        },
-                        {
-                            label: '2025 (Anterior)',
-                            data: d2025,
-                            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.3)',
-                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            borderWidth: 1,
-                            borderRadius: 6,
-                            barPercentage: 0.8,
-                            order: 2
-                        }
+                        { label: '2026', data: (dividendosHistorico["2026"] || []).map(d => d.valor), backgroundColor: '#6366f1', borderRadius: 4 },
+                        { label: '2025', data: (dividendosHistorico["2025"] || []).map(d => d.valor), backgroundColor: isDark ? 'rgba(148,163,184,0.4)' : 'rgba(100,116,139,0.3)', borderRadius: 4 }
                     ]
                 },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: gridColor }, 
-                            ticks: { color: labelColor, font: { size: 10, weight: '700' }, callback: (v) => 'R$ ' + v } 
-                        },
-                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 10, weight: '800' } } }
-                    }
-                }
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } }, x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9, weight: '700' } } } } }
             });
 
-            // 2. Gráfico de Rosca com Largura Maior e Efeito Sombra (3D Style)
+            // Rosca
             const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
             const tipoData = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
-            
             charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
                 type: 'doughnut',
                 data: { 
                     labels: tipoLabels, 
                     datasets: [{ 
                         data: tipoData, 
-                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
-                        borderWidth: isDark ? 4 : 3,
-                        borderColor: isDark ? '#161e31' : '#ffffff',
-                        hoverOffset: 15
+                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                        borderWidth: 4, borderColor: isDark ? '#161e31' : '#fff'
                     }] 
                 },
-                options: { 
-                    maintainAspectRatio: false, 
-                    cutout: '65%', // Largura das bordas maior
-                    plugins: { 
-                        legend: { 
-                            position: 'bottom', 
-                            labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 20, usePointStyle: true, boxWidth: 8 } 
-                        } 
-                    }
-                }
-            });
-
-            // 3. Performance
-            const top = [...fullData].sort((a,b) => b.atual - a.atual).slice(0, 10);
-            charts.perf = new Chart(document.getElementById('chartPerformance'), {
-                type: 'bar',
-                data: { 
-                    labels: top.map(d => d.ativo), 
-                    datasets: [
-                        { label: 'Valor Mercado', data: top.map(d => d.atual), backgroundColor: '#10b981', borderRadius: 4 },
-                        { label: 'Custo Aquisição', data: top.map(d => d.investidoBolso), backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderRadius: 4 }
-                    ] 
-                },
-                options: { 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'top', align: 'end', labels: { color: labelColor, font: { size: 10, weight: '700' } } } },
-                    scales: { 
-                        y: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } }, 
-                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 10, weight: '800' } } } 
-                    } 
-                }
+                options: { maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: labelColor, font: { size: 9, weight: '800' }, usePointStyle: true } } } }
             });
         }
 
@@ -529,21 +461,10 @@
             renderCharts();
         }
 
-        function toggleGroup(header) {
-            header.nextElementSibling.classList.toggle('expanded');
-        }
-
-        function expandAll() {
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded'));
-        }
-
-        function collapseAll() {
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded'));
-        }
-
-        function setupSearchListener() {
-            document.getElementById('searchInput').addEventListener('input', renderAssetGroups);
-        }
+        function toggleGroup(header) { header.nextElementSibling.classList.toggle('expanded'); }
+        function expandAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded')); }
+        function collapseAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded')); }
+        function setupSearchListener() { document.getElementById('searchInput').addEventListener('input', renderAssetGroups); }
 
         window.onload = init;
     </script>
