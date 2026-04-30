@@ -53,9 +53,7 @@
         .light-mode .sun-icon { background: white; color: #f59e0b; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .dark-mode .moon-icon { background: #334155; color: #818cf8; }
 
-        th.sortable { cursor: pointer; position: relative; }
-        th.sortable:hover { color: var(--brand-primary); }
-        .sort-indicator { font-size: 0.7rem; margin-left: 4px; opacity: 0.5; }
+        th { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
         
         #loading-overlay {
             position: fixed; inset: 0; background: var(--bg-dark);
@@ -64,12 +62,15 @@
         .light-mode #loading-overlay { background: var(--bg-light); }
 
         .status-pill { padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
-        .status-up { background: rgba(16, 185, 129, 0.1); color: var(--brand-success); }
-        .status-down { background: rgba(239, 68, 68, 0.1); color: var(--brand-danger); }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .group-header {
+            background: rgba(99, 102, 241, 0.05);
+            border-left: 4px solid var(--brand-primary);
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -87,7 +88,7 @@
                 </svg>
             </div>
             <div>
-                <h1 class="text-xl font-extrabold tracking-tight dark:text-white text-slate-900">Gonça<span class="text-indigo-500">Invest</span></h1>
+                <h1 class="text-xl font-extrabold tracking-tight">Gonça<span class="text-indigo-500">Invest</span></h1>
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Analytics Dashboard</p>
             </div>
         </div>
@@ -106,18 +107,15 @@
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         
-        <!-- KPIs Ajustados para 4 colunas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             <div class="glass-card p-6 border-t-4 border-indigo-500">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Atual</p>
                 <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
             </div>
             <div class="glass-card p-6 border-t-4 border-slate-500">
-                <!-- Label editada para clareza (Opcional, mas ajuda a lembrar a regra) -->
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Do Bolso</p>
                 <h2 id="total-investido" class="text-3xl font-black">R$ 0,00</h2>
             </div>
-            <!-- NOVO CARD: Proventos Recebidos -->
             <div class="glass-card p-6 border-t-4 border-amber-500">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Proventos Recebidos</p>
                 <h2 id="total-proventos" class="text-3xl font-black text-amber-500 dark:text-amber-400">R$ 0,00</h2>
@@ -128,7 +126,6 @@
             </div>
         </div>
 
-        <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
             <div class="glass-card p-6">
                 <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Alocação por Tipo (%)</h3>
@@ -144,27 +141,16 @@
             </div>
         </div>
 
-        <!-- Tabela -->
-        <div class="glass-card overflow-hidden">
-            <div class="p-6 border-b border-black/5 dark:border-white/5 flex justify-between items-center">
-                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lista de Ativos e Performance</h3>
-                <input type="text" id="searchInput" placeholder="Filtrar ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-lg px-3 py-1 text-xs outline-none focus:border-indigo-500">
+        <!-- Seção de Lista de Ativos Agrupada -->
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ativos Agrupados por Categoria</h3>
+            <div class="flex gap-4 items-center">
+                <input type="text" id="searchInput" placeholder="Filtrar ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-lg px-3 py-1 text-xs outline-none focus:border-indigo-500 w-48">
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="text-[10px] font-black text-slate-500 uppercase border-b border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50">
-                            <th class="py-4 px-6 sortable active" data-col="ativo">Ativo <span class="sort-indicator">▼</span></th>
-                            <th class="py-4 px-4 text-right sortable" data-col="pMedio">P. Médio <span class="sort-indicator">↕</span></th>
-                            <th class="py-4 px-4 text-right sortable" data-col="pAtual">P. Atual <span class="sort-indicator">↕</span></th>
-                            <th class="py-4 px-4 text-right sortable" data-col="atual">Vlr. Total <span class="sort-indicator">↕</span></th>
-                            <th class="py-4 px-4 text-right sortable" data-col="peso">Peso <span class="sort-indicator">↕</span></th>
-                            <th class="py-4 px-6 text-right sortable" data-col="lucro">Resultado <span class="sort-indicator">↕</span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="text-sm"></tbody>
-                </table>
-            </div>
+        </div>
+
+        <div id="assetsContainer" class="space-y-8">
+            <!-- As tabelas por tipo serão geradas aqui -->
         </div>
     </main>
 
@@ -172,7 +158,6 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1550358623&single=true&output=csv';
         
         let fullData = [];
-        let sortConfig = { column: 'atual', direction: 'desc' };
         let charts = {};
 
         async function init() {
@@ -182,7 +167,6 @@
                 skipEmptyLines: 'greedy',
                 complete: function(results) {
                     processCSV(results.data);
-                    setupSortListeners();
                     setupSearchListener();
                     document.getElementById('loading-overlay').style.display = 'none';
                 }
@@ -191,11 +175,8 @@
 
         function toggleTheme() {
             const body = document.body;
-            if (body.classList.contains('dark-mode')) {
-                body.classList.replace('dark-mode', 'light-mode');
-            } else {
-                body.classList.replace('light-mode', 'dark-mode');
-            }
+            body.classList.toggle('dark-mode');
+            body.classList.toggle('light-mode');
             renderCharts();
         }
 
@@ -210,13 +191,12 @@
         function processCSV(rows) {
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
-                const investidoBruto = parseNum(row[9]); // Coluna J (Total Investido Bruto da Planilha)
-                const atual = parseNum(row[10]);         // Coluna K
-                const proventos = parseNum(row[8]);      // Coluna I (Proventos Recebidos)
+                const investidoBruto = parseNum(row[9]); 
+                const atual = parseNum(row[10]);         
+                const proventos = parseNum(row[8]);      
                 
                 if (!ticker || ticker.toLowerCase().includes('total')) return null;
 
-                // Aqui aplicamos a regra: O que efetivamente saiu do bolso (Investimento Líquido)
                 const investidoLiquido = investidoBruto - proventos; 
 
                 return {
@@ -225,7 +205,7 @@
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
                     proventos: proventos,
-                    investido: investidoLiquido, // Reatribuído para alimentar gráficos e o lucro individual corretamente
+                    investido: investidoLiquido,
                     atual: atual,
                     lucro: atual - investidoLiquido,
                     peso: 0
@@ -237,8 +217,8 @@
 
         function updateDashboard() {
             const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
-            const totalInvestido = fullData.reduce((acc, curr) => acc + curr.investido, 0); // Já com proventos descontados
-            const totalProventos = fullData.reduce((acc, curr) => acc + curr.proventos, 0); // Soma da Coluna I
+            const totalInvestido = fullData.reduce((acc, curr) => acc + curr.investido, 0);
+            const totalProventos = fullData.reduce((acc, curr) => acc + curr.proventos, 0);
             const totalLucro = totalPatrimonio - totalInvestido;
 
             fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
@@ -246,7 +226,7 @@
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
             document.getElementById('total-investido').innerText = fmt(totalInvestido);
-            document.getElementById('total-proventos').innerText = fmt(totalProventos); // Atualiza o novo Card
+            document.getElementById('total-proventos').innerText = fmt(totalProventos);
             
             const resEl = document.getElementById('total-resultado');
             const resBorder = document.getElementById('kpi-resultado-border');
@@ -254,38 +234,77 @@
             resEl.className = `text-3xl font-black ${totalLucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
             resBorder.style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
 
-            renderTable();
+            renderAssetGroups();
             renderCharts();
         }
 
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+        function renderAssetGroups() {
+            const container = document.getElementById('assetsContainer');
+            container.innerHTML = '';
             const searchTerm = document.getElementById('searchInput').value.toUpperCase();
             
-            let data = fullData.filter(d => d.ativo.includes(searchTerm));
-            data.sort((a, b) => {
-                let valA = a[sortConfig.column];
-                let valB = b[sortConfig.column];
-                return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
-            });
+            // Agrupar dados por tipo
+            const groups = fullData.reduce((acc, curr) => {
+                if (!acc[curr.tipo]) acc[curr.tipo] = [];
+                if (curr.ativo.includes(searchTerm)) acc[curr.tipo].push(curr);
+                return acc;
+            }, {});
 
-            data.forEach(d => {
-                const difPreco = d.pAtual - d.pMedio;
-                tbody.innerHTML += `
-                    <tr class="border-b border-black/5 dark:border-white/[0.02] hover:bg-black/5 dark:hover:bg-white/[0.02]">
-                        <td class="py-4 px-6">
-                            <div class="flex flex-col">
-                                <span class="font-bold">${d.ativo}</span>
-                                <span class="text-[9px] text-slate-500 font-bold uppercase">${d.tipo}</span>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-right text-slate-400">R$ ${d.pMedio.toFixed(2)}</td>
-                        <td class="py-4 px-4 text-right font-bold ${difPreco >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.pAtual.toFixed(2)}</td>
-                        <td class="py-4 px-4 text-right font-bold">R$ ${d.atual.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
-                        <td class="py-4 px-4 text-right"><span class="bg-slate-200 dark:bg-slate-800 text-slate-500 text-[10px] px-2 py-1 rounded font-bold">${d.peso.toFixed(1)}%</span></td>
-                        <td class="py-4 px-6 text-right font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
-                    </tr>`;
+            // Ordenar tipos alfabeticamente
+            const sortedTypes = Object.keys(groups).sort();
+
+            sortedTypes.forEach(tipo => {
+                if (groups[tipo].length === 0) return;
+
+                const assets = groups[tipo].sort((a, b) => b.atual - a.atual);
+                const subtotalAtual = assets.reduce((s, a) => s + a.atual, 0);
+                const subtotalInvestido = assets.reduce((s, a) => s + a.investido, 0);
+                const subtotalLucro = subtotalAtual - subtotalInvestido;
+
+                const section = document.createElement('div');
+                section.className = 'glass-card overflow-hidden shadow-sm border border-black/5 dark:border-white/5';
+                
+                let tableRows = assets.map(d => {
+                    const difPreco = d.pAtual - d.pMedio;
+                    return `
+                        <tr class="border-b border-black/5 dark:border-white/[0.02] hover:bg-black/5 dark:hover:bg-white/[0.02]">
+                            <td class="py-3 px-6 font-bold text-sm">${d.ativo}</td>
+                            <td class="py-3 px-4 text-right text-xs text-slate-400">R$ ${d.pMedio.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-sm font-bold ${difPreco >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.pAtual.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-sm font-bold">R$ ${d.atual.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                            <td class="py-3 px-4 text-right"><span class="bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] px-2 py-1 rounded font-bold">${d.peso.toFixed(1)}%</span></td>
+                            <td class="py-3 px-6 text-right text-sm font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                        </tr>`;
+                }).join('');
+
+                section.innerHTML = `
+                    <div class="group-header p-4 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="bg-indigo-600 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">${tipo}</span>
+                            <span class="text-xs font-bold text-slate-500">${assets.length} Ativo(s)</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Subtotal</span>
+                            <span class="text-sm font-black">${subtotalAtual.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-[9px] font-black text-slate-400 uppercase border-b border-black/5 dark:border-white/5">
+                                    <th class="py-3 px-6">Ativo</th>
+                                    <th class="py-3 px-4 text-right">P. Médio</th>
+                                    <th class="py-3 px-4 text-right">P. Atual</th>
+                                    <th class="py-3 px-4 text-right">Total</th>
+                                    <th class="py-3 px-4 text-right">Peso</th>
+                                    <th class="py-3 px-6 text-right">Resultado</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(section);
             });
         }
 
@@ -302,15 +321,12 @@
                 return acc;
             }, {});
 
-            const tiposLabels = Object.keys(agrupadoPorTipo);
-            const tiposValores = Object.values(agrupadoPorTipo);
-
             charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
                 type: 'doughnut',
                 data: {
-                    labels: tiposLabels,
+                    labels: Object.keys(agrupadoPorTipo),
                     datasets: [{ 
-                        data: tiposValores, 
+                        data: Object.values(agrupadoPorTipo), 
                         backgroundColor: colors, 
                         borderWidth: isDark ? 2 : 1,
                         borderColor: isDark ? '#161e31' : '#ffffff' 
@@ -318,17 +334,12 @@
                 },
                 options: { 
                     maintainAspectRatio: false, 
-                    cutout: '70%', 
+                    cutout: '75%', 
                     plugins: { 
                         legend: { 
                             display: true, 
                             position: 'bottom',
-                            labels: {
-                                color: labelColor,
-                                padding: 20,
-                                font: { size: 10, weight: 'bold' },
-                                usePointStyle: true
-                            }
+                            labels: { color: labelColor, padding: 20, font: { size: 10, weight: 'bold' }, usePointStyle: true }
                         } 
                     } 
                 }
@@ -371,18 +382,8 @@
             });
         }
 
-        function setupSortListeners() {
-            document.querySelectorAll('th.sortable').forEach(th => {
-                th.addEventListener('click', () => {
-                    sortConfig.column = th.dataset.col;
-                    sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-                    renderTable();
-                });
-            });
-        }
-
         function setupSearchListener() {
-            document.getElementById('searchInput').addEventListener('input', renderTable);
+            document.getElementById('searchInput').addEventListener('input', renderAssetGroups);
         }
 
         window.onload = init;
