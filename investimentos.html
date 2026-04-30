@@ -106,15 +106,21 @@
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         
-        <!-- KPIs -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <!-- KPIs Ajustados para 4 colunas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             <div class="glass-card p-6 border-t-4 border-indigo-500">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Atual</p>
                 <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
             </div>
             <div class="glass-card p-6 border-t-4 border-slate-500">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Investido</p>
+                <!-- Label editada para clareza (Opcional, mas ajuda a lembrar a regra) -->
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Do Bolso</p>
                 <h2 id="total-investido" class="text-3xl font-black">R$ 0,00</h2>
+            </div>
+            <!-- NOVO CARD: Proventos Recebidos -->
+            <div class="glass-card p-6 border-t-4 border-amber-500">
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Proventos Recebidos</p>
+                <h2 id="total-proventos" class="text-3xl font-black text-amber-500 dark:text-amber-400">R$ 0,00</h2>
             </div>
             <div class="glass-card p-6 border-t-4" id="kpi-resultado-border">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Resultado Líquido</p>
@@ -204,19 +210,24 @@
         function processCSV(rows) {
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
-                const investido = parseNum(row[9]);
-                const atual = parseNum(row[10]);
+                const investidoBruto = parseNum(row[9]); // Coluna J (Total Investido Bruto da Planilha)
+                const atual = parseNum(row[10]);         // Coluna K
+                const proventos = parseNum(row[8]);      // Coluna I (Proventos Recebidos)
                 
                 if (!ticker || ticker.toLowerCase().includes('total')) return null;
+
+                // Aqui aplicamos a regra: O que efetivamente saiu do bolso (Investimento Líquido)
+                const investidoLiquido = investidoBruto - proventos; 
 
                 return {
                     tipo: row[0] ? row[0].trim() : 'Outros',
                     ativo: ticker.toUpperCase(),
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
-                    investido: investido,
+                    proventos: proventos,
+                    investido: investidoLiquido, // Reatribuído para alimentar gráficos e o lucro individual corretamente
                     atual: atual,
-                    lucro: atual - investido,
+                    lucro: atual - investidoLiquido,
                     peso: 0
                 };
             }).filter(d => d !== null && d.ativo !== "");
@@ -226,7 +237,8 @@
 
         function updateDashboard() {
             const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
-            const totalInvestido = fullData.reduce((acc, curr) => acc + curr.investido, 0);
+            const totalInvestido = fullData.reduce((acc, curr) => acc + curr.investido, 0); // Já com proventos descontados
+            const totalProventos = fullData.reduce((acc, curr) => acc + curr.proventos, 0); // Soma da Coluna I
             const totalLucro = totalPatrimonio - totalInvestido;
 
             fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
@@ -234,6 +246,7 @@
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
             document.getElementById('total-investido').innerText = fmt(totalInvestido);
+            document.getElementById('total-proventos').innerText = fmt(totalProventos); // Atualiza o novo Card
             
             const resEl = document.getElementById('total-resultado');
             const resBorder = document.getElementById('kpi-resultado-border');
@@ -284,7 +297,6 @@
             Object.values(charts).forEach(c => c.destroy());
             const colors = ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#fb923c', '#facc15', '#4ade80', '#2dd4bf'];
 
-            // Agrupamento por TIPO (Coluna A) para a Rosca
             const agrupadoPorTipo = fullData.reduce((acc, curr) => {
                 acc[curr.tipo] = (acc[curr.tipo] || 0) + curr.atual;
                 return acc;
@@ -293,7 +305,6 @@
             const tiposLabels = Object.keys(agrupadoPorTipo);
             const tiposValores = Object.values(agrupadoPorTipo);
 
-            // Gráfico 1: Alocação por TIPO
             charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
                 type: 'doughnut',
                 data: {
@@ -323,7 +334,6 @@
                 }
             });
 
-            // Gráfico 2: Concentração de Ativos (Mantido por ativo para ver maiores posições)
             const topAtivos = [...fullData].sort((a,b) => b.atual - a.atual).slice(0, 8);
             charts.conc = new Chart(document.getElementById('chartConcentracao'), {
                 type: 'bar',
@@ -341,13 +351,12 @@
                 }
             });
 
-            // Gráfico 3: Performance
             charts.perf = new Chart(document.getElementById('chartPerformance'), {
                 type: 'bar',
                 data: {
                     labels: topAtivos.slice(0, 6).map(d => d.ativo),
                     datasets: [
-                        { label: 'Investido', data: topAtivos.slice(0, 6).map(d => d.investido), backgroundColor: isDark ? '#334155' : '#cbd5e1', borderRadius: 2 },
+                        { label: 'Do Bolso', data: topAtivos.slice(0, 6).map(d => d.investido), backgroundColor: isDark ? '#334155' : '#cbd5e1', borderRadius: 2 },
                         { label: 'Atual', data: topAtivos.slice(0, 6).map(d => d.atual), backgroundColor: '#10b981', borderRadius: 2 }
                     ]
                 },
