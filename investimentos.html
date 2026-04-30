@@ -23,7 +23,6 @@
 
         * { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, border-color 0.3s, color 0.2s; }
         
-        /* Theme Logic */
         body.light-mode { background-color: var(--bg-light); color: var(--text-light); }
         body.dark-mode { background-color: var(--bg-dark); color: var(--text-dark); }
 
@@ -35,7 +34,6 @@
         .light-mode .glass-card { background-color: var(--card-light); border-color: #e2e8f0; }
         .dark-mode .glass-card { background-color: var(--card-dark); }
 
-        /* Theme Toggle UI */
         .theme-switch {
             background: #e2e8f0;
             padding: 4px;
@@ -55,7 +53,6 @@
         .light-mode .sun-icon { background: white; color: #f59e0b; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .dark-mode .moon-icon { background: #334155; color: #818cf8; }
 
-        /* Table & Components */
         th.sortable { cursor: pointer; position: relative; }
         th.sortable:hover { color: var(--brand-primary); }
         .sort-indicator { font-size: 0.7rem; margin-left: 4px; opacity: 0.5; }
@@ -128,11 +125,11 @@
         <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
             <div class="glass-card p-6">
-                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Alocação por Ativo (%)</h3>
-                <div class="h-64"><canvas id="chartAlocacao"></canvas></div>
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Alocação por Tipo (%)</h3>
+                <div class="h-64"><canvas id="chartAlocacaoTipo"></canvas></div>
             </div>
             <div class="glass-card p-6">
-                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Concentração (R$)</h3>
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Concentração de Ativos (R$)</h3>
                 <div class="h-64"><canvas id="chartConcentracao"></canvas></div>
             </div>
             <div class="glass-card p-6">
@@ -193,7 +190,7 @@
             } else {
                 body.classList.replace('light-mode', 'dark-mode');
             }
-            renderCharts(); // Redesenha para ajustar cores se necessário
+            renderCharts();
         }
 
         function parseNum(val) {
@@ -205,7 +202,6 @@
         }
 
         function processCSV(rows) {
-            // Coluna A (0) = Tipo, Coluna B (1) = Ativo
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
                 const investido = parseNum(row[9]);
@@ -214,7 +210,7 @@
                 if (!ticker || ticker.toLowerCase().includes('total')) return null;
 
                 return {
-                    tipo: row[0],
+                    tipo: row[0] ? row[0].trim() : 'Outros',
                     ativo: ticker.toUpperCase(),
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
@@ -268,7 +264,7 @@
                         <td class="py-4 px-6">
                             <div class="flex flex-col">
                                 <span class="font-bold">${d.ativo}</span>
-                                <span class="text-[9px] text-slate-500 font-bold uppercase">${d.tipo || 'Ativo'}</span>
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">${d.tipo}</span>
                             </div>
                         </td>
                         <td class="py-4 px-4 text-right text-slate-400">R$ ${d.pMedio.toFixed(2)}</td>
@@ -288,22 +284,52 @@
             Object.values(charts).forEach(c => c.destroy());
             const colors = ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#fb923c', '#facc15', '#4ade80', '#2dd4bf'];
 
-            // Gráfico 1: Alocação
-            charts.aloc = new Chart(document.getElementById('chartAlocacao'), {
+            // Agrupamento por TIPO (Coluna A) para a Rosca
+            const agrupadoPorTipo = fullData.reduce((acc, curr) => {
+                acc[curr.tipo] = (acc[curr.tipo] || 0) + curr.atual;
+                return acc;
+            }, {});
+
+            const tiposLabels = Object.keys(agrupadoPorTipo);
+            const tiposValores = Object.values(agrupadoPorTipo);
+
+            // Gráfico 1: Alocação por TIPO
+            charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
                 type: 'doughnut',
                 data: {
-                    labels: fullData.slice(0, 8).map(d => d.ativo),
-                    datasets: [{ data: fullData.slice(0, 8).map(d => d.atual), backgroundColor: colors, borderWidth: 0 }]
+                    labels: tiposLabels,
+                    datasets: [{ 
+                        data: tiposValores, 
+                        backgroundColor: colors, 
+                        borderWidth: isDark ? 2 : 1,
+                        borderColor: isDark ? '#161e31' : '#ffffff' 
+                    }]
                 },
-                options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+                options: { 
+                    maintainAspectRatio: false, 
+                    cutout: '70%', 
+                    plugins: { 
+                        legend: { 
+                            display: true, 
+                            position: 'bottom',
+                            labels: {
+                                color: labelColor,
+                                padding: 20,
+                                font: { size: 10, weight: 'bold' },
+                                usePointStyle: true
+                            }
+                        } 
+                    } 
+                }
             });
 
-            // Gráfico 2: Concentração
+            // Gráfico 2: Concentração de Ativos (Mantido por ativo para ver maiores posições)
+            const topAtivos = [...fullData].sort((a,b) => b.atual - a.atual).slice(0, 8);
             charts.conc = new Chart(document.getElementById('chartConcentracao'), {
                 type: 'bar',
                 data: {
-                    labels: fullData.slice(0, 8).map(d => d.ativo),
-                    datasets: [{ data: fullData.slice(0, 8).map(d => d.atual), backgroundColor: '#6366f1', borderRadius: 4 }]
+                    labels: topAtivos.map(d => d.ativo),
+                    datasets: [{ data: topAtivos.map(d => d.atual), backgroundColor: '#6366f1', borderRadius: 4 }]
                 },
                 options: {
                     maintainAspectRatio: false,
@@ -319,10 +345,10 @@
             charts.perf = new Chart(document.getElementById('chartPerformance'), {
                 type: 'bar',
                 data: {
-                    labels: fullData.slice(0, 6).map(d => d.ativo),
+                    labels: topAtivos.slice(0, 6).map(d => d.ativo),
                     datasets: [
-                        { label: 'Inv.', data: fullData.slice(0, 6).map(d => d.investido), backgroundColor: isDark ? '#334155' : '#cbd5e1', borderRadius: 2 },
-                        { label: 'Atu.', data: fullData.slice(0, 6).map(d => d.atual), backgroundColor: '#10b981', borderRadius: 2 }
+                        { label: 'Investido', data: topAtivos.slice(0, 6).map(d => d.investido), backgroundColor: isDark ? '#334155' : '#cbd5e1', borderRadius: 2 },
+                        { label: 'Atual', data: topAtivos.slice(0, 6).map(d => d.atual), backgroundColor: '#10b981', borderRadius: 2 }
                     ]
                 },
                 options: {
