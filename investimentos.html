@@ -36,7 +36,6 @@
         .light-mode .glass-card { background-color: var(--card-light); }
         .dark-mode .glass-card { background-color: var(--card-dark); border-color: rgba(255, 255, 255, 0.05); }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -59,7 +58,6 @@
             border: 1px solid #e2e8f0; outline: none; font-size: 0.875rem; transition: all 0.2s;
         }
         .dark-mode .search-input { background: #1e293b; border-color: #334155; color: white; }
-        .search-input:focus { border-color: var(--brand-primary); ring: 2px; ring-color: #6366f1; }
 
         .theme-toggle-wrapper {
             background: #e2e8f0; padding: 4px; border-radius: 50px; display: flex; align-items: center; gap: 4px;
@@ -117,9 +115,7 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
-        <!-- Dashboard Header -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-         
             <div class="glass-card p-6 border-l-4 border-amber-500">
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Patrimônio Atual</p>
                 <h2 id="kpi-total-patrimonio" class="text-3xl font-extrabold tracking-tight">R$ 0,00</h2>
@@ -138,7 +134,6 @@
             </div>
         </div>
 
-        <!-- Smart Filter Section -->
         <div class="glass-card p-6 mb-10">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
@@ -157,11 +152,9 @@
             
             <div id="filter-container" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                 <button id="btn-all" class="btn-filter active" onclick="filterData('ALL')">Todos Ativos</button>
-                <!-- Filtros dinâmicos entram aqui -->
             </div>
         </div>
 
-        <!-- Insights -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <div class="glass-card p-6">
                 <h3 class="text-sm font-extrabold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
@@ -183,7 +176,6 @@
             </div>
         </div>
 
-        <!-- Table -->
         <div class="glass-card overflow-hidden">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20">
                 <h3 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-widest">Detalhamento Financeiro</h3>
@@ -200,6 +192,8 @@
                         <tr class="text-[10px] uppercase tracking-tighter font-black text-slate-400 border-b border-slate-100 dark:border-slate-800">
                             <th class="py-4 px-6">Ativo</th>
                             <th class="py-4 px-2 text-right">Qtd</th>
+                            <th class="py-4 px-2 text-right">P. Médio (E)</th>
+                            <th class="py-4 px-2 text-right">P. Atual (F)</th>
                             <th class="py-4 px-2 text-right">Investido (J)</th>
                             <th class="py-4 px-2 text-right">Valor Atual (K)</th>
                             <th class="py-4 px-6 text-right">Resultado</th>
@@ -219,7 +213,6 @@
         let fullData = [];
         let filteredData = [];
         let charts = {};
-        let currentSearch = "";
 
         async function fetchData() {
             document.getElementById('loading-overlay').style.display = 'flex';
@@ -249,20 +242,30 @@
         }
 
         function processData(data, fields) {
+            // Mapeamento baseado nas colunas fornecidas:
+            // E = Índice 4 (Preço Médio)
+            // F = Índice 5 (Preço Atual)
+            // J = Índice 9 (Investido)
+            // K = Índice 10 (Valor Atual)
             const colAtivo = fields.find(f => f.toLowerCase().includes('ativo') || f.toLowerCase().includes('ticker')) || fields[0];
             const colQtd = fields.find(f => f.toLowerCase().includes('quantidade') || f.toLowerCase().includes('qtd')) || fields[1];
-            const colInvestido = fields[9]; // J
-            const colValorAtual = fields[10]; // K
+            
+            const colPrecoMedio = fields[4]; // E
+            const colPrecoAtual = fields[5]; // F
+            const colInvestido = fields[9];  // J
+            const colValorTotal = fields[10]; // K
 
             fullData = data.filter(row => {
                 const ticker = row[colAtivo];
                 return ticker && ticker.trim() !== '' && !ticker.toLowerCase().includes('total');
             }).map(row => {
                 const inv = parseNumeric(row[colInvestido]);
-                const atu = parseNumeric(row[colValorAtual]);
+                const atu = parseNumeric(row[colValorTotal]);
                 return {
                     ativo: row[colAtivo].toString().trim().toUpperCase(),
                     qtd: parseNumeric(row[colQtd]),
+                    pMedio: parseNumeric(row[colPrecoMedio]),
+                    pAtual: parseNumeric(row[colPrecoAtual]),
                     investido: inv,
                     atual: atu,
                     lucro: atu - inv
@@ -278,8 +281,6 @@
             const assets = [...new Set(fullData.map(d => d.ativo))].sort();
             
             document.getElementById('asset-count').innerText = `${assets.length} ativos encontrados na carteira`;
-
-            // Mantém apenas o botão "Todos" e adiciona os novos
             container.innerHTML = '<button id="btn-all" class="btn-filter active" onclick="filterData(\'ALL\')">Todos Ativos</button>';
             
             assets.forEach(asset => {
@@ -295,20 +296,9 @@
         function handleSearch() {
             const term = document.getElementById('assetSearch').value.toUpperCase();
             const chips = document.querySelectorAll('.asset-chip');
-            
             chips.forEach(chip => {
-                const ticker = chip.dataset.ticker;
-                if (ticker.includes(term)) {
-                    chip.style.display = 'block';
-                } else {
-                    chip.style.display = 'none';
-                }
+                chip.style.display = chip.dataset.ticker.includes(term) ? 'block' : 'none';
             });
-
-            // Se o usuário apagar tudo e apertar Enter ou limpar, volta ao "ALL" se nada estiver selecionado
-            if (term === "") {
-                // Opcional: Auto-selecionar 'Todos' se limpar a busca?
-            }
         }
 
         function filterData(asset, btnElement) {
@@ -366,6 +356,8 @@
                             </div>
                         </td>
                         <td class="py-4 px-2 text-right font-medium text-slate-500">${d.qtd}</td>
+                        <td class="py-4 px-2 text-right text-slate-500">R$ ${fNum(d.pMedio)}</td>
+                        <td class="py-4 px-2 text-right text-indigo-500 font-semibold">R$ ${fNum(d.pAtual)}</td>
                         <td class="py-4 px-2 text-right text-slate-600 dark:text-slate-300">R$ ${fNum(d.investido)}</td>
                         <td class="py-4 px-2 text-right font-bold text-slate-800 dark:text-white">R$ ${fNum(d.atual)}</td>
                         <td class="py-4 px-6 text-right">
