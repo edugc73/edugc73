@@ -103,7 +103,7 @@
 
     <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400">A processar a sua Carteira...</p>
+        <p class="font-bold text-slate-400">Sincronizando Proventos...</p>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
@@ -115,7 +115,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-extrabold tracking-tight">Gonça<span class="text-indigo-500">Invest</span></h1>
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Análise de Performance</p>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Dashboard de Proventos</p>
             </div>
         </div>
         
@@ -136,7 +136,7 @@
         <!-- KPI Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="glass-card p-6 border-t-4 border-indigo-500 relative overflow-hidden group">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Património Atual</p>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Atual</p>
                 <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
                 <div id="perc-total" class="mt-2 text-xs font-bold flex items-center gap-1">
                     <span>--</span>
@@ -144,13 +144,13 @@
             </div>
 
             <div class="glass-card p-6 border-t-4 border-slate-500">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Valor Total Investido</p>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Investido (Aportes)</p>
                 <h2 id="total-investido" class="text-3xl font-black">R$ 0,00</h2>
-                <p class="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Aportes + Proventos Reinvestidos</p>
+                <p class="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Soma de todos os aportes</p>
             </div>
 
             <div class="glass-card p-6 border-t-4 border-amber-500">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Proventos Recebidos</p>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Proventos Acumulados 2026</p>
                 <h2 id="total-proventos" class="text-3xl font-black text-amber-500">R$ 0,00</h2>
                 <div id="yield-on-cost" class="mt-2 text-[10px] font-black text-amber-600 uppercase">YoC: 0.00%</div>
             </div>
@@ -184,21 +184,34 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <!-- Gráficos Principais -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            <div class="glass-card p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Evolução de Dividendos 2026</h3>
+                        <p class="text-xs font-bold text-slate-400">Recebimentos Mensais Detalhados</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-indigo-500 px-2 py-1 bg-indigo-500/10 rounded">Mensal</span>
+                </div>
+                <div class="h-72"><canvas id="chartDividendosMensal"></canvas></div>
+            </div>
+            
             <div class="glass-card p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Alocação por Tipo</h3>
-                    <span class="text-[10px] font-bold text-indigo-500">Diversificação</span>
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Alocação Atual</h3>
                 </div>
                 <div class="h-72"><canvas id="chartAlocacaoTipo"></canvas></div>
             </div>
-            <div class="glass-card p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Performance (Aporte vs Atual)</h3>
-                    <span class="text-[10px] font-bold text-emerald-500">Top 6 Ativos</span>
-                </div>
-                <div class="h-72"><canvas id="chartPerformance"></canvas></div>
+        </div>
+
+        <!-- Performance Chart -->
+        <div class="glass-card p-6 mb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Performance (Investido vs Atual)</h3>
+                <span class="text-[10px] font-bold text-emerald-500">Top 10 Ativos</span>
             </div>
+            <div class="h-80"><canvas id="chartPerformance"></canvas></div>
         </div>
 
         <!-- Asset List -->
@@ -217,29 +230,38 @@
     </main>
 
     <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1550358623&single=true&output=csv';
-        const META_FINAL = 1000000;
+        const URL_CARTEIRA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1550358623&single=true&output=csv';
+        const URL_DIVIDENDOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=440281931&single=true&output=csv';
         
+        const META_FINAL = 1000000;
+        const ANO_DASHBOARD = "2026";
+        const NOMES_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
         let fullData = [];
+        let dividendos2026 = [];
         let charts = {};
 
         async function init() {
-            Papa.parse(CSV_URL, {
-                download: true,
-                header: false,
-                skipEmptyLines: 'greedy',
-                complete: function(results) {
-                    processCSV(results.data);
-                    setupSearchListener();
-                    document.getElementById('loading-overlay').style.display = 'none';
-                }
+            Promise.all([
+                fetchCSV(URL_CARTEIRA),
+                fetchCSV(URL_DIVIDENDOS)
+            ]).then(([carteiraRows, dividendosRows]) => {
+                processMatrizDividendos(dividendosRows);
+                processCarteira(carteiraRows);
+                setupSearchListener();
+                document.getElementById('loading-overlay').style.display = 'none';
             });
         }
 
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            document.body.classList.toggle('light-mode');
-            renderCharts();
+        function fetchCSV(url) {
+            return new Promise((resolve) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: false,
+                    skipEmptyLines: 'greedy',
+                    complete: (results) => resolve(results.data)
+                });
+            });
         }
 
         function parseNum(val) {
@@ -250,13 +272,25 @@
             return parseFloat(clean) || 0;
         }
 
-        function processCSV(rows) {
+        function processMatrizDividendos(rows) {
+            // Estrutura esperada: Col A: Ano, Col B-M: Jan-Dez
+            const row2026 = rows.find(r => r[0] && r[0].toString().trim() === ANO_DASHBOARD);
+            
+            if (row2026) {
+                // Mapeia os 12 meses (índices 1 a 12 do array da linha)
+                dividendos2026 = NOMES_MESES.map((nome, index) => ({
+                    mes: nome,
+                    valor: parseNum(row2026[index + 1])
+                }));
+            } else {
+                // Fallback se não encontrar o ano
+                dividendos2026 = NOMES_MESES.map(nome => ({ mes: nome, valor: 0 }));
+            }
+        }
+
+        function processCarteira(rows) {
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
-                const investidoDoBolso = parseNum(row[9]); 
-                const atual = parseNum(row[10]);         
-                const proventos = parseNum(row[8]);      
-                
                 if (!ticker || ticker.toLowerCase().includes('total')) return null;
                 
                 return {
@@ -264,13 +298,12 @@
                     ativo: ticker.toUpperCase(),
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
-                    proventos: proventos,
-                    investidoBolso: investidoDoBolso,
-                    atual: atual,
-                    lucro: atual - investidoDoBolso,
+                    investidoBolso: parseNum(row[9]),
+                    atual: parseNum(row[10]),
+                    lucro: parseNum(row[10]) - parseNum(row[9]),
                     peso: 0
                 };
-            }).filter(d => d !== null && d.ativo !== "");
+            }).filter(d => d !== null);
 
             updateDashboard();
         }
@@ -278,12 +311,13 @@
         function updateDashboard() {
             const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
             const totalDoBolso = fullData.reduce((acc, curr) => acc + curr.investidoBolso, 0);
-            const totalProventos = fullData.reduce((acc, curr) => acc + curr.proventos, 0);
             
-            const totalInvestidoComProventos = totalDoBolso + totalProventos;
+            // Soma dos valores de dividendos de 2026 processados da matriz
+            const totalProventosAnual = dividendos2026.reduce((acc, curr) => acc + curr.valor, 0);
+            
             const totalLucro = totalPatrimonio - totalDoBolso;
             const rentabilidadeGlobal = totalDoBolso > 0 ? (totalLucro / totalDoBolso) * 100 : 0;
-            const yocGlobal = totalDoBolso > 0 ? (totalProventos / totalDoBolso) * 100 : 0;
+            const yocGlobal = totalDoBolso > 0 ? (totalProventosAnual / totalDoBolso) * 100 : 0;
 
             // Atualiza Meta
             const percMeta = Math.min((totalPatrimonio / META_FINAL) * 100, 100);
@@ -296,10 +330,9 @@
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             
             document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
-            document.getElementById('total-investido').innerText = fmt(totalInvestidoComProventos);
-            document.getElementById('total-proventos').innerText = fmt(totalProventos);
+            document.getElementById('total-investido').innerText = fmt(totalDoBolso);
+            document.getElementById('total-proventos').innerText = fmt(totalProventosAnual);
             document.getElementById('total-resultado').innerText = fmt(totalLucro);
-            
             document.getElementById('yield-on-cost').innerText = `YoC: ${yocGlobal.toFixed(2)}%`;
             
             const percEl = document.getElementById('perc-total');
@@ -307,32 +340,10 @@
             percEl.innerHTML = `<span>${rentabilidadeGlobal >= 0 ? '↑' : '↓'} ${rentabilidadeGlobal.toFixed(2)}% de rentabilidade</span>`;
 
             const resBorder = document.getElementById('kpi-resultado-border');
-            const resLabel = document.getElementById('resultado-label');
             resBorder.style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
-            resLabel.innerText = totalLucro >= 0 ? 'Lucro Acumulado' : 'Prejuízo Acumulado';
-            resLabel.className = `mt-2 text-[10px] font-black uppercase tracking-tighter ${totalLucro >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
 
             renderAssetGroups();
             renderCharts();
-        }
-
-        function toggleGroup(header) {
-            header.classList.toggle('active');
-            header.nextElementSibling.classList.toggle('expanded');
-        }
-
-        function expandAll() {
-            document.querySelectorAll('.group-header').forEach(h => {
-                h.classList.add('active');
-                h.nextElementSibling.classList.add('expanded');
-            });
-        }
-
-        function collapseAll() {
-            document.querySelectorAll('.group-header').forEach(h => {
-                h.classList.remove('active');
-                h.nextElementSibling.classList.remove('expanded');
-            });
         }
 
         function renderAssetGroups() {
@@ -402,9 +413,36 @@
             const labelColor = isDark ? '#64748b' : '#94a3b8';
             Object.values(charts).forEach(c => c.destroy());
 
+            // 1. Gráfico de Dividendos 2026
+            charts.divs = new Chart(document.getElementById('chartDividendosMensal'), {
+                type: 'bar',
+                data: {
+                    labels: dividendos2026.map(d => d.mes),
+                    datasets: [{
+                        label: 'Dividendos (R$)',
+                        data: dividendos2026.map(d => d.valor),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#818cf8'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: gridColor }, 
+                            ticks: { color: labelColor, font: { size: 10 } } 
+                        },
+                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 10, weight: '600' } } }
+                    }
+                }
+            });
+
+            // 2. Gráfico de Alocação
             const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
             const tipoData = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
-
             charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
                 type: 'doughnut',
                 data: { 
@@ -417,21 +455,22 @@
                 },
                 options: { 
                     maintainAspectRatio: false, 
-                    cutout: '78%', 
+                    cutout: '75%', 
                     plugins: { 
-                        legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '600' }, padding: 20, usePointStyle: true } } 
+                        legend: { position: 'bottom', labels: { color: labelColor, font: { size: 9, weight: '600' }, padding: 15, usePointStyle: true } } 
                     } 
                 }
             });
 
-            const top = [...fullData].sort((a,b) => b.atual - a.atual).slice(0, 6);
+            // 3. Performance Top 10
+            const top = [...fullData].sort((a,b) => b.atual - a.atual).slice(0, 10);
             charts.perf = new Chart(document.getElementById('chartPerformance'), {
                 type: 'bar',
                 data: { 
                     labels: top.map(d => d.ativo), 
                     datasets: [
-                        { label: 'Investido', data: top.map(d => d.investidoBolso), backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderRadius: 5 },
-                        { label: 'Valor Atual', data: top.map(d => d.atual), backgroundColor: '#10b981', borderRadius: 5 }
+                        { label: 'Investido', data: top.map(d => d.investidoBolso), backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderRadius: 4 },
+                        { label: 'Valor Atual', data: top.map(d => d.atual), backgroundColor: '#10b981', borderRadius: 4 }
                     ] 
                 },
                 options: { 
@@ -439,9 +478,34 @@
                     plugins: { legend: { position: 'top', align: 'end', labels: { color: labelColor, font: { size: 10 } } } },
                     scales: { 
                         y: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } }, 
-                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 10, weight: '700' } } } 
+                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9, weight: '700' } } } 
                     } 
                 }
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+            renderCharts();
+        }
+
+        function toggleGroup(header) {
+            header.classList.toggle('active');
+            header.nextElementSibling.classList.toggle('expanded');
+        }
+
+        function expandAll() {
+            document.querySelectorAll('.group-header').forEach(h => {
+                h.classList.add('active');
+                h.nextElementSibling.classList.add('expanded');
+            });
+        }
+
+        function collapseAll() {
+            document.querySelectorAll('.group-header').forEach(h => {
+                h.classList.remove('active');
+                h.nextElementSibling.classList.remove('expanded');
             });
         }
 
