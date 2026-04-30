@@ -55,8 +55,8 @@
 <body class="light-mode">
 
     <div id="loading-overlay">
-        <div class="text-xl font-bold animate-pulse text-[#1a237e] mb-2">Processando Carteira...</div>
-        <div id="status-text" class="text-sm text-gray-600">Sincronizando com Coluna K (Valor Atual)...</div>
+        <div class="text-xl font-bold animate-pulse text-[#1a237e] mb-2">Sincronizando Colunas J e K...</div>
+        <div id="status-text" class="text-sm text-gray-600">Ajustando Detalhamento de Ativos...</div>
     </div>
 
     <nav class="p-6 flex justify-between items-center bg-white dark:bg-slate-900 shadow-md mb-8 transition-colors">
@@ -68,7 +68,6 @@
     </nav>
 
     <main class="container mx-auto px-4 pb-12">
-        <!-- KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="card p-6 border-l-8 border-[#1a237e]">
                 <p class="text-sm font-medium opacity-70">Valor Total da Carteira (Patrimônio)</p>
@@ -84,37 +83,34 @@
             </div>
         </div>
 
-        <!-- Filtros -->
         <div class="mb-8">
-            <h3 class="text-lg font-bold mb-4">Filtrar Ativos</h3>
+            <h3 class="text-lg font-bold mb-4">Filtrar por Ativo</h3>
             <div id="filter-container" class="flex gap-2 overflow-x-auto pb-2">
                 <button id="btn-all" class="btn-filter active" onclick="filterData('ALL')">Todos</button>
             </div>
         </div>
 
-        <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div class="card p-6">
-                <h3 class="text-lg font-bold mb-4">Composição por Ativo</h3>
+                <h3 class="text-lg font-bold mb-4">Composição (Valor Atual)</h3>
                 <canvas id="barChart"></canvas>
             </div>
             <div class="card p-6">
-                <h3 class="text-lg font-bold mb-4">Investido vs Valor Atual</h3>
+                <h3 class="text-lg font-bold mb-4">Comparativo Investido vs Atual</h3>
                 <canvas id="comparisonChart"></canvas>
             </div>
         </div>
 
-        <!-- Tabela -->
         <div class="card p-6">
-            <h3 class="text-lg font-bold mb-4">Dados da Planilha</h3>
+            <h3 class="text-lg font-bold mb-4">Detalhamento dos Ativos</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="border-b dark:border-slate-700">
                         <tr>
                             <th class="py-3 px-2">Ticker</th>
                             <th class="py-3 px-2 text-right">Qtd</th>
-                            <th class="py-3 px-2 text-right">Investido</th>
-                            <th class="py-3 px-2 text-right">Valor Atual</th>
+                            <th class="py-3 px-2 text-right text-orange-600">Investido (Col J)</th>
+                            <th class="py-3 px-2 text-right text-blue-600">Valor Atual (Col K)</th>
                             <th class="py-3 px-2 text-right">Resultado</th>
                         </tr>
                     </thead>
@@ -144,45 +140,50 @@
         }
 
         function parseNumeric(val) {
-            if (!val) return 0;
-            // Remove R$, espaços e converte formato PT-BR para Number
+            if (val === undefined || val === null || val === '') return 0;
             let str = val.toString().replace(/R\$|\s/g, '').trim();
-            
-            // Se tiver vírgula e ponto, ponto é milhar e vírgula é decimal
             if (str.includes(',') && str.includes('.')) {
                 str = str.replace(/\./g, '').replace(',', '.');
             } else if (str.includes(',')) {
                 str = str.replace(',', '.');
             }
-            
-            return parseFloat(str) || 0;
+            let n = parseFloat(str);
+            return isNaN(n) ? 0 : n;
         }
 
         function processData(data, fields) {
-            // Busca específica para "VALOR ATUAL" (Coluna K conforme indicado)
-            const findCol = (terms) => fields.find(f => terms.some(t => f.toLowerCase().trim().includes(t)));
+            // Mapeamento por posição caso o nome falhe
+            // Coluna J = Índice 9, Coluna K = Índice 10 (base zero)
+            const getFieldName = (index, fallbackTerms) => {
+                // Tenta pelo nome exato primeiro
+                let found = fields.find(f => fallbackTerms.some(t => f.toLowerCase().trim() === t));
+                // Se não achar nome exato, pega pela posição se existir
+                return found || fields[index];
+            };
 
-            const colAtivo = findCol(['ativo', 'ticker']);
-            const colQtd = findCol(['quantidade', 'qtd']);
-            const colInvestido = findCol(['investido', 'valor aplicado']);
-            const colValorAtual = findCol(['valor atual', 'patrimônio', 'total atual']);
+            const colAtivo = fields.find(f => f.toLowerCase().includes('ativo') || f.toLowerCase().includes('ticker')) || fields[0];
+            const colQtd = fields.find(f => f.toLowerCase().includes('quantidade') || f.toLowerCase().includes('qtd')) || fields[1];
+            
+            // Forçando J e K
+            const colInvestido = getFieldName(9, ['valor investido', 'investido']);
+            const colValorAtual = getFieldName(10, ['valor atual', 'atual']);
 
             fullData = data.filter(row => {
                 const ticker = row[colAtivo];
                 return ticker && ticker.trim() !== '' && !ticker.toLowerCase().includes('total');
             }).map(row => {
-                const qtd = parseNumeric(row[colQtd]);
-                const investido = parseNumeric(row[colInvestido]);
-                const atual = parseNumeric(row[colValorAtual]);
+                const investidoValue = parseNumeric(row[colInvestido]);
+                const atualValue = parseNumeric(row[colValorAtual]);
+                const qtdValue = parseNumeric(row[colQtd]);
 
                 return {
                     ativo: row[colAtivo].toString().trim().toUpperCase(),
-                    qtd: qtd,
-                    investido: investido,
-                    atual: atual,
-                    lucro: atual - investido
+                    qtd: qtdValue,
+                    investido: investidoValue,
+                    atual: atualValue,
+                    lucro: atualValue - investidoValue
                 };
-            }).filter(item => item.qtd > 0 || item.atual > 0);
+            }).filter(item => item.ativo !== '' && (item.investido !== 0 || item.atual !== 0));
 
             renderFilters();
             filterData('ALL');
@@ -190,6 +191,7 @@
 
         function renderFilters() {
             const container = document.getElementById('filter-container');
+            container.innerHTML = '<button id="btn-all" class="btn-filter active" onclick="filterData(\'ALL\')">Todos</button>';
             const assets = [...new Set(fullData.map(d => d.ativo))].sort();
             assets.forEach(asset => {
                 const btn = document.createElement('button');
@@ -287,7 +289,8 @@
                     scales: {
                         x: { ticks: { color: textColor } },
                         y: { ticks: { color: textColor } }
-                    }
+                    },
+                    plugins: { legend: { labels: { color: textColor } } }
                 }
             });
         }
