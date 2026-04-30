@@ -50,25 +50,13 @@
             position: fixed; inset: 0; background: rgba(255,255,255,0.95);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
-
-        #debug-panel {
-            font-family: monospace;
-            font-size: 10px;
-            background: rgba(0,0,0,0.05);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            max-width: 90%;
-            display: none; /* Ativar apenas para debug se necessário */
-        }
     </style>
 </head>
 <body class="light-mode">
 
     <div id="loading-overlay">
-        <div class="text-xl font-bold animate-pulse text-[#1a237e] mb-2">Sincronizando Dados Reais...</div>
-        <div id="status-text" class="text-sm text-gray-600">Lendo link da planilha...</div>
-        <div id="debug-panel"></div>
+        <div class="text-xl font-bold animate-pulse text-[#1a237e] mb-2">Processando Carteira...</div>
+        <div id="status-text" class="text-sm text-gray-600">Sincronizando com Coluna K (Valor Atual)...</div>
     </div>
 
     <nav class="p-6 flex justify-between items-center bg-white dark:bg-slate-900 shadow-md mb-8 transition-colors">
@@ -98,7 +86,7 @@
 
         <!-- Filtros -->
         <div class="mb-8">
-            <h3 class="text-lg font-bold mb-4">Selecione um Ativo</h3>
+            <h3 class="text-lg font-bold mb-4">Filtrar Ativos</h3>
             <div id="filter-container" class="flex gap-2 overflow-x-auto pb-2">
                 <button id="btn-all" class="btn-filter active" onclick="filterData('ALL')">Todos</button>
             </div>
@@ -107,28 +95,26 @@
         <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div class="card p-6">
-                <h3 class="text-lg font-bold mb-4">Composição (R$)</h3>
+                <h3 class="text-lg font-bold mb-4">Composição por Ativo</h3>
                 <canvas id="barChart"></canvas>
             </div>
             <div class="card p-6">
-                <h3 class="text-lg font-bold mb-4">Comparativo Investido vs Atual</h3>
+                <h3 class="text-lg font-bold mb-4">Investido vs Valor Atual</h3>
                 <canvas id="comparisonChart"></canvas>
             </div>
         </div>
 
         <!-- Tabela -->
         <div class="card p-6">
-            <h3 class="text-lg font-bold mb-4">Listagem dos Dados</h3>
+            <h3 class="text-lg font-bold mb-4">Dados da Planilha</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="border-b dark:border-slate-700">
                         <tr>
                             <th class="py-3 px-2">Ticker</th>
                             <th class="py-3 px-2 text-right">Qtd</th>
-                            <th class="py-3 px-2 text-right">P. Médio</th>
                             <th class="py-3 px-2 text-right">Investido</th>
-                            <th class="py-3 px-2 text-right">Cotação</th>
-                            <th class="py-3 px-2 text-right">Patrimônio</th>
+                            <th class="py-3 px-2 text-right">Valor Atual</th>
                             <th class="py-3 px-2 text-right">Resultado</th>
                         </tr>
                     </thead>
@@ -153,82 +139,50 @@
                 complete: function(results) {
                     processData(results.data, results.meta.fields);
                     document.getElementById('loading-overlay').style.display = 'none';
-                },
-                error: function(err) {
-                    document.getElementById('status-text').innerText = "Erro ao acessar a planilha.";
                 }
             });
         }
 
-        // Função para converter strings monetárias (PT-BR ou EN) para número real
         function parseNumeric(val) {
-            if (val === undefined || val === null || val === '') return 0;
-            if (typeof val === 'number') return val;
-            
-            // Remove R$, espaços, e outros caracteres não numéricos exceto vírgula e ponto
+            if (!val) return 0;
+            // Remove R$, espaços e converte formato PT-BR para Number
             let str = val.toString().replace(/R\$|\s/g, '').trim();
             
-            if (!str) return 0;
-
-            // Lógica para detectar se o separador decimal é vírgula ou ponto
-            // Se houver vírgula e ponto, a vírgula é decimal (Brasil)
+            // Se tiver vírgula e ponto, ponto é milhar e vírgula é decimal
             if (str.includes(',') && str.includes('.')) {
                 str = str.replace(/\./g, '').replace(',', '.');
             } else if (str.includes(',')) {
-                // Se só tem vírgula, trocamos por ponto
                 str = str.replace(',', '.');
             }
             
-            let num = parseFloat(str);
-            return isNaN(num) ? 0 : num;
+            return parseFloat(str) || 0;
         }
 
         function processData(data, fields) {
-            const debugPanel = document.getElementById('debug-panel');
-            
-            // Função para achar coluna por similaridade
-            const findCol = (terms) => {
-                const found = fields.find(f => {
-                    const fieldName = f.toLowerCase().trim();
-                    return terms.some(t => fieldName.includes(t));
-                });
-                return found;
-            };
+            // Busca específica para "VALOR ATUAL" (Coluna K conforme indicado)
+            const findCol = (terms) => fields.find(f => terms.some(t => f.toLowerCase().trim().includes(t)));
 
             const colAtivo = findCol(['ativo', 'ticker']);
             const colQtd = findCol(['quantidade', 'qtd']);
-            const colInvestido = findCol(['valor investido', 'investido']);
-            const colPM = findCol(['preço médio', 'médio']);
-            const colCotacao = findCol(['cotação atual', 'cotação']);
-            const colPatrimonio = findCol(['total atual', 'patrimônio', 'mercado']);
+            const colInvestido = findCol(['investido', 'valor aplicado']);
+            const colValorAtual = findCol(['valor atual', 'patrimônio', 'total atual']);
 
             fullData = data.filter(row => {
-                const t = row[colAtivo];
-                return t && t.trim() !== '' && !t.toLowerCase().includes('total');
+                const ticker = row[colAtivo];
+                return ticker && ticker.trim() !== '' && !ticker.toLowerCase().includes('total');
             }).map(row => {
                 const qtd = parseNumeric(row[colQtd]);
                 const investido = parseNumeric(row[colInvestido]);
-                const cotacao = parseNumeric(row[colCotacao]);
-                const pm = parseNumeric(row[colPM]);
-                
-                // CÁLCULO MANUAL CASO A COLUNA M VENHA ZERADA DO CSV
-                // Muitos CSVs do Google não exportam o resultado da fórmula em tempo real
-                let patPlanilha = parseNumeric(row[colPatrimonio]);
-                let patCalculado = qtd * cotacao;
-                
-                // Prioriza o maior valor ou o calculado se o da planilha for 0
-                const atual = (patPlanilha > 0) ? patPlanilha : patCalculado;
+                const atual = parseNumeric(row[colValorAtual]);
 
                 return {
                     ativo: row[colAtivo].toString().trim().toUpperCase(),
                     qtd: qtd,
-                    pm: pm,
                     investido: investido,
-                    cotacao: cotacao,
                     atual: atual,
                     lucro: atual - investido
                 };
-            }).filter(item => item.qtd > 0);
+            }).filter(item => item.qtd > 0 || item.atual > 0);
 
             renderFilters();
             filterData('ALL');
@@ -236,8 +190,8 @@
 
         function renderFilters() {
             const container = document.getElementById('filter-container');
-            const assets = [...new Set(fullData.map(d => d.ativo))];
-            assets.sort().forEach(asset => {
+            const assets = [...new Set(fullData.map(d => d.ativo))].sort();
+            assets.forEach(asset => {
                 const btn = document.createElement('button');
                 btn.className = 'btn-filter';
                 btn.innerText = asset;
@@ -280,13 +234,11 @@
             filteredData.forEach(d => {
                 const corLucro = d.lucro >= 0 ? 'text-green-500' : 'text-red-500';
                 tbody.innerHTML += `
-                    <tr class="border-b dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                    <tr class="border-b dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800">
                         <td class="py-4 px-2 font-bold">${d.ativo}</td>
                         <td class="py-4 px-2 text-right">${d.qtd}</td>
-                        <td class="py-4 px-2 text-right">R$ ${fNum(d.pm)}</td>
                         <td class="py-4 px-2 text-right">R$ ${fNum(d.investido)}</td>
-                        <td class="py-4 px-2 text-right">R$ ${fNum(d.cotacao)}</td>
-                        <td class="py-4 px-2 text-right">R$ ${fNum(d.atual)}</td>
+                        <td class="py-4 px-2 text-right font-semibold">R$ ${fNum(d.atual)}</td>
                         <td class="py-4 px-2 text-right font-semibold ${corLucro}">R$ ${fNum(d.lucro)}</td>
                     </tr>
                 `;
@@ -304,7 +256,7 @@
                 data: {
                     labels: filteredData.map(d => d.ativo),
                     datasets: [{
-                        label: 'Patrimônio (R$)',
+                        label: 'Valor Atual (R$)',
                         data: filteredData.map(d => d.atual),
                         backgroundColor: '#1a237e',
                         borderRadius: 4
@@ -328,15 +280,14 @@
                     labels: filteredData.map(d => d.ativo),
                     datasets: [
                         { label: 'Investido', data: filteredData.map(d => d.investido), backgroundColor: '#fbc02d' },
-                        { label: 'Patrimônio', data: filteredData.map(d => d.atual), backgroundColor: '#4caf50' }
+                        { label: 'Atual', data: filteredData.map(d => d.atual), backgroundColor: '#4caf50' }
                     ]
                 },
                 options: {
                     scales: {
                         x: { ticks: { color: textColor } },
                         y: { ticks: { color: textColor } }
-                    },
-                    plugins: { legend: { labels: { color: textColor } } }
+                    }
                 }
             });
         }
