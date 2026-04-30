@@ -13,44 +13,69 @@
             --brand-primary: #6366f1;
             --brand-success: #10b981;
             --brand-danger: #ef4444;
+            --bg-light: #f8fafc;
+            --card-light: #ffffff;
+            --text-light: #1e293b;
             --bg-dark: #0b0f1a;
             --card-dark: #161e31;
             --text-dark: #f1f5f9;
         }
 
-        * { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s; }
+        * { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, border-color 0.3s, color 0.2s; }
         
-        body { background-color: var(--bg-dark); color: var(--text-dark); margin: 0; }
+        /* Theme Logic */
+        body.light-mode { background-color: var(--bg-light); color: var(--text-light); }
+        body.dark-mode { background-color: var(--bg-dark); color: var(--text-dark); }
 
         .glass-card {
-            background-color: var(--card-dark);
             border-radius: 1.25rem;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
         }
+        .light-mode .glass-card { background-color: var(--card-light); border-color: #e2e8f0; }
+        .dark-mode .glass-card { background-color: var(--card-dark); }
 
-        /* Sorting Indicators */
+        /* Theme Toggle UI */
+        .theme-switch {
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 50px;
+            display: flex;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .dark-mode .theme-switch { background: #1e293b; }
+        .theme-btn {
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .light-mode .sun-icon { background: white; color: #f59e0b; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .dark-mode .moon-icon { background: #334155; color: #818cf8; }
+
+        /* Table & Components */
         th.sortable { cursor: pointer; position: relative; }
         th.sortable:hover { color: var(--brand-primary); }
         .sort-indicator { font-size: 0.7rem; margin-left: 4px; opacity: 0.5; }
-        th.active .sort-indicator { opacity: 1; color: var(--brand-primary); }
-
+        
         #loading-overlay {
             position: fixed; inset: 0; background: var(--bg-dark);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
+        .light-mode #loading-overlay { background: var(--bg-light); }
 
         .status-pill { padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
         .status-up { background: rgba(16, 185, 129, 0.1); color: var(--brand-success); }
         .status-down { background: rgba(239, 68, 68, 0.1); color: var(--brand-danger); }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
     <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
@@ -65,30 +90,38 @@
                 </svg>
             </div>
             <div>
-                <h1 class="text-xl font-extrabold tracking-tight">Gonça<span class="text-indigo-500">Invest</span></h1>
+                <h1 class="text-xl font-extrabold tracking-tight dark:text-white text-slate-900">Gonça<span class="text-indigo-500">Invest</span></h1>
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Analytics Dashboard</p>
             </div>
         </div>
-        <div class="text-right">
-            <p id="last-update" class="text-[10px] text-slate-500 font-bold uppercase">Atualizado agora</p>
+        
+        <div class="flex items-center gap-6">
+            <div class="theme-switch" onclick="toggleTheme()">
+                <div class="theme-btn sun-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.657 7.657l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                </div>
+                <div class="theme-btn moon-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                </div>
+            </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         
-        <!-- KPIs Principais -->
+        <!-- KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <div class="glass-card p-6 border-t-4 border-indigo-500">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Atual</p>
-                <h2 id="total-atual" class="text-3xl font-black text-white">R$ 0,00</h2>
+                <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
             </div>
-            <div class="glass-card p-6 border-t-4 border-slate-700">
+            <div class="glass-card p-6 border-t-4 border-slate-500">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Investido</p>
-                <h2 id="total-investido" class="text-3xl font-black text-white">R$ 0,00</h2>
+                <h2 id="total-investido" class="text-3xl font-black">R$ 0,00</h2>
             </div>
             <div class="glass-card p-6 border-t-4" id="kpi-resultado-border">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Resultado Líquido</p>
-                <h2 id="total-resultado" class="text-3xl font-black text-white">R$ 0,00</h2>
+                <h2 id="total-resultado" class="text-3xl font-black">R$ 0,00</h2>
             </div>
         </div>
 
@@ -96,36 +129,28 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
             <div class="glass-card p-6">
                 <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Alocação por Ativo (%)</h3>
-                <div class="h-64 relative">
-                    <canvas id="chartAlocacao"></canvas>
-                </div>
+                <div class="h-64"><canvas id="chartAlocacao"></canvas></div>
             </div>
             <div class="glass-card p-6">
                 <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Concentração (R$)</h3>
-                <div class="h-64">
-                    <canvas id="chartConcentracao"></canvas>
-                </div>
+                <div class="h-64"><canvas id="chartConcentracao"></canvas></div>
             </div>
             <div class="glass-card p-6">
                 <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Performance Individual</h3>
-                <div class="h-64">
-                    <canvas id="chartPerformance"></canvas>
-                </div>
+                <div class="h-64"><canvas id="chartPerformance"></canvas></div>
             </div>
         </div>
 
-        <!-- Tabela Detalhada -->
+        <!-- Tabela -->
         <div class="glass-card overflow-hidden">
-            <div class="p-6 border-b border-white/5 flex justify-between items-center">
+            <div class="p-6 border-b border-black/5 dark:border-white/5 flex justify-between items-center">
                 <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lista de Ativos e Performance</h3>
-                <div class="flex gap-2">
-                    <input type="text" id="searchInput" placeholder="Filtrar ticker..." class="bg-slate-900 border border-white/10 rounded-lg px-3 py-1 text-xs outline-none focus:border-indigo-500">
-                </div>
+                <input type="text" id="searchInput" placeholder="Filtrar ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-lg px-3 py-1 text-xs outline-none focus:border-indigo-500">
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="text-[10px] font-black text-slate-500 uppercase border-b border-white/5 bg-slate-900/50">
+                        <tr class="text-[10px] font-black text-slate-500 uppercase border-b border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50">
                             <th class="py-4 px-6 sortable active" data-col="ativo">Ativo <span class="sort-indicator">▼</span></th>
                             <th class="py-4 px-4 text-right sortable" data-col="pMedio">P. Médio <span class="sort-indicator">↕</span></th>
                             <th class="py-4 px-4 text-right sortable" data-col="pAtual">P. Atual <span class="sort-indicator">↕</span></th>
@@ -134,9 +159,7 @@
                             <th class="py-4 px-6 text-right sortable" data-col="lucro">Resultado <span class="sort-indicator">↕</span></th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="text-sm">
-                        <!-- Gerado via JS -->
-                    </tbody>
+                    <tbody id="tableBody" class="text-sm"></tbody>
                 </table>
             </div>
         </div>
@@ -149,13 +172,10 @@
         let sortConfig = { column: 'atual', direction: 'desc' };
         let charts = {};
 
-        // Paleta moderna para o gráfico de pizza
-        const colors = ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#fb923c', '#facc15', '#4ade80', '#2dd4bf', '#38bdf8', '#818cf8'];
-
         async function init() {
             Papa.parse(CSV_URL, {
                 download: true,
-                header: false, // Usando false para mapear por índice fixo
+                header: false,
                 skipEmptyLines: 'greedy',
                 complete: function(results) {
                     processCSV(results.data);
@@ -166,9 +186,18 @@
             });
         }
 
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('dark-mode')) {
+                body.classList.replace('dark-mode', 'light-mode');
+            } else {
+                body.classList.replace('light-mode', 'dark-mode');
+            }
+            renderCharts(); // Redesenha para ajustar cores se necessário
+        }
+
         function parseNum(val) {
             if (!val) return 0;
-            // Remove R$, espaços e converte formato BR para US
             let clean = val.toString().replace(/R\$|\s|%/g, '').trim();
             if (clean.includes(',') && clean.includes('.')) clean = clean.replace(/\./g, '').replace(',', '.');
             else if (clean.includes(',')) clean = clean.replace(',', '.');
@@ -176,9 +205,7 @@
         }
 
         function processCSV(rows) {
-            // Pulamos a primeira linha (cabeçalhos)
-            // Conforme orientação: Coluna A (0) = Tipo, Coluna B (1) = Ativo
-            // Mapeamento baseado nos índices: 4 (E) P.Médio, 5 (F) P.Atual, 9 (J) Investido, 10 (K) Valor Total
+            // Coluna A (0) = Tipo, Coluna B (1) = Ativo
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
                 const investido = parseNum(row[9]);
@@ -194,7 +221,7 @@
                     investido: investido,
                     atual: atual,
                     lucro: atual - investido,
-                    peso: 0 // Calc depois
+                    peso: 0
                 };
             }).filter(d => d !== null && d.ativo !== "");
 
@@ -206,12 +233,8 @@
             const totalInvestido = fullData.reduce((acc, curr) => acc + curr.investido, 0);
             const totalLucro = totalPatrimonio - totalInvestido;
 
-            // Calcula pesos
-            fullData.forEach(d => {
-                d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0;
-            });
+            fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
 
-            // Atualiza KPIs
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
             document.getElementById('total-investido').innerText = fmt(totalInvestido);
@@ -219,7 +242,7 @@
             const resEl = document.getElementById('total-resultado');
             const resBorder = document.getElementById('kpi-resultado-border');
             resEl.innerText = fmt(totalLucro);
-            resEl.className = totalLucro >= 0 ? "text-3xl font-black text-emerald-500" : "text-3xl font-black text-rose-500";
+            resEl.className = `text-3xl font-black ${totalLucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
             resBorder.style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
 
             renderTable();
@@ -229,128 +252,85 @@
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-
             const searchTerm = document.getElementById('searchInput').value.toUpperCase();
             
             let data = fullData.filter(d => d.ativo.includes(searchTerm));
-
-            // Ordenação
             data.sort((a, b) => {
                 let valA = a[sortConfig.column];
                 let valB = b[sortConfig.column];
-                if (typeof valA === 'string') return sortConfig.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
             });
 
             data.forEach(d => {
                 const difPreco = d.pAtual - d.pMedio;
-                const percLucro = d.investido > 0 ? (d.lucro / d.investido) * 100 : 0;
-
                 tbody.innerHTML += `
-                    <tr class="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors">
+                    <tr class="border-b border-black/5 dark:border-white/[0.02] hover:bg-black/5 dark:hover:bg-white/[0.02]">
                         <td class="py-4 px-6">
                             <div class="flex flex-col">
-                                <span class="font-bold text-white">${d.ativo}</span>
-                                <span class="text-[9px] text-slate-600 font-bold uppercase">${d.tipo || 'Ativo'}</span>
+                                <span class="font-bold">${d.ativo}</span>
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">${d.tipo || 'Ativo'}</span>
                             </div>
                         </td>
                         <td class="py-4 px-4 text-right text-slate-400">R$ ${d.pMedio.toFixed(2)}</td>
-                        <td class="py-4 px-4 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="${difPreco >= 0 ? 'text-emerald-500' : 'text-rose-500'} font-bold">R$ ${d.pAtual.toFixed(2)}</span>
-                                <span class="text-[9px] opacity-50">${difPreco >= 0 ? '↑' : '↓'} ${Math.abs(difPreco).toFixed(2)}</span>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-right font-bold text-slate-200">R$ ${d.atual.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
-                        <td class="py-4 px-4 text-right">
-                            <span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-1 rounded font-bold">${d.peso.toFixed(1)}%</span>
-                        </td>
-                        <td class="py-4 px-6 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
-                                <span class="status-pill ${d.lucro >= 0 ? 'status-up' : 'status-down'} mt-1">${percLucro.toFixed(1)}%</span>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                        <td class="py-4 px-4 text-right font-bold ${difPreco >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.pAtual.toFixed(2)}</td>
+                        <td class="py-4 px-4 text-right font-bold">R$ ${d.atual.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                        <td class="py-4 px-4 text-right"><span class="bg-slate-200 dark:bg-slate-800 text-slate-500 text-[10px] px-2 py-1 rounded font-bold">${d.peso.toFixed(1)}%</span></td>
+                        <td class="py-4 px-6 text-right font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                    </tr>`;
             });
         }
 
         function renderCharts() {
-            const ctxAloc = document.getElementById('chartAlocacao').getContext('2d');
-            const ctxConc = document.getElementById('chartConcentracao').getContext('2d');
-            const ctxPerf = document.getElementById('chartPerformance').getContext('2d');
+            const isDark = document.body.classList.contains('dark-mode');
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            const labelColor = isDark ? '#64748b' : '#94a3b8';
 
-            // Destruir gráficos anteriores
             Object.values(charts).forEach(c => c.destroy());
+            const colors = ['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#fb923c', '#facc15', '#4ade80', '#2dd4bf'];
 
-            // 1. Alocação (Pizza/Doughnut)
-            // Pegamos os top 10 e agrupamos o resto em "Outros"
-            const sortedByValue = [...fullData].sort((a,b) => b.atual - a.atual);
-            const topAtivos = sortedByValue.slice(0, 8);
-            const outrosVal = sortedByValue.slice(8).reduce((acc, curr) => acc + curr.atual, 0);
-            
-            const labels = topAtivos.map(d => d.ativo);
-            const values = topAtivos.map(d => d.atual);
-            if (outrosVal > 0) { labels.push('Outros'); values.push(outrosVal); }
-
-            charts.aloc = new Chart(ctxAloc, {
+            // Gráfico 1: Alocação
+            charts.aloc = new Chart(document.getElementById('chartAlocacao'), {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: colors,
-                        borderWidth: 2,
-                        borderColor: '#161e31'
-                    }]
+                    labels: fullData.slice(0, 8).map(d => d.ativo),
+                    datasets: [{ data: fullData.slice(0, 8).map(d => d.atual), backgroundColor: colors, borderWidth: 0 }]
                 },
-                options: {
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: {
-                        legend: { position: 'bottom', labels: { color: '#64748b', boxWidth: 10, font: { size: 9, weight: 'bold' } } }
-                    }
-                }
+                options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
             });
 
-            // 2. Concentração (Barras)
-            charts.conc = new Chart(ctxConc, {
+            // Gráfico 2: Concentração
+            charts.conc = new Chart(document.getElementById('chartConcentracao'), {
                 type: 'bar',
                 data: {
-                    labels: fullData.slice(0,10).map(d => d.ativo),
-                    datasets: [{
-                        data: fullData.slice(0,10).map(d => d.atual),
-                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                        borderRadius: 4
-                    }]
+                    labels: fullData.slice(0, 8).map(d => d.ativo),
+                    datasets: [{ data: fullData.slice(0, 8).map(d => d.atual), backgroundColor: '#6366f1', borderRadius: 4 }]
                 },
                 options: {
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#475569', font: { size: 9 } } },
-                        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9, weight: 'bold' } } }
+                        y: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9 } } }
                     }
                 }
             });
 
-            // 3. Performance (Comparação)
-            charts.perf = new Chart(ctxPerf, {
+            // Gráfico 3: Performance
+            charts.perf = new Chart(document.getElementById('chartPerformance'), {
                 type: 'bar',
                 data: {
-                    labels: fullData.slice(0,8).map(d => d.ativo),
+                    labels: fullData.slice(0, 6).map(d => d.ativo),
                     datasets: [
-                        { label: 'Investido', data: fullData.slice(0,8).map(d => d.investido), backgroundColor: '#334155', borderRadius: 2 },
-                        { label: 'Atual', data: fullData.slice(0,8).map(d => d.atual), backgroundColor: '#10b981', borderRadius: 2 }
+                        { label: 'Inv.', data: fullData.slice(0, 6).map(d => d.investido), backgroundColor: isDark ? '#334155' : '#cbd5e1', borderRadius: 2 },
+                        { label: 'Atu.', data: fullData.slice(0, 6).map(d => d.atual), backgroundColor: '#10b981', borderRadius: 2 }
                     ]
                 },
                 options: {
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: true, labels: { color: '#475569', font: { size: 9 } } } },
+                    plugins: { legend: { display: true, labels: { color: labelColor, font: { size: 8 } } } },
                     scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#475569', font: { size: 9 } } },
-                        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9, weight: 'bold' } } }
+                        y: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9 } } }
                     }
                 }
             });
@@ -359,22 +339,8 @@
         function setupSortListeners() {
             document.querySelectorAll('th.sortable').forEach(th => {
                 th.addEventListener('click', () => {
-                    const col = th.dataset.col;
-                    if (sortConfig.column === col) {
-                        sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        sortConfig.column = col;
-                        sortConfig.direction = 'desc';
-                    }
-                    
-                    // Atualiza UI dos headers
-                    document.querySelectorAll('th.sortable').forEach(el => {
-                        el.classList.remove('active');
-                        el.querySelector('.sort-indicator').innerText = '↕';
-                    });
-                    th.classList.add('active');
-                    th.querySelector('.sort-indicator').innerText = sortConfig.direction === 'asc' ? '▲' : '▼';
-                    
+                    sortConfig.column = th.dataset.col;
+                    sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
                     renderTable();
                 });
             });
