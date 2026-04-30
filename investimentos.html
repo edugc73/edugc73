@@ -89,7 +89,6 @@
 
         .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
         
-        /* Estilo para simular profundidade no gráfico de rosca */
         .chart-container-3d {
             position: relative;
             filter: drop-shadow(0px 10px 8px rgba(0,0,0,0.2));
@@ -221,12 +220,6 @@
             </div>
         </div>
 
-        <!-- Performance Chart -->
-        <div class="glass-card p-6 mb-10">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 text-center md:text-left">Performance Individual dos Ativos</h3>
-            <div class="h-80"><canvas id="chartPerformance"></canvas></div>
-        </div>
-
         <!-- Filtro e Lista -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">Meus Ativos</h3>
@@ -322,11 +315,9 @@
             const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
             const totalDoBolso = fullData.reduce((acc, curr) => acc + curr.investidoBolso, 0);
             
-            // Dados de 2026
             const dados2026 = dividendosHistorico["2026"] || NOMES_MESES.map(m => ({mes: m, valor: 0}));
             const totalProventosAnual = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
             
-            // Cálculo da média: divide apenas pelos meses que possuem valor cadastrado
             const mesesAtivos = dados2026.filter(d => d.valor > 0).length || 1;
             const mediaMensal = totalProventosAnual / mesesAtivos;
 
@@ -350,7 +341,7 @@
             document.getElementById('yield-on-cost').innerText = `YoC: ${yocGlobal.toFixed(2)}%`;
             document.getElementById('monthly-avg').innerText = `Média: R$ ${mediaMensal.toFixed(0)}`;
             
-            const snowballCotas = Math.floor(mediaMensal / 10.50); // Média de preço de FIIs Base 10
+            const snowballCotas = Math.floor(mediaMensal / 10.50); 
             document.getElementById('snowball-metric').innerText = `+ ${snowballCotas} Cotas (Base R$ 10,50)`;
             
             const percEl = document.getElementById('perc-total');
@@ -430,7 +421,7 @@
             
             Object.values(charts).forEach(c => c.destroy());
 
-            // 1. Gráfico de Comparação Temporal (Ajustado para Visibilidade)
+            // 1. Gráfico de Comparação Temporal
             const d2026 = (dividendosHistorico["2026"] || []).map(d => d.valor);
             const d2025 = (dividendosHistorico["2025"] || []).map(d => d.valor);
 
@@ -473,7 +464,7 @@
                 }
             });
 
-            // 2. Gráfico de Rosca com Largura Maior e Efeito Sombra (3D Style)
+            // 2. Gráfico de Rosca Alocação
             const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
             const tipoData = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
             
@@ -491,34 +482,13 @@
                 },
                 options: { 
                     maintainAspectRatio: false, 
-                    cutout: '65%', // Largura das bordas maior
+                    cutout: '65%', 
                     plugins: { 
                         legend: { 
                             position: 'bottom', 
                             labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 20, usePointStyle: true, boxWidth: 8 } 
                         } 
                     }
-                }
-            });
-
-            // 3. Performance
-            const top = [...fullData].sort((a,b) => b.atual - a.atual).slice(0, 10);
-            charts.perf = new Chart(document.getElementById('chartPerformance'), {
-                type: 'bar',
-                data: { 
-                    labels: top.map(d => d.ativo), 
-                    datasets: [
-                        { label: 'Valor Mercado', data: top.map(d => d.atual), backgroundColor: '#10b981', borderRadius: 4 },
-                        { label: 'Custo Aquisição', data: top.map(d => d.investidoBolso), backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderRadius: 4 }
-                    ] 
-                },
-                options: { 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { position: 'top', align: 'end', labels: { color: labelColor, font: { size: 10, weight: '700' } } } },
-                    scales: { 
-                        y: { grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9 } } }, 
-                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 10, weight: '800' } } } 
-                    } 
                 }
             });
         }
