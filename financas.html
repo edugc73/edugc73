@@ -4,20 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Financial Intelligence | Dashboard</title>
+    
+    <!-- Dependências -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Fontes -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --bg: #030712;
             --surface: #111827;
             --surface-accent: #1f2937;
+            --surface-hover: #374151;
             --primary: #10b981; /* Emerald 500 */
+            --primary-glow: rgba(16, 185, 129, 0.2);
             --secondary: #3b82f6; /* Blue 500 */
+            --warning: #f59e0b; /* Amber 500 */
             --danger: #ef4444; /* Red 500 */
             --text-main: #f9fafb;
             --text-muted: #9ca3af;
-            --glass: rgba(17, 24, 39, 0.7);
+            --glass: rgba(17, 24, 39, 0.6);
+            --border: rgba(255, 255, 255, 0.08);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,66 +35,127 @@
         body {
             background-color: var(--bg);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 40%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.08) 0px, transparent 40%);
+            background-attachment: fixed;
             color: var(--text-main);
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
             padding: 24px;
         }
 
-        .container { max-width: 1300px; margin: 0 auto; }
+        .container { max-width: 1300px; margin: 0 auto; animation: fadeIn 0.5s ease-out; }
 
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 32px;
             padding-bottom: 24px;
-            border-bottom: 1px solid var(--surface-accent);
+            border-bottom: 1px solid var(--border);
         }
 
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-icon { 
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .brand h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
-        .brand span { color: var(--text-muted); font-size: 0.875rem; }
+        .brand span { color: var(--text-muted); font-size: 0.875rem; display: flex; align-items: center; gap: 6px;}
 
         .controls { display: flex; align-items: center; gap: 16px; }
         
         select {
-            background: var(--surface);
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(8px);
             color: var(--text-main);
-            border: 1px solid var(--surface-accent);
+            border: 1px solid var(--border);
             padding: 10px 16px;
             border-radius: 12px;
+            font-family: inherit;
             font-weight: 500;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
             cursor: pointer;
+            appearance: none;
+            padding-right: 40px;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239ca3af%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px top 50%;
+            background-size: 10px auto;
         }
-        select:hover { border-color: var(--primary); }
+        select:hover, select:focus { border-color: var(--primary); background-color: rgba(31, 41, 55, 0.8); }
 
         /* Grid Layout */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
         .card {
             background: var(--glass);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--surface-accent);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
             border-radius: 20px;
             padding: 24px;
-            transition: transform 0.2s, border-color 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .card:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .card:hover { 
+            border-color: rgba(255,255,255,0.15); 
+            transform: translateY(-4px); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
 
-        .kpi-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        .kpi-value { font-size: 1.75rem; font-weight: 700; margin: 8px 0; display: block; }
-        .kpi-trend { font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 4px; }
-        .trend-up { color: var(--primary); }
-        .trend-down { color: var(--danger); }
+        /* Card Icon Background (Subtle) */
+        .card-bg-icon {
+            position: absolute;
+            right: -10px;
+            bottom: -10px;
+            width: 100px;
+            height: 100px;
+            opacity: 0.03;
+            pointer-events: none;
+            color: white;
+        }
+
+        .kpi-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .kpi-header i { color: var(--text-muted); width: 18px; height: 18px; }
+        .kpi-label { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; display: block; letter-spacing: -0.5px; }
+        
+        .kpi-trend { 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 4px; 
+            padding: 4px 8px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.03);
+        }
+        .kpi-trend i { width: 14px; height: 14px; }
+        .trend-up.good { color: var(--primary); background: rgba(16, 185, 129, 0.1); }
+        .trend-down.good { color: var(--primary); background: rgba(16, 185, 129, 0.1); }
+        .trend-up.bad { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .trend-down.bad { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .trend-neutral { color: var(--text-muted); }
 
         .main-grid {
             display: grid;
@@ -92,16 +163,76 @@
             gap: 20px;
         }
 
-        .chart-section { display: flex; flex-direction: column; gap: 20px; }
-        .chart-box { height: 350px; }
-        .chart-title { font-size: 1rem; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .chart-section, .side-panel { display: flex; flex-direction: column; gap: 20px; }
+        .chart-box { height: 380px; display: flex; flex-direction: column; }
+        .chart-container { flex-grow: 1; position: relative; min-height: 0; }
+        
+        .chart-title { 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center;
+            justify-content: space-between; 
+        }
+        .chart-title-left { display: flex; align-items: center; gap: 8px; }
+        .chart-title-left i { color: var(--primary); width: 20px; height: 20px; }
+        .chart-title span { font-size: 0.8rem; font-weight: 400; color: var(--text-muted); background: var(--surface-accent); padding: 2px 8px; border-radius: 12px;}
 
-        .side-panel { display: flex; flex-direction: column; gap: 20px; }
+        /* Progress Bars */
+        .progress-list { display: flex; flex-direction: column; gap: 20px; margin-top: 10px; }
+        .progress-item { width: 100%; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 10px; font-weight: 500;}
+        .progress-label span:first-child { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+        .progress-label span:first-child i { width: 16px; height: 16px; }
+        
+        .progress-bar-bg { 
+            background: rgba(255,255,255,0.05); 
+            height: 10px; 
+            border-radius: 5px; 
+            overflow: hidden; 
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .progress-bar-fill { 
+            height: 100%; 
+            border-radius: 5px; 
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative;
+        }
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 2s infinite;
+        }
 
-        .progress-item { margin-bottom: 16px; }
-        .progress-label { display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 8px; }
-        .progress-bar-bg { background: var(--surface-accent); height: 8px; border-radius: 4px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease-in-out; }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--surface-accent);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         @media (max-width: 1024px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -109,20 +240,34 @@
         }
         @media (max-width: 640px) {
             .stats-grid { grid-template-columns: 1fr; }
-            header { flex-direction: column; align-items: flex-start; }
+            header { flex-direction: column; align-items: flex-start; gap: 20px; }
+            .controls { width: 100%; }
+            select { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- Loader -->
+<div id="loader">
+    <div class="spinner"></div>
+    <p style="color: var(--text-muted); font-weight: 500;">Conectando à base de dados...</p>
+</div>
+
+<div class="container" style="display: none;" id="main-content">
     <header>
         <div class="brand">
-            <h1>Inteligência Financeira</h1>
-            <span id="sync-status">Sincronizando dados da nuvem...</span>
+            <div class="brand-icon">
+                <i data-lucide="wallet" style="color: white; width: 24px; height: 24px;"></i>
+            </div>
+            <div>
+                <h1>Inteligência Financeira</h1>
+                <span id="sync-status"><i data-lucide="cloud-sync" style="width: 14px;"></i> Sincronizando dados...</span>
+            </div>
         </div>
         
         <div class="controls">
+            <i data-lucide="calendar" style="color: var(--text-muted);"></i>
             <select id="monthSelect"></select>
         </div>
     </header>
@@ -130,24 +275,43 @@
     <!-- KPIs -->
     <div class="stats-grid">
         <div class="card">
-            <span class="kpi-label">Receita Líquida</span>
+            <i data-lucide="arrow-down-circle" class="card-bg-icon"></i>
+            <div class="kpi-header">
+                <i data-lucide="trending-up" style="color: var(--primary);"></i>
+                <span class="kpi-label">Receita Líquida</span>
+            </div>
             <span class="kpi-value" id="kpi-receita">R$ 0,00</span>
-            <div class="kpi-trend" id="trend-receita"></div>
+            <div class="kpi-trend" id="trend-receita">--</div>
         </div>
+        
         <div class="card">
-            <span class="kpi-label">Gastos Totais</span>
+            <i data-lucide="credit-card" class="card-bg-icon"></i>
+            <div class="kpi-header">
+                <i data-lucide="trending-down" style="color: var(--danger);"></i>
+                <span class="kpi-label">Gastos Totais</span>
+            </div>
             <span class="kpi-value" id="kpi-gastos">R$ 0,00</span>
-            <div class="kpi-trend" id="trend-gastos"></div>
+            <div class="kpi-trend" id="trend-gastos">--</div>
         </div>
+        
         <div class="card">
-            <span class="kpi-label">Investimentos</span>
+            <i data-lucide="piggy-bank" class="card-bg-icon"></i>
+            <div class="kpi-header">
+                <i data-lucide="bar-chart-2" style="color: var(--secondary);"></i>
+                <span class="kpi-label">Investimentos</span>
+            </div>
             <span class="kpi-value" id="kpi-invest">R$ 0,00</span>
-            <div class="kpi-trend" id="trend-invest"></div>
+            <div class="kpi-trend" id="trend-invest">--</div>
         </div>
-        <div class="card">
-            <span class="kpi-label">Saldo Livre</span>
+        
+        <div class="card" style="border-color: var(--primary-glow);">
+            <i data-lucide="check-circle-2" class="card-bg-icon"></i>
+            <div class="kpi-header">
+                <i data-lucide="wallet" style="color: var(--primary);"></i>
+                <span class="kpi-label">Saldo Livre</span>
+            </div>
             <span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
-            <div class="kpi-trend" id="trend-saldo"></div>
+            <div class="kpi-trend" id="trend-saldo">--</div>
         </div>
     </div>
 
@@ -155,57 +319,81 @@
         <div class="chart-section">
             <!-- Gráfico de Evolução -->
             <div class="card chart-box">
-                <div class="chart-title">Evolução do Patrimônio Mensal <span>(Saldo Final)</span></div>
-                <canvas id="mainEvolutionChart"></canvas>
+                <div class="chart-title">
+                    <div class="chart-title-left">
+                        <i data-lucide="line-chart"></i> Evolução do Patrimônio
+                    </div>
+                    <span>Saldo Final Acumulado</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="mainEvolutionChart"></canvas>
+                </div>
             </div>
 
             <!-- Gráfico de Gastos por Categoria -->
             <div class="card chart-box">
-                <div class="chart-title">Distribuição de Despesas <span>Categorizado</span></div>
-                <canvas id="categoryChart"></canvas>
+                <div class="chart-title">
+                    <div class="chart-title-left">
+                        <i data-lucide="pie-chart"></i> Distribuição de Despesas
+                    </div>
+                    <span>Categorizado</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
             </div>
         </div>
 
         <div class="side-panel">
             <!-- Composição da Renda -->
             <div class="card">
-                <div class="chart-title">Origem da Renda</div>
-                <div style="height: 180px; margin-bottom: 20px;">
+                <div class="chart-title">
+                    <div class="chart-title-left">
+                        <i data-lucide="briefcase"></i> Origem da Renda
+                    </div>
+                </div>
+                <div style="height: 220px; position: relative;">
                     <canvas id="incomePieChart"></canvas>
                 </div>
             </div>
 
             <!-- Orçamentos e Limites -->
-            <div class="card">
-                <div class="chart-title">Uso do Orçamento</div>
+            <div class="card" style="flex-grow: 1;">
+                <div class="chart-title">
+                    <div class="chart-title-left">
+                        <i data-lucide="target"></i> Indicadores de Saúde
+                    </div>
+                </div>
                 
-                <div class="progress-item">
-                    <div class="progress-label">
-                        <span>Despesas vs Renda</span>
-                        <span id="perc-gastos">0%</span>
+                <div class="progress-list">
+                    <div class="progress-item">
+                        <div class="progress-label">
+                            <span><i data-lucide="shopping-cart"></i> Despesas vs Renda</span>
+                            <span id="perc-gastos" style="font-weight: 700;">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger); width: 0%"></div>
+                        </div>
                     </div>
-                    <div class="progress-bar-bg">
-                        <div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger); width: 0%"></div>
-                    </div>
-                </div>
 
-                <div class="progress-item">
-                    <div class="progress-label">
-                        <span>Taxa de Investimento</span>
-                        <span id="perc-invest">0%</span>
+                    <div class="progress-item">
+                        <div class="progress-label">
+                            <span><i data-lucide="trending-up"></i> Taxa de Investimento</span>
+                            <span id="perc-invest" style="font-weight: 700;">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary); width: 0%"></div>
+                        </div>
                     </div>
-                    <div class="progress-bar-bg">
-                        <div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary); width: 0%"></div>
-                    </div>
-                </div>
 
-                <div class="progress-item" style="margin-bottom: 0;">
-                    <div class="progress-label">
-                        <span>Eficiência Financeira (Saldo)</span>
-                        <span id="perc-saldo">0%</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div id="bar-saldo" class="progress-bar-fill" style="background: var(--primary); width: 0%"></div>
+                    <div class="progress-item">
+                        <div class="progress-label">
+                            <span><i data-lucide="shield-check"></i> Eficiência (Saldo Livre)</span>
+                            <span id="perc-saldo" style="font-weight: 700; color: var(--primary);">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="bar-saldo" class="progress-bar-fill" style="background: var(--primary); width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -214,6 +402,9 @@
 </div>
 
 <script>
+    // Inicializar Ícones
+    lucide.createIcons();
+
     const URL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
     
     let globalData = [];
@@ -221,8 +412,7 @@
 
     // Formatação
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-    const fmtPerc = new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 1 });
-
+    
     function parseVal(v) {
         if (!v) return 0;
         if (typeof v === 'number') return v;
@@ -235,7 +425,8 @@
             header: true,
             skipEmptyLines: true,
             complete: (results) => {
-                globalData = results.data.map(r => {
+                // Remover linhas que possam estar completamente vazias no CSV
+                globalData = results.data.filter(r => r.MÊS || r.Mes).map(r => {
                     const clean = {};
                     for(let k in r) clean[k.trim()] = r[k];
                     return clean;
@@ -244,8 +435,21 @@
                 if(globalData.length > 0) {
                     fillMonthSelector();
                     renderDashboard(globalData.length - 1);
-                    document.getElementById('sync-status').innerText = 'Dados atualizados em tempo real';
+                    
+                    // Atualizar UI de Loading
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('main-content').style.display = 'block';
+                    }, 500);
+
+                    document.getElementById('sync-status').innerHTML = '<i data-lucide="check-circle-2" style="width: 14px; color: var(--primary);"></i> Atualizado em tempo real';
+                    lucide.createIcons();
                 }
+            },
+            error: (err) => {
+                alert("Erro ao carregar dados da planilha. Verifique a URL.");
+                console.error(err);
             }
         });
     }
@@ -262,11 +466,39 @@
         sel.onchange = (e) => renderDashboard(parseInt(e.target.value));
     }
 
+    // Função para calcular e renderizar tendências (Mês a Mês)
+    function renderTrend(elementId, currentValue, prevValue, invertColors = false) {
+        const el = document.getElementById(elementId);
+        if (prevValue === null || prevValue === 0) {
+            el.innerHTML = `<span class="trend-neutral">Sem base anterior</span>`;
+            return;
+        }
+
+        const diff = currentValue - prevValue;
+        const perc = (Math.abs(diff) / prevValue) * 100;
+        
+        let icon = diff >= 0 ? 'arrow-up-right' : 'arrow-down-right';
+        let colorClass = '';
+
+        if (diff > 0) {
+            colorClass = invertColors ? 'bad trend-up' : 'good trend-up';
+        } else if (diff < 0) {
+            colorClass = invertColors ? 'good trend-down' : 'bad trend-down';
+        } else {
+            colorClass = 'trend-neutral';
+            icon = 'minus';
+        }
+
+        el.className = `kpi-trend ${colorClass}`;
+        el.innerHTML = `<i data-lucide="${icon}"></i> ${perc.toFixed(1)}% vs anterior`;
+        lucide.createIcons();
+    }
+
     function renderDashboard(idx) {
         const row = globalData[idx];
         const prevRow = idx > 0 ? globalData[idx-1] : null;
 
-        // Cálculos
+        // Cálculos do mês atual
         const rAposentadoria = parseVal(row["Salario Aposentadoria"]);
         const rPTTC = parseVal(row["Salário PTTC"]);
         const rTotal = rAposentadoria + rPTTC;
@@ -279,16 +511,32 @@
         const invest = parseVal(row.Investimentos);
         const saldo = parseVal(row["Saldo Final do Mês"]);
 
-        // Atualizar KPIs
+        // Atualizar KPIs Numéricos
         document.getElementById('kpi-receita').innerText = fmt.format(rTotal);
         document.getElementById('kpi-gastos').innerText = fmt.format(gTotal);
         document.getElementById('kpi-invest').innerText = fmt.format(invest);
         document.getElementById('kpi-saldo').innerText = fmt.format(saldo);
 
+        // Cálculos e Tendências do mês anterior (se houver)
+        let prevRTotal = null, prevGTotal = null, prevInvest = null, prevSaldo = null;
+        if (prevRow) {
+            prevRTotal = parseVal(prevRow["Salario Aposentadoria"]) + parseVal(prevRow["Salário PTTC"]);
+            prevGTotal = (parseVal(prevRow["Cartão C6"]) + parseVal(prevRow["Cartão ML"])) + 
+                         (parseVal(prevRow.Luz) + parseVal(prevRow.Água) + parseVal(prevRow.IPTU) + parseVal(prevRow.DESKTOP) + parseVal(prevRow["Internet Mãe"]) + parseVal(prevRow.Celular)) + 
+                         (parseVal(prevRow.IPVA) + parseVal(prevRow["Outros Gastos"]) + parseVal(prevRow["Canção Nova"]));
+            prevInvest = parseVal(prevRow.Investimentos);
+            prevSaldo = parseVal(prevRow["Saldo Final do Mês"]);
+        }
+
+        renderTrend('trend-receita', rTotal, prevRTotal, false); // Mais receita = Bom
+        renderTrend('trend-gastos', gTotal, prevGTotal, true);   // Mais gasto = Ruim (invertColors = true)
+        renderTrend('trend-invest', invest, prevInvest, false);  // Mais invest = Bom
+        renderTrend('trend-saldo', saldo, prevSaldo, false);     // Mais saldo = Bom
+
         // Barra de Progresso
-        const pGastos = (gTotal / rTotal) * 100;
-        const pInvest = (invest / rTotal) * 100;
-        const pSaldo = (saldo / rTotal) * 100;
+        const pGastos = rTotal > 0 ? (gTotal / rTotal) * 100 : 0;
+        const pInvest = rTotal > 0 ? (invest / rTotal) * 100 : 0;
+        const pSaldo = rTotal > 0 ? (saldo / rTotal) * 100 : 0;
 
         document.getElementById('perc-gastos').innerText = pGastos.toFixed(1) + '%';
         document.getElementById('bar-gastos').style.width = Math.min(pGastos, 100) + '%';
@@ -303,65 +551,109 @@
     }
 
     function renderCharts(idx, rAposentadoria, rPTTC, gCartao, gFixos, gOutros) {
-        // Limpar anteriores
-        Object.values(charts).forEach(c => c.destroy());
+        if(charts.evolution) charts.evolution.destroy();
+        if(charts.categories) charts.categories.destroy();
+        if(charts.income) charts.income.destroy();
 
         Chart.defaults.color = '#9ca3af';
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+        
+        // Tooltip comum para formatar moeda
+        const tooltipCurrency = {
+            callbacks: {
+                label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) label += ': ';
+                    if (context.parsed.y !== null) {
+                        label += fmt.format(context.parsed.y || context.parsed);
+                    }
+                    return label;
+                }
+            },
+            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+            titleFont: { size: 14, family: "'Plus Jakarta Sans', sans-serif" },
+            bodyFont: { size: 13, family: "'Plus Jakarta Sans', sans-serif" },
+            padding: 12,
+            cornerRadius: 8,
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1
+        };
 
         // 1. Evolução Patrimonial (Linha)
+        const labels = globalData.map(d => d.MÊS || d.Mes);
+        const dataEvolucao = globalData.map(d => parseVal(d["Saldo Final do Mês"]));
+        
         charts.evolution = new Chart(document.getElementById('mainEvolutionChart'), {
             type: 'line',
             data: {
-                labels: globalData.map(d => d.MÊS || d.Mes),
+                labels: labels,
                 datasets: [{
                     label: 'Saldo Acumulado',
-                    data: globalData.map(d => parseVal(d["Saldo Final do Mês"])),
+                    data: dataEvolucao,
                     borderColor: '#10b981',
                     backgroundColor: (ctx) => {
-                        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 400);
-                        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+                        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
                         gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
                         return gradient;
                     },
                     fill: true,
                     tension: 0.4,
-                    pointRadius: globalData.map((_, i) => i === idx ? 6 : 0),
-                    pointBackgroundColor: '#10b981',
+                    pointRadius: globalData.map((_, i) => i === idx ? 6 : 3),
+                    pointBackgroundColor: globalData.map((_, i) => i === idx ? '#fff' : '#10b981'),
+                    pointBorderColor: '#10b981',
+                    pointBorderWidth: 2,
                     borderWidth: 3
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: tooltipCurrency
+                },
                 scales: { 
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' } },
-                    x: { grid: { display: false } }
-                }
+                    y: { 
+                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                        ticks: { callback: (value) => 'R$ ' + (value/1000).toFixed(0) + 'k' }
+                    },
+                    x: { grid: { display: false, drawBorder: false } }
+                },
+                interaction: { intersect: false, mode: 'index' },
             }
         });
 
-        // 2. Categorias de Gastos (Barras)
+        // 2. Categorias de Gastos (Barras Horizontais)
         charts.categories = new Chart(document.getElementById('categoryChart'), {
             type: 'bar',
             data: {
                 labels: ['Cartões', 'Contas Fixas', 'Outros Gastos'],
                 datasets: [{
+                    label: 'Valor Gasto',
                     data: [gCartao, gFixos, gOutros],
                     backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-                    borderRadius: 8,
-                    barThickness: 40
+                    borderRadius: 6,
+                    barThickness: 'flex',
+                    maxBarThickness: 45
                 }]
             },
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        ...tooltipCurrency,
+                        callbacks: {
+                            label: function(context) { return fmt.format(context.parsed.x); }
+                        }
+                    }
+                },
                 scales: {
-                    x: { grid: { display: false }, ticks: { display: false } },
-                    y: { grid: { display: false } }
+                    x: { grid: { display: false }, ticks: { display: false }, border: {display: false} },
+                    y: { grid: { display: false }, border: {display: false}, ticks: { font: { weight: '500' } } }
                 }
             }
         });
@@ -370,25 +662,36 @@
         charts.income = new Chart(document.getElementById('incomePieChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Aposentadoria', 'PTTC'],
+                labels: ['Aposentadoria', 'Salário PTTC'],
                 datasets: [{
                     data: [rAposentadoria, rPTTC],
                     backgroundColor: ['#10b981', '#3b82f6'],
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    borderWidth: 2,
+                    borderColor: '#111827',
+                    hoverOffset: 8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '70%',
+                cutout: '75%',
                 plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } }
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { usePointStyle: true, padding: 20, font: { size: 13 } } 
+                    },
+                    tooltip: {
+                        ...tooltipCurrency,
+                        callbacks: {
+                            label: function(context) { return ' ' + fmt.format(context.parsed); }
+                        }
+                    }
                 }
             }
         });
     }
 
+    // Start
     init();
 </script>
 
