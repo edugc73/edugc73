@@ -46,13 +46,11 @@
 
         .container { max-width: 1300px; margin: 0 auto; animation: fadeIn 0.5s ease-out; }
 
-        /* Animações */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Header */
         header {
             display: flex;
             justify-content: space-between;
@@ -95,9 +93,7 @@
             background-position: right 16px top 50%;
             background-size: 10px auto;
         }
-        select:hover, select:focus { border-color: var(--primary); background-color: rgba(31, 41, 55, 0.8); }
 
-        /* Grid Layout */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -108,147 +104,60 @@
         .card {
             background: var(--glass);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, border-color 0.3s ease;
             position: relative;
             overflow: hidden;
         }
-        .card:hover { 
-            border-color: rgba(255,255,255,0.15); 
-            transform: translateY(-4px); 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-        }
+        .card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.15); }
 
-        /* Card Icon Background (Subtle) */
         .card-bg-icon {
-            position: absolute;
-            right: -10px;
-            bottom: -10px;
-            width: 100px;
-            height: 100px;
-            opacity: 0.03;
-            pointer-events: none;
-            color: white;
+            position: absolute; right: -10px; bottom: -10px;
+            width: 100px; height: 100px; opacity: 0.03; pointer-events: none;
         }
 
         .kpi-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-        .kpi-header i { color: var(--text-muted); width: 18px; height: 18px; }
         .kpi-label { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        .kpi-value { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; display: block; letter-spacing: -0.5px; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; display: block; }
         
-        .kpi-trend { 
-            font-size: 0.8rem; 
-            font-weight: 600; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 4px; 
-            padding: 4px 8px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.03);
-        }
-        .kpi-trend i { width: 14px; height: 14px; }
-        .trend-up.good { color: var(--primary); background: rgba(16, 185, 129, 0.1); }
-        .trend-down.good { color: var(--primary); background: rgba(16, 185, 129, 0.1); }
-        .trend-up.bad { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
-        .trend-down.bad { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
-        .trend-neutral { color: var(--text-muted); }
+        .kpi-trend { font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 20px; background: rgba(255,255,255,0.03); }
+        .trend-up.good, .trend-down.good { color: var(--primary); background: rgba(16, 185, 129, 0.1); }
+        .trend-up.bad, .trend-down.bad { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
 
         .main-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 2.5fr 1fr;
             gap: 20px;
         }
 
-        .chart-section, .side-panel { display: flex; flex-direction: column; gap: 20px; }
-        .chart-box { height: 380px; display: flex; flex-direction: column; }
+        .chart-section { display: flex; flex-direction: column; gap: 20px; }
+        .chart-box { height: 400px; display: flex; flex-direction: column; }
         .chart-container { flex-grow: 1; position: relative; min-height: 0; }
         
-        .chart-title { 
-            font-size: 1.1rem; 
-            font-weight: 600; 
-            margin-bottom: 20px; 
-            display: flex; 
-            align-items: center;
-            justify-content: space-between; 
-        }
+        .chart-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
         .chart-title-left { display: flex; align-items: center; gap: 8px; }
         .chart-title-left i { color: var(--primary); width: 20px; height: 20px; }
-        .chart-title span { font-size: 0.8rem; font-weight: 400; color: var(--text-muted); background: var(--surface-accent); padding: 2px 8px; border-radius: 12px;}
 
-        /* Progress Bars */
-        .progress-list { display: flex; flex-direction: column; gap: 20px; margin-top: 10px; }
-        .progress-item { width: 100%; }
-        .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 10px; font-weight: 500;}
-        .progress-label span:first-child { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
-        .progress-label span:first-child i { width: 16px; height: 16px; }
-        
-        .progress-bar-bg { 
-            background: rgba(255,255,255,0.05); 
-            height: 10px; 
-            border-radius: 5px; 
-            overflow: hidden; 
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
-        }
-        .progress-bar-fill { 
-            height: 100%; 
-            border-radius: 5px; 
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); 
-            position: relative;
-        }
-        .progress-bar-fill::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-            animation: shimmer 2s infinite;
-        }
+        .progress-list { display: flex; flex-direction: column; gap: 24px; margin-top: 10px; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 12px; font-weight: 500;}
+        .progress-bar-bg { background: rgba(255,255,255,0.05); height: 12px; border-radius: 6px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 6px; transition: width 1s ease-in-out; position: relative; }
 
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        /* Loading Overlay */
         #loader {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.5s;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: opacity 0.5s;
         }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid var(--surface-accent);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 16px;
-        }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--surface-accent); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 1024px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .main-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 640px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            header { flex-direction: column; align-items: flex-start; gap: 20px; }
-            .controls { width: 100%; }
-            select { width: 100%; }
-        }
+        @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .main-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-<!-- Loader -->
 <div id="loader">
     <div class="spinner"></div>
     <p style="color: var(--text-muted); font-weight: 500;">Conectando à base de dados...</p>
@@ -257,59 +166,40 @@
 <div class="container" style="display: none;" id="main-content">
     <header>
         <div class="brand">
-            <div class="brand-icon">
-                <i data-lucide="wallet" style="color: white; width: 24px; height: 24px;"></i>
-            </div>
+            <div class="brand-icon"><i data-lucide="wallet" style="color: white; width: 24px; height: 24px;"></i></div>
             <div>
                 <h1>Inteligência Financeira</h1>
                 <span id="sync-status"><i data-lucide="cloud-sync" style="width: 14px;"></i> Sincronizando dados...</span>
             </div>
         </div>
-        
         <div class="controls">
             <i data-lucide="calendar" style="color: var(--text-muted);"></i>
             <select id="monthSelect"></select>
         </div>
     </header>
 
-    <!-- KPIs -->
     <div class="stats-grid">
         <div class="card">
             <i data-lucide="arrow-down-circle" class="card-bg-icon"></i>
-            <div class="kpi-header">
-                <i data-lucide="trending-up" style="color: var(--primary);"></i>
-                <span class="kpi-label">Receita Líquida</span>
-            </div>
+            <div class="kpi-header"><i data-lucide="trending-up" style="color: var(--primary);"></i><span class="kpi-label">Receita Líquida</span></div>
             <span class="kpi-value" id="kpi-receita">R$ 0,00</span>
             <div class="kpi-trend" id="trend-receita">--</div>
         </div>
-        
         <div class="card">
             <i data-lucide="credit-card" class="card-bg-icon"></i>
-            <div class="kpi-header">
-                <i data-lucide="trending-down" style="color: var(--danger);"></i>
-                <span class="kpi-label">Gastos Totais</span>
-            </div>
+            <div class="kpi-header"><i data-lucide="trending-down" style="color: var(--danger);"></i><span class="kpi-label">Gastos Totais</span></div>
             <span class="kpi-value" id="kpi-gastos">R$ 0,00</span>
             <div class="kpi-trend" id="trend-gastos">--</div>
         </div>
-        
         <div class="card">
             <i data-lucide="piggy-bank" class="card-bg-icon"></i>
-            <div class="kpi-header">
-                <i data-lucide="bar-chart-2" style="color: var(--secondary);"></i>
-                <span class="kpi-label">Investimentos</span>
-            </div>
+            <div class="kpi-header"><i data-lucide="bar-chart-2" style="color: var(--secondary);"></i><span class="kpi-label">Investimentos</span></div>
             <span class="kpi-value" id="kpi-invest">R$ 0,00</span>
             <div class="kpi-trend" id="trend-invest">--</div>
         </div>
-        
         <div class="card" style="border-color: var(--primary-glow);">
             <i data-lucide="check-circle-2" class="card-bg-icon"></i>
-            <div class="kpi-header">
-                <i data-lucide="wallet" style="color: var(--primary);"></i>
-                <span class="kpi-label">Saldo Livre</span>
-            </div>
+            <div class="kpi-header"><i data-lucide="wallet" style="color: var(--primary);"></i><span class="kpi-label">Saldo Livre</span></div>
             <span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
             <div class="kpi-trend" id="trend-saldo">--</div>
         </div>
@@ -317,84 +207,52 @@
 
     <div class="main-grid">
         <div class="chart-section">
-            <!-- Gráfico de Evolução -->
+            <!-- Gráfico de Histórico de Gastos -->
             <div class="card chart-box">
                 <div class="chart-title">
-                    <div class="chart-title-left">
-                        <i data-lucide="line-chart"></i> Evolução do Patrimônio
-                    </div>
-                    <span>Saldo Final Acumulado</span>
+                    <div class="chart-title-left"><i data-lucide="bar-chart-3"></i> Histórico Mensal de Gastos</div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Comparativo Anual</span>
                 </div>
-                <div class="chart-container">
-                    <canvas id="mainEvolutionChart"></canvas>
-                </div>
+                <div class="chart-container"><canvas id="spendingHistoryChart"></canvas></div>
             </div>
 
             <!-- Gráfico de Gastos por Categoria -->
-            <div class="card chart-box">
+            <div class="card chart-box" style="height: 320px;">
                 <div class="chart-title">
-                    <div class="chart-title-left">
-                        <i data-lucide="pie-chart"></i> Distribuição de Despesas
-                    </div>
-                    <span>Categorizado</span>
+                    <div class="chart-title-left"><i data-lucide="pie-chart"></i> Detalhamento por Categoria</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="categoryChart"></canvas>
-                </div>
+                <div class="chart-container"><canvas id="categoryChart"></canvas></div>
             </div>
         </div>
 
         <div class="side-panel">
-            <!-- Composição da Renda -->
-            <div class="card">
+            <div class="card" style="height: 100%;">
                 <div class="chart-title">
-                    <div class="chart-title-left">
-                        <i data-lucide="briefcase"></i> Origem da Renda
-                    </div>
+                    <div class="chart-title-left"><i data-lucide="target"></i> Saúde Financeira</div>
                 </div>
-                <div style="height: 220px; position: relative;">
-                    <canvas id="incomePieChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Orçamentos e Limites -->
-            <div class="card" style="flex-grow: 1;">
-                <div class="chart-title">
-                    <div class="chart-title-left">
-                        <i data-lucide="target"></i> Indicadores de Saúde
-                    </div>
-                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Proporção em relação à receita total do mês.</p>
                 
                 <div class="progress-list">
                     <div class="progress-item">
-                        <div class="progress-label">
-                            <span><i data-lucide="shopping-cart"></i> Despesas vs Renda</span>
-                            <span id="perc-gastos" style="font-weight: 700;">0%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger); width: 0%"></div>
-                        </div>
+                        <div class="progress-label"><span>Despesas Totais</span><span id="perc-gastos">0%</span></div>
+                        <div class="progress-bar-bg"><div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger); width: 0%"></div></div>
                     </div>
-
                     <div class="progress-item">
-                        <div class="progress-label">
-                            <span><i data-lucide="trending-up"></i> Taxa de Investimento</span>
-                            <span id="perc-invest" style="font-weight: 700;">0%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary); width: 0%"></div>
-                        </div>
+                        <div class="progress-label"><span>Aporte Investimentos</span><span id="perc-invest">0%</span></div>
+                        <div class="progress-bar-bg"><div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary); width: 0%"></div></div>
                     </div>
-
                     <div class="progress-item">
-                        <div class="progress-label">
-                            <span><i data-lucide="shield-check"></i> Eficiência (Saldo Livre)</span>
-                            <span id="perc-saldo" style="font-weight: 700; color: var(--primary);">0%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div id="bar-saldo" class="progress-bar-fill" style="background: var(--primary); width: 0%"></div>
-                        </div>
+                        <div class="progress-label"><span>Eficiência de Caixa</span><span id="perc-saldo">0%</span></div>
+                        <div class="progress-bar-bg"><div id="bar-saldo" class="progress-bar-fill" style="background: var(--primary); width: 0%"></div></div>
                     </div>
+                </div>
+
+                <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px dashed var(--border);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i data-lucide="info" style="width: 18px; color: var(--secondary);"></i>
+                        <span style="font-weight: 600; font-size: 0.9rem;">Dica Mensal</span>
+                    </div>
+                    <p id="financial-tip" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">Analise o histórico ao lado para identificar meses com gastos atípicos nos cartões.</p>
                 </div>
             </div>
         </div>
@@ -402,15 +260,10 @@
 </div>
 
 <script>
-    // Inicializar Ícones
     lucide.createIcons();
-
     const URL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv';
-    
     let globalData = [];
     let charts = {};
-
-    // Formatação
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     
     function parseVal(v) {
@@ -419,13 +272,23 @@
         return parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) || 0;
     }
 
+    // Calcula os gastos de uma linha específica
+    function calculateMonthStats(row) {
+        const gCartao = parseVal(row["Cartão C6"]) + parseVal(row["Cartão ML"]);
+        const gFixos = parseVal(row.Luz) + parseVal(row.Água) + parseVal(row.IPTU) + parseVal(row.DESKTOP) + parseVal(row["Internet Mãe"]) + parseVal(row.Celular);
+        const gOutros = parseVal(row.IPVA) + parseVal(row["Outros Gastos"]) + parseVal(row["Canção Nova"]);
+        const gTotal = gCartao + gFixos + gOutros;
+        const rTotal = parseVal(row["Salario Aposentadoria"]) + parseVal(row["Salário PTTC"]);
+        const invest = parseVal(row.Investimentos);
+        const saldo = parseVal(row["Saldo Final do Mês"]);
+        
+        return { gCartao, gFixos, gOutros, gTotal, rTotal, invest, saldo };
+    }
+
     async function init() {
         Papa.parse(URL_CSV, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
+            download: true, header: true, skipEmptyLines: true,
             complete: (results) => {
-                // Remover linhas que possam estar completamente vazias no CSV
                 globalData = results.data.filter(r => r.MÊS || r.Mes).map(r => {
                     const clean = {};
                     for(let k in r) clean[k.trim()] = r[k];
@@ -433,29 +296,18 @@
                 });
                 
                 if(globalData.length > 0) {
-                    // Descobre o mês atual (0 = Jan, 1 = Fev, ..., 11 = Dez)
                     const currentMonthIndex = new Date().getMonth();
-                    
-                    // Verifica se a planilha já tem dados até esse mês, senão mostra o último preenchido
                     const targetIndex = currentMonthIndex < globalData.length ? currentMonthIndex : globalData.length - 1;
-
                     fillMonthSelector(targetIndex);
                     renderDashboard(targetIndex);
-                    
-                    // Atualizar UI de Loading
                     document.getElementById('loader').style.opacity = '0';
                     setTimeout(() => {
                         document.getElementById('loader').style.display = 'none';
                         document.getElementById('main-content').style.display = 'block';
                     }, 500);
-
-                    document.getElementById('sync-status').innerHTML = '<i data-lucide="check-circle-2" style="width: 14px; color: var(--primary);"></i> Atualizado em tempo real';
+                    document.getElementById('sync-status').innerHTML = '<i data-lucide="check-circle-2" style="width: 14px; color: var(--primary);"></i> Atualizado';
                     lucide.createIcons();
                 }
-            },
-            error: (err) => {
-                alert("Erro ao carregar dados da planilha. Verifique a URL.");
-                console.error(err);
             }
         });
     }
@@ -472,232 +324,107 @@
         sel.onchange = (e) => renderDashboard(parseInt(e.target.value));
     }
 
-    // Função para calcular e renderizar tendências (Mês a Mês)
     function renderTrend(elementId, currentValue, prevValue, invertColors = false) {
         const el = document.getElementById(elementId);
-        if (prevValue === null || prevValue === 0) {
-            el.innerHTML = `<span class="trend-neutral">Sem base anterior</span>`;
-            return;
-        }
-
+        if (!prevValue) { el.innerHTML = `<span class="trend-neutral">--</span>`; return; }
         const diff = currentValue - prevValue;
         const perc = (Math.abs(diff) / prevValue) * 100;
-        
         let icon = diff >= 0 ? 'arrow-up-right' : 'arrow-down-right';
-        let colorClass = '';
-
-        if (diff > 0) {
-            colorClass = invertColors ? 'bad trend-up' : 'good trend-up';
-        } else if (diff < 0) {
-            colorClass = invertColors ? 'good trend-down' : 'bad trend-down';
-        } else {
-            colorClass = 'trend-neutral';
-            icon = 'minus';
-        }
-
+        let colorClass = diff > 0 ? (invertColors ? 'bad trend-up' : 'good trend-up') : (invertColors ? 'good trend-down' : 'bad trend-down');
         el.className = `kpi-trend ${colorClass}`;
-        el.innerHTML = `<i data-lucide="${icon}"></i> ${perc.toFixed(1)}% vs anterior`;
+        el.innerHTML = `<i data-lucide="${icon}"></i> ${perc.toFixed(1)}%`;
         lucide.createIcons();
     }
 
     function renderDashboard(idx) {
-        const row = globalData[idx];
-        const prevRow = idx > 0 ? globalData[idx-1] : null;
+        const stats = calculateMonthStats(globalData[idx]);
+        const prevStats = idx > 0 ? calculateMonthStats(globalData[idx-1]) : null;
 
-        // Cálculos do mês atual
-        const rAposentadoria = parseVal(row["Salario Aposentadoria"]);
-        const rPTTC = parseVal(row["Salário PTTC"]);
-        const rTotal = rAposentadoria + rPTTC;
+        document.getElementById('kpi-receita').innerText = fmt.format(stats.rTotal);
+        document.getElementById('kpi-gastos').innerText = fmt.format(stats.gTotal);
+        document.getElementById('kpi-invest').innerText = fmt.format(stats.invest);
+        document.getElementById('kpi-saldo').innerText = fmt.format(stats.saldo);
 
-        const gCartao = parseVal(row["Cartão C6"]) + parseVal(row["Cartão ML"]);
-        const gFixos = parseVal(row.Luz) + parseVal(row.Água) + parseVal(row.IPTU) + parseVal(row.DESKTOP) + parseVal(row["Internet Mãe"]) + parseVal(row.Celular);
-        const gOutros = parseVal(row.IPVA) + parseVal(row["Outros Gastos"]) + parseVal(row["Canção Nova"]);
-        const gTotal = gCartao + gFixos + gOutros;
+        renderTrend('trend-receita', stats.rTotal, prevStats?.rTotal, false);
+        renderTrend('trend-gastos', stats.gTotal, prevStats?.gTotal, true);
+        renderTrend('trend-invest', stats.invest, prevStats?.invest, false);
+        renderTrend('trend-saldo', stats.saldo, prevStats?.saldo, false);
 
-        const invest = parseVal(row.Investimentos);
-        const saldo = parseVal(row["Saldo Final do Mês"]);
-
-        // Atualizar KPIs Numéricos
-        document.getElementById('kpi-receita').innerText = fmt.format(rTotal);
-        document.getElementById('kpi-gastos').innerText = fmt.format(gTotal);
-        document.getElementById('kpi-invest').innerText = fmt.format(invest);
-        document.getElementById('kpi-saldo').innerText = fmt.format(saldo);
-
-        // Cálculos e Tendências do mês anterior (se houver)
-        let prevRTotal = null, prevGTotal = null, prevInvest = null, prevSaldo = null;
-        if (prevRow) {
-            prevRTotal = parseVal(prevRow["Salario Aposentadoria"]) + parseVal(prevRow["Salário PTTC"]);
-            prevGTotal = (parseVal(prevRow["Cartão C6"]) + parseVal(prevRow["Cartão ML"])) + 
-                         (parseVal(prevRow.Luz) + parseVal(prevRow.Água) + parseVal(prevRow.IPTU) + parseVal(prevRow.DESKTOP) + parseVal(prevRow["Internet Mãe"]) + parseVal(prevRow.Celular)) + 
-                         (parseVal(prevRow.IPVA) + parseVal(prevRow["Outros Gastos"]) + parseVal(prevRow["Canção Nova"]));
-            prevInvest = parseVal(prevRow.Investimentos);
-            prevSaldo = parseVal(prevRow["Saldo Final do Mês"]);
-        }
-
-        renderTrend('trend-receita', rTotal, prevRTotal, false); // Mais receita = Bom
-        renderTrend('trend-gastos', gTotal, prevGTotal, true);   // Mais gasto = Ruim (invertColors = true)
-        renderTrend('trend-invest', invest, prevInvest, false);  // Mais invest = Bom
-        renderTrend('trend-saldo', saldo, prevSaldo, false);     // Mais saldo = Bom
-
-        // Barra de Progresso
-        const pGastos = rTotal > 0 ? (gTotal / rTotal) * 100 : 0;
-        const pInvest = rTotal > 0 ? (invest / rTotal) * 100 : 0;
-        const pSaldo = rTotal > 0 ? (saldo / rTotal) * 100 : 0;
+        const pGastos = stats.rTotal > 0 ? (stats.gTotal / stats.rTotal) * 100 : 0;
+        const pInvest = stats.rTotal > 0 ? (stats.invest / stats.rTotal) * 100 : 0;
+        const pSaldo = stats.rTotal > 0 ? (stats.saldo / stats.rTotal) * 100 : 0;
 
         document.getElementById('perc-gastos').innerText = pGastos.toFixed(1) + '%';
         document.getElementById('bar-gastos').style.width = Math.min(pGastos, 100) + '%';
-        
         document.getElementById('perc-invest').innerText = pInvest.toFixed(1) + '%';
         document.getElementById('bar-invest').style.width = Math.min(pInvest, 100) + '%';
-
         document.getElementById('perc-saldo').innerText = pSaldo.toFixed(1) + '%';
         document.getElementById('bar-saldo').style.width = Math.min(pSaldo, 100) + '%';
 
-        renderCharts(idx, rAposentadoria, rPTTC, gCartao, gFixos, gOutros);
+        renderCharts(idx, stats);
     }
 
-    function renderCharts(idx, rAposentadoria, rPTTC, gCartao, gFixos, gOutros) {
-        if(charts.evolution) charts.evolution.destroy();
+    function renderCharts(selectedIdx, stats) {
+        if(charts.history) charts.history.destroy();
         if(charts.categories) charts.categories.destroy();
-        if(charts.income) charts.income.destroy();
 
         Chart.defaults.color = '#9ca3af';
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-        
-        // Tooltip comum para formatar moeda
-        const tooltipCurrency = {
-            callbacks: {
-                label: function(context) {
-                    let label = context.dataset.label || '';
-                    if (label) label += ': ';
-                    if (context.parsed.y !== null) {
-                        label += fmt.format(context.parsed.y || context.parsed);
-                    }
-                    return label;
-                }
-            },
-            backgroundColor: 'rgba(17, 24, 39, 0.9)',
-            titleFont: { size: 14, family: "'Plus Jakarta Sans', sans-serif" },
-            bodyFont: { size: 13, family: "'Plus Jakarta Sans', sans-serif" },
-            padding: 12,
-            cornerRadius: 8,
-            borderColor: 'rgba(255,255,255,0.1)',
-            borderWidth: 1
-        };
 
-        // 1. Evolução Patrimonial (Linha)
+        // 1. Histórico Mensal de Gastos (Barras)
         const labels = globalData.map(d => d.MÊS || d.Mes);
-        const dataEvolucao = globalData.map(d => parseVal(d["Saldo Final do Mês"]));
+        const dataGastos = globalData.map(d => calculateMonthStats(d).gTotal);
         
-        charts.evolution = new Chart(document.getElementById('mainEvolutionChart'), {
-            type: 'line',
+        charts.history = new Chart(document.getElementById('spendingHistoryChart'), {
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Saldo Acumulado',
-                    data: dataEvolucao,
-                    borderColor: '#10b981',
-                    backgroundColor: (ctx) => {
-                        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
-                        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-                        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
-                        return gradient;
-                    },
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: globalData.map((_, i) => i === idx ? 6 : 3),
-                    pointBackgroundColor: globalData.map((_, i) => i === idx ? '#fff' : '#10b981'),
-                    pointBorderColor: '#10b981',
-                    pointBorderWidth: 2,
-                    borderWidth: 3
+                    label: 'Gasto Total',
+                    data: dataGastos,
+                    backgroundColor: dataGastos.map((_, i) => i === selectedIdx ? '#ef4444' : 'rgba(239, 68, 68, 0.2)'),
+                    borderColor: '#ef4444',
+                    borderWidth: (ctx) => ctx.dataIndex === selectedIdx ? 2 : 0,
+                    borderRadius: 8,
+                    hoverBackgroundColor: '#ef4444'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: tooltipCurrency
-                },
+                plugins: { legend: { display: false } },
                 scales: { 
-                    y: { 
-                        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-                        ticks: { callback: (value) => 'R$ ' + (value/1000).toFixed(0) + 'k' }
-                    },
-                    x: { grid: { display: false, drawBorder: false } }
-                },
-                interaction: { intersect: false, mode: 'index' },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => 'R$ ' + v } },
+                    x: { grid: { display: false } }
+                }
             }
         });
 
-        // 2. Categorias de Gastos (Barras Horizontais)
+        // 2. Categorias (Barras Horizontais)
         charts.categories = new Chart(document.getElementById('categoryChart'), {
             type: 'bar',
             data: {
-                labels: ['Cartões', 'Contas Fixas', 'Outros Gastos'],
+                labels: ['Cartões', 'Contas Fixas', 'Outros'],
                 datasets: [{
-                    label: 'Valor Gasto',
-                    data: [gCartao, gFixos, gOutros],
+                    data: [stats.gCartao, stats.gFixos, stats.gOutros],
                     backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
                     borderRadius: 6,
-                    barThickness: 'flex',
-                    maxBarThickness: 45
+                    barThickness: 30
                 }]
             },
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        ...tooltipCurrency,
-                        callbacks: {
-                            label: function(context) { return fmt.format(context.parsed.x); }
-                        }
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     x: { grid: { display: false }, ticks: { display: false }, border: {display: false} },
-                    y: { grid: { display: false }, border: {display: false}, ticks: { font: { weight: '500' } } }
-                }
-            }
-        });
-
-        // 3. Origem da Renda (Donut)
-        charts.income = new Chart(document.getElementById('incomePieChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Aposentadoria', 'Salário PTTC'],
-                datasets: [{
-                    data: [rAposentadoria, rPTTC],
-                    backgroundColor: ['#10b981', '#3b82f6'],
-                    borderWidth: 2,
-                    borderColor: '#111827',
-                    hoverOffset: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { 
-                        position: 'bottom', 
-                        labels: { usePointStyle: true, padding: 20, font: { size: 13 } } 
-                    },
-                    tooltip: {
-                        ...tooltipCurrency,
-                        callbacks: {
-                            label: function(context) { return ' ' + fmt.format(context.parsed); }
-                        }
-                    }
+                    y: { grid: { display: false }, border: {display: false} }
                 }
             }
         });
     }
 
-    // Start
     init();
 </script>
 
