@@ -1,568 +1,279 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GonçaInvest | Premium Analytics</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --brand-primary: #6366f1;
-            --brand-success: #10b981;
-            --bg-light: #f8fafc;
-            --card-light: #ffffff;
-            --text-light: #1e293b;
-            --bg-dark: #0b0f1a;
-            --card-dark: #161e31;
-            --text-dark: #f1f5f9;
-        }
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
+import { 
+  TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon, 
+  Wallet, ArrowUpRight, ArrowDownRight, Search, Calculator, Calendar,
+  Moon, Sun, Bell, Settings, LogOut, ChevronRight
+} from 'lucide-react';
 
-        * { font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s ease-in-out; }
-        
-        body.light-mode { background-color: var(--bg-light); color: var(--text-light); }
-        body.dark-mode { background-color: var(--bg-dark); color: var(--text-dark); }
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-        .glass-card {
-            border-radius: 1.25rem;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
-        }
-        .light-mode .glass-card { background-color: var(--card-light); border-color: #e2e8f0; }
-        .dark-mode .glass-card { background-color: var(--card-dark); }
+const App = () => {
+  const [darkMode, setDarkMode] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Dados Mockados da Carteira
+  const portfolioData = [
+    { id: 1, ticker: 'ITUB4', name: 'Itaú Unibanco', sector: 'Financeiro', balance: 12500.45, change: 1.2, quantity: 450 },
+    { id: 2, ticker: 'VALE3', name: 'Vale S.A.', sector: 'Mineração', balance: 8430.20, change: -0.5, quantity: 120 },
+    { id: 3, ticker: 'PETR4', name: 'Petrobras', sector: 'Energia', balance: 7200.10, change: 2.3, quantity: 200 },
+    { id: 4, ticker: 'WEGE3', name: 'Weg S.A.', sector: 'Industrial', balance: 5100.80, change: 0.8, quantity: 100 },
+    { id: 5, ticker: 'IVVB11', name: 'iShares S&P 500', sector: 'ETF Internacional', balance: 15320.00, change: 1.5, quantity: 60 },
+  ];
 
-        .theme-switch {
-            background: #e2e8f0;
-            padding: 4px;
-            border-radius: 50px;
-            display: flex;
-            gap: 4px;
-            cursor: pointer;
-        }
-        .dark-mode .theme-switch { background: #1e293b; }
-        .theme-btn {
-            padding: 6px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .light-mode .sun-icon { background: white; color: #f59e0b; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .dark-mode .moon-icon { background: #334155; color: #818cf8; }
+  const chartData = [
+    { month: 'Jan', value: 45000 },
+    { month: 'Fev', value: 46200 },
+    { month: 'Mar', value: 45800 },
+    { month: 'Abr', value: 48500 },
+    { month: 'Mai', value: 49100 },
+    { month: 'Jun', value: 52000 },
+  ];
 
-        #loading-overlay {
-            position: fixed; inset: 0; background: var(--bg-dark);
-            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
-        }
-        .light-mode #loading-overlay { background: var(--bg-light); }
+  // Lógica da Calculadora de Proventos
+  const [calcTicker, setCalcTicker] = useState('');
+  const [calcAmount, setCalcAmount] = useState(100);
+  
+  // Simulador de dividend yield (apenas para demonstração)
+  const estimatedYield = useMemo(() => {
+    if (!calcTicker) return 0;
+    // Simula um yield randômico baseado no ticker para qualquer ativo digitado
+    const hash = calcTicker.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return (4 + (hash % 8)).toFixed(2); // Retorna entre 4% e 12%
+  }, [calcTicker]);
 
-        .group-header {
-            background: rgba(99, 102, 241, 0.05);
-            border-left: 4px solid var(--brand-primary);
-            cursor: pointer;
-        }
+  const annualDividend = (calcAmount * (estimatedYield / 100) * 100).toFixed(2);
 
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .collapsible-content.expanded { max-height: 5000px; }
+  return (
+    <div className={`${darkMode ? 'bg-slate-900 text-white' : 'bg-gray-50 text-slate-900'} min-h-screen transition-colors duration-300 font-sans`}>
+      {/* Sidebar Lateral */}
+      <aside className={`fixed left-0 top-0 h-full w-64 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'} border-r hidden lg:flex flex-col z-20`}>
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+            <TrendingUp size={24} className="text-white" />
+          </div>
+          <span className="font-bold text-xl tracking-tight">FinDashboard</span>
+        </div>
 
-        .progress-bar-bg { background: rgba(99, 102, 241, 0.1); border-radius: 50px; overflow: hidden; }
-        .progress-bar-fill { 
-            height: 10px; 
-            background: linear-gradient(90deg, #6366f1, #a855f7); 
-            border-radius: 50px;
-            transition: width 1s ease-in-out;
-        }
-        
-        .stat-badge {
-            font-size: 0.65rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
+        <nav className="flex-1 px-4 py-4 space-y-2">
+          <NavItem icon={<Wallet size={20} />} label="Visão Geral" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} darkMode={darkMode} />
+          <NavItem icon={<PieChartIcon size={20} />} label="Patrimônio" active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} darkMode={darkMode} />
+          <NavItem icon={<Calculator size={20} />} label="Calculadora" active={activeTab === 'calc'} onClick={() => setActiveTab('calc')} darkMode={darkMode} />
+          <NavItem icon={<Calendar size={20} />} label="Calendário" active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} darkMode={darkMode} />
+        </nav>
 
-        .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
-        
-        .chart-container-3d {
-            position: relative;
-            filter: drop-shadow(0px 10px 8px rgba(0,0,0,0.2));
-        }
+        <div className="p-4 mt-auto border-t border-slate-700">
+          <button onClick={() => setDarkMode(!darkMode)} className={`flex items-center gap-3 w-full p-3 rounded-lg ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100'} transition-colors`}>
+            {darkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-indigo-600" />}
+            <span>{darkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
+          </button>
+        </div>
+      </aside>
 
-        /* Custom Input for Calculator */
-        .calc-input {
-            background: rgba(99, 102, 241, 0.05);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            border-radius: 12px;
-            padding: 10px 15px;
-            font-weight: 700;
-            font-size: 14px;
-            outline: none;
-            width: 100%;
-        }
-        .calc-input:focus {
-            border-color: var(--brand-primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-    </style>
-</head>
-<body class="dark-mode">
+      {/* Conteúdo Principal */}
+      <main className="lg:ml-64 p-4 md:p-8">
+        {/* Header Superior */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Olá, Investidor</h1>
+            <p className={`${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Sua carteira rendeu +2.4% este mês.</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className={`relative flex items-center ${darkMode ? 'bg-slate-800' : 'bg-white shadow-sm'} rounded-full px-4 py-2 border ${darkMode ? 'border-slate-700' : 'border-gray-200'}`}>
+              <Search size={18} className="text-slate-400 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Buscar ativo na B3..." 
+                className="bg-transparent border-none focus:ring-0 text-sm w-48 outline-none"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button className={`p-2 rounded-full ${darkMode ? 'bg-slate-800' : 'bg-white shadow-sm'} border ${darkMode ? 'border-slate-700' : 'border-gray-200'}`}>
+              <Bell size={20} />
+            </button>
+          </div>
+        </header>
 
-    <div id="loading-overlay">
-        <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Carregando Dashboard 3.0...</p>
+        {/* Grid de Cards de Resumo */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard title="Saldo Total" value="R$ 48.551,55" change="+5.2%" icon={<Wallet className="text-blue-500" />} darkMode={darkMode} />
+          <StatCard title="Proventos Mensais" value="R$ 412,80" change="+12.1%" icon={<DollarSign className="text-green-500" />} darkMode={darkMode} />
+          <StatCard title="Melhor Ativo" value="PETR4" change="+15.4%" icon={<TrendingUp className="text-emerald-500" />} darkMode={darkMode} />
+          <StatCard title="Pior Ativo" value="VALE3" change="-3.2%" icon={<TrendingDown className="text-red-500" />} darkMode={darkMode} />
+        </div>
+
+        {/* Seção Central - Gráficos e Calculadora */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          
+          {/* Gráfico de Evolução */}
+          <div className={`xl:col-span-2 p-6 rounded-2xl ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white shadow-sm border-gray-200'} border`}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold">Evolução do Patrimônio</h2>
+              <select className={`text-sm rounded-lg p-2 outline-none ${darkMode ? 'bg-slate-700 border-slate-600' : 'bg-gray-100 border-gray-200'}`}>
+                <option>Últimos 6 meses</option>
+                <option>12 meses</option>
+                <option>Tudo</option>
+              </select>
+            </div>
+            <div className="h-80 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#334155" : "#e2e8f0"} vertical={false} />
+                  <XAxis dataKey="month" stroke={darkMode ? "#94a3b8" : "#64748b"} axisLine={false} tickLine={false} />
+                  <YAxis stroke={darkMode ? "#94a3b8" : "#64748b"} axisLine={false} tickLine={false} tickFormatter={(val) => `R$ ${val/1000}k`} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: darkMode ? '#1e293b' : '#fff', 
+                      borderColor: darkMode ? '#334155' : '#e2e8f0',
+                      color: darkMode ? '#fff' : '#000'
+                    }} 
+                  />
+                  <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* CALCULADORA DE PROVENTOS (ATUALIZADA) */}
+          <div className={`p-6 rounded-2xl ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white shadow-sm border-gray-200'} border`}>
+            <div className="flex items-center gap-2 mb-6">
+              <Calculator size={20} className="text-blue-500" />
+              <h2 className="text-lg font-bold">Calculadora de Dividendos</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`text-xs block mb-1 uppercase font-semibold ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Código do Ativo (Qualquer ativo B3)</label>
+                <div className={`flex items-center px-3 py-2 rounded-xl border transition-all ${darkMode ? 'bg-slate-900 border-slate-700 focus-within:border-blue-500' : 'bg-gray-50 border-gray-200 focus-within:border-blue-500'}`}>
+                  <Search size={16} className="text-slate-500 mr-2" />
+                  <input 
+                    type="text" 
+                    placeholder="Ex: PETR4, MXRF11, AAPL34..."
+                    className={`w-full bg-transparent outline-none font-medium ${darkMode ? 'text-white placeholder:text-slate-500' : 'text-slate-900 placeholder:text-gray-400'}`}
+                    value={calcTicker}
+                    onChange={(e) => setCalcTicker(e.target.value.toUpperCase())}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={`text-xs block mb-1 uppercase font-semibold ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>Valor Investido (R$)</label>
+                <input 
+                  type="number" 
+                  className={`w-full px-3 py-2 rounded-xl border outline-none transition-all ${darkMode ? 'bg-slate-900 border-slate-700 focus:border-blue-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-blue-500 text-slate-900'}`}
+                  value={calcAmount}
+                  onChange={(e) => setCalcAmount(Number(e.target.value))}
+                />
+              </div>
+
+              <div className={`mt-6 p-4 rounded-xl ${darkMode ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-sm opacity-80 italic">Projeção Estimada ({estimatedYield}% yld)</span>
+                  <ArrowUpRight className="text-blue-500" size={18} />
+                </div>
+                <div className="text-2xl font-bold text-blue-500">
+                  R$ {calcTicker ? annualDividend : '0,00'}
+                  <span className="text-xs ml-1 opacity-70">/ano</span>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-[10px] mt-4 opacity-50 italic">
+              *Valores baseados em dados históricos simulados para o ticker informado.
+            </p>
+          </div>
+        </div>
+
+        {/* Tabela de Ativos da Carteira */}
+        <div className={`mt-8 p-6 rounded-2xl ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white shadow-sm border-gray-200'} border`}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold">Meus Ativos</h2>
+            <button className="text-sm text-blue-500 font-medium flex items-center gap-1">Ver todos <ChevronRight size={16}/></button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className={`text-xs uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                  <th className="pb-4 font-semibold">Ativo</th>
+                  <th className="pb-4 font-semibold">Setor</th>
+                  <th className="pb-4 font-semibold text-right">Quantidade</th>
+                  <th className="pb-4 font-semibold text-right">Valor Total</th>
+                  <th className="pb-4 font-semibold text-right">Variação</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/50">
+                {portfolioData.map((asset) => (
+                  <tr key={asset.id} className="hover:bg-slate-700/10 transition-colors group">
+                    <td className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
+                          {asset.ticker.substring(0, 2)}
+                        </div>
+                        <div>
+                          <p className="font-bold">{asset.ticker}</p>
+                          <p className="text-xs opacity-50">{asset.name}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 text-sm opacity-80">{asset.sector}</td>
+                    <td className="py-4 text-sm text-right font-medium">{asset.quantity}</td>
+                    <td className="py-4 text-sm text-right font-bold">R$ {asset.balance.toLocaleString('pt-BR')}</td>
+                    <td className="py-4 text-right">
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${asset.change >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                        {asset.change >= 0 ? '+' : ''}{asset.change}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
     </div>
+  );
+};
 
-    <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-            </div>
-            <div>
-                <h1 class="text-2xl font-black tracking-tighter">Gonça<span class="text-indigo-500">Invest</span></h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">Asset Management System</p>
-            </div>
-        </div>
-        
-        <div class="flex items-center gap-4">
-            <div class="theme-switch" onclick="toggleTheme()">
-                <div class="theme-btn sun-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.657 7.657l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-                </div>
-                <div class="theme-btn moon-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                </div>
-            </div>
-        </div>
-    </nav>
+// Subcomponentes auxiliares
+const NavItem = ({ icon, label, active, onClick, darkMode }) => (
+  <button 
+    onClick={onClick}
+    className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all ${
+      active 
+        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
+        : `${darkMode ? 'text-slate-400 hover:bg-slate-700 hover:text-white' : 'text-gray-500 hover:bg-gray-100'}`
+    }`}
+  >
+    {icon}
+    <span className="font-medium text-sm">{label}</span>
+  </button>
+);
 
-    <main class="max-w-7xl mx-auto px-6 pb-20">
-        
-        <!-- KPIs Principais -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="glass-card p-6 border-b-4 border-indigo-500 relative glow-indigo">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Líquido</p>
-                <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
-                <div id="perc-total" class="mt-2 text-[10px] font-bold">Aguardando dados...</div>
-            </div>
+const StatCard = ({ title, value, change, icon, darkMode }) => (
+  <div className={`p-6 rounded-2xl border transition-all hover:scale-[1.02] duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white shadow-sm border-gray-200'}`}>
+    <div className="flex items-center justify-between mb-4">
+      <div className={`p-2 rounded-lg ${darkMode ? 'bg-slate-900' : 'bg-gray-50'}`}>
+        {icon}
+      </div>
+      <span className={`text-xs font-bold ${change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+        {change}
+      </span>
+    </div>
+    <p className={`text-sm mb-1 ${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>{title}</p>
+    <h3 className="text-xl font-bold">{value}</h3>
+  </div>
+);
 
-            <div class="glass-card p-6 border-b-4 border-slate-400">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total de Aportes</p>
-                <h2 id="total-investido" class="text-3xl font-black">R$ 0,00</h2>
-                <p class="mt-2 text-[10px] text-slate-400 font-bold uppercase">Total tirado do bolso</p>
-            </div>
-
-            <div class="glass-card p-6 border-b-4 border-amber-500">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Dividendos 2026</p>
-                <h2 id="total-proventos" class="text-3xl font-black text-amber-500">R$ 0,00</h2>
-                <div class="mt-2 flex items-center gap-2">
-                    <span id="yield-on-cost" class="stat-badge bg-amber-500/10 text-amber-500">YoC: 0.00%</span>
-                    <span id="monthly-avg" class="stat-badge bg-slate-500/10 text-slate-500">Média: R$ 0</span>
-                </div>
-            </div>
-
-            <div class="glass-card p-6 border-b-4" id="kpi-resultado-border">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Resultado Líquido</p>
-                <h2 id="total-resultado" class="text-3xl font-black">R$ 0,00</h2>
-                <p id="resultado-label" class="mt-2 text-[10px] font-black uppercase">Saldo da Carteira</p>
-            </div>
-        </div>
-
-        <!-- Meta e Snowball -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            <div class="glass-card p-7 lg:col-span-2 flex flex-col justify-center relative overflow-hidden">
-                <div class="relative z-10">
-                    <div class="flex justify-between items-end mb-4">
-                        <div>
-                            <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Rumo à Independência</h4>
-                            <p class="text-3xl font-black">Meta: R$ 1.000.000</p>
-                        </div>
-                        <div class="text-right">
-                            <span id="meta-percent" class="text-2xl font-black text-indigo-500">0%</span>
-                        </div>
-                    </div>
-                    <div class="progress-bar-bg mb-2">
-                        <div id="meta-progress" class="progress-bar-fill" style="width: 0%"></div>
-                    </div>
-                    <p id="meta-restante" class="text-[10px] text-slate-500 font-bold uppercase text-right">Falta R$ 0,00</p>
-                </div>
-            </div>
-
-            <!-- NOVO CARD: CALCULADORA DE APORTES -->
-            <div class="glass-card p-6 flex flex-col justify-center bg-indigo-500/[0.03] border-l-4 border-indigo-500">
-                <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Calculadora de Proventos</h4>
-                <div class="space-y-3">
-                    <div class="relative">
-                        <input type="text" id="calc-asset-input" placeholder="Digite o Ticker (Ex: MXRF11)" class="calc-input uppercase text-indigo-600 dark:text-indigo-400">
-                    </div>
-                    <div class="flex items-center gap-4 bg-black/5 dark:bg-white/5 p-3 rounded-xl">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                        </div>
-                        <div>
-                            <p id="calc-result-label" class="text-[9px] text-slate-500 font-bold uppercase">Aguardando ticker...</p>
-                            <p id="calc-result-value" class="text-lg font-black text-indigo-500 leading-tight">-- Cotas</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Gráficos Principais -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-            <div class="glass-card p-6">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Comparativo de Proventos</h3>
-                        <p class="text-xs font-bold text-slate-400">Análise Temporal Interanual</p>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 bg-indigo-500 rounded-sm"></span><span class="text-[10px] font-bold">2026</span></div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 bg-slate-400 rounded-sm"></span><span class="text-[10px] font-bold">2025</span></div>
-                    </div>
-                </div>
-                <div class="h-80"><canvas id="chartDividendosAnual"></canvas></div>
-            </div>
-            
-            <div class="glass-card p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Alocação de Ativos</h3>
-                        <p class="text-xs font-bold text-slate-400">Distribuição Estratégica</p>
-                    </div>
-                </div>
-                <div class="h-80 chart-container-3d"><canvas id="chartAlocacaoTipo"></canvas></div>
-            </div>
-        </div>
-
-        <!-- Filtro e Lista -->
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-            <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">Meus Ativos</h3>
-            <div class="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                <input type="text" id="searchInput" placeholder="Filtrar por ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30 w-full md:w-64 font-bold">
-                <div class="flex gap-2">
-                    <button onclick="expandAll()" class="px-4 py-2.5 text-[10px] font-black uppercase bg-indigo-600/10 text-indigo-500 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">Expandir</button>
-                    <button onclick="collapseAll()" class="px-4 py-2.5 text-[10px] font-black uppercase bg-slate-600/10 text-slate-500 rounded-xl hover:bg-slate-600 hover:text-white transition-all">Recolher</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="assetsContainer" class="space-y-4"></div>
-    </main>
-
-    <script>
-        const URL_CARTEIRA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1550358623&single=true&output=csv';
-        const URL_DIVIDENDOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=440281931&single=true&output=csv';
-        
-        const META_FINAL = 1000000;
-        const NOMES_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
-        let fullData = [];
-        let dividendosHistorico = {};
-        let charts = {};
-        let globalMediaMensal = 0;
-
-        async function init() {
-            try {
-                const [carteiraRows, dividendosRows] = await Promise.all([
-                    fetchCSV(URL_CARTEIRA),
-                    fetchCSV(URL_DIVIDENDOS)
-                ]);
-                processMatrizHistorica(dividendosRows);
-                processCarteira(carteiraRows);
-                setupSearchListener();
-                setupCalculatorListener();
-                document.getElementById('loading-overlay').style.display = 'none';
-            } catch (error) {
-                console.error("Erro ao carregar dados:", error);
-            }
-        }
-
-        function fetchCSV(url) {
-            return new Promise((resolve, reject) => {
-                Papa.parse(url, {
-                    download: true,
-                    header: false,
-                    skipEmptyLines: 'greedy',
-                    complete: (results) => resolve(results.data),
-                    error: (err) => reject(err)
-                });
-            });
-        }
-
-        function parseNum(val) {
-            if (!val) return 0;
-            let clean = val.toString().replace(/R\$|\s|%/g, '').trim();
-            if (clean.includes(',') && clean.includes('.')) clean = clean.replace(/\./g, '').replace(',', '.');
-            else if (clean.includes(',')) clean = clean.replace(',', '.');
-            return parseFloat(clean) || 0;
-        }
-
-        function processMatrizHistorica(rows) {
-            dividendosHistorico = {};
-            rows.slice(1).forEach(row => {
-                const ano = row[0] ? row[0].toString().trim() : null;
-                if (!ano) return;
-                dividendosHistorico[ano] = NOMES_MESES.map((nome, index) => ({
-                    mes: nome,
-                    valor: parseNum(row[index + 1])
-                }));
-            });
-        }
-
-        function processCarteira(rows) {
-            fullData = rows.slice(1).map(row => {
-                const ticker = row[1] ? row[1].trim() : '';
-                if (!ticker || ticker.toLowerCase().includes('total')) return null;
-                return {
-                    tipo: row[0] ? row[0].trim() : 'Outros',
-                    ativo: ticker.toUpperCase(),
-                    pMedio: parseNum(row[4]),
-                    pAtual: parseNum(row[5]),
-                    investidoBolso: parseNum(row[9]),
-                    atual: parseNum(row[10]),
-                    lucro: parseNum(row[10]) - parseNum(row[9]),
-                    peso: 0
-                };
-            }).filter(d => d !== null);
-            updateDashboard();
-        }
-
-        function updateDashboard() {
-            const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
-            const totalDoBolso = fullData.reduce((acc, curr) => acc + curr.investidoBolso, 0);
-            
-            const dados2026 = dividendosHistorico["2026"] || NOMES_MESES.map(m => ({mes: m, valor: 0}));
-            const totalProventosAnual = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
-            
-            const mesesAtivos = dados2026.filter(d => d.valor > 0).length || 1;
-            globalMediaMensal = totalProventosAnual / mesesAtivos;
-
-            const totalLucro = totalPatrimonio - totalDoBolso;
-            const rentabilidadeGlobal = totalDoBolso > 0 ? (totalLucro / totalDoBolso) * 100 : 0;
-            const yocGlobal = totalDoBolso > 0 ? (totalProventosAnual / totalDoBolso) * 100 : 0;
-
-            const percMeta = Math.min((totalPatrimonio / META_FINAL) * 100, 100);
-            document.getElementById('meta-progress').style.width = `${percMeta}%`;
-            document.getElementById('meta-percent').innerText = `${percMeta.toFixed(2)}%`;
-            document.getElementById('meta-restante').innerText = `Falta R$ ${(META_FINAL - totalPatrimonio).toLocaleString('pt-BR')}`;
-
-            fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
-
-            const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            
-            document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
-            document.getElementById('total-investido').innerText = fmt(totalDoBolso);
-            document.getElementById('total-proventos').innerText = fmt(totalProventosAnual);
-            document.getElementById('total-resultado').innerText = fmt(totalLucro);
-            document.getElementById('yield-on-cost').innerText = `YoC: ${yocGlobal.toFixed(2)}%`;
-            document.getElementById('monthly-avg').innerText = `Média: R$ ${globalMediaMensal.toFixed(0)}`;
-            
-            const percEl = document.getElementById('perc-total');
-            percEl.className = `mt-2 text-[11px] font-black uppercase flex items-center gap-1 ${rentabilidadeGlobal >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
-            percEl.innerHTML = `<span>${rentabilidadeGlobal >= 0 ? '▲' : '▼'} ${rentabilidadeGlobal.toFixed(2)}% de Retorno Total</span>`;
-
-            document.getElementById('kpi-resultado-border').style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
-
-            renderAssetGroups();
-            renderCharts();
-        }
-
-        // FUNÇÃO DA CALCULADORA
-        function setupCalculatorListener() {
-            const input = document.getElementById('calc-asset-input');
-            const label = document.getElementById('calc-result-label');
-            const value = document.getElementById('calc-result-value');
-
-            input.addEventListener('input', (e) => {
-                const ticker = e.target.value.toUpperCase().trim();
-                if (!ticker) {
-                    label.innerText = "Aguardando ticker...";
-                    value.innerText = "-- Cotas";
-                    return;
-                }
-
-                const asset = fullData.find(a => a.ativo === ticker);
-                if (asset && asset.pAtual > 0) {
-                    const cotas = Math.floor(globalMediaMensal / asset.pAtual);
-                    label.innerText = `Cotação ${ticker}: R$ ${asset.pAtual.toFixed(2)}`;
-                    value.innerText = `+ ${cotas} Cotas / mês`;
-                } else {
-                    label.innerText = "Ativo não encontrado";
-                    value.innerText = "0 Cotas";
-                }
-            });
-        }
-
-        function renderAssetGroups() {
-            const container = document.getElementById('assetsContainer');
-            const search = document.getElementById('searchInput').value.toUpperCase();
-            container.innerHTML = '';
-            
-            const groups = fullData.reduce((acc, curr) => {
-                if (!acc[curr.tipo]) acc[curr.tipo] = [];
-                if (curr.ativo.includes(search)) acc[curr.tipo].push(curr);
-                return acc;
-            }, {});
-
-            Object.keys(groups).sort().forEach(tipo => {
-                if (groups[tipo].length === 0) return;
-                const assets = groups[tipo].sort((a, b) => b.atual - a.atual);
-                const subAtual = assets.reduce((s, a) => s + a.atual, 0);
-                const subBolso = assets.reduce((s, a) => s + a.investidoBolso, 0);
-                const subRent = subBolso > 0 ? ((subAtual - subBolso) / subBolso) * 100 : 0;
-
-                const section = document.createElement('div');
-                section.className = 'glass-card overflow-hidden border border-black/5 dark:border-white/5';
-                
-                let rows = assets.map(d => `
-                    <tr class="border-b border-black/5 dark:border-white/[0.02] hover:bg-black/5 dark:hover:bg-white/[0.05]">
-                        <td class="py-4 px-6"><div class="font-black text-sm text-indigo-500">${d.ativo}</div></td>
-                        <td class="py-4 px-4 text-right text-[11px] text-slate-500 font-bold">R$ ${d.pMedio.toFixed(2)}</td>
-                        <td class="py-4 px-4 text-right text-sm font-black ${d.pAtual >= d.pMedio ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.pAtual.toFixed(2)}</td>
-                        <td class="py-4 px-4 text-right">
-                            <div class="text-sm font-black">R$ ${d.atual.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">${d.peso.toFixed(1)}% do Portfólio</div>
-                        </td>
-                        <td class="py-4 px-6 text-right">
-                            <div class="text-sm font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-                        </td>
-                    </tr>`).join('');
-
-                section.innerHTML = `
-                    <div class="group-header p-5 flex justify-between items-center" onclick="toggleGroup(this)">
-                        <div class="flex items-center gap-4">
-                            <div class="p-1.5 bg-indigo-600/10 rounded-lg text-indigo-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></div>
-                            <span class="text-[10px] font-black px-2.5 py-1 bg-indigo-600 text-white rounded uppercase tracking-wider">${tipo}</span>
-                            <span class="stat-badge ${subRent >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">${subRent >= 0 ? '+' : ''}${subRent.toFixed(1)}%</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-sm font-black">${subAtual.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
-                        </div>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-[10px] text-slate-500 uppercase font-black">
-                                    <tr><th class="py-4 px-6">Ativo</th><th class="py-4 px-4 text-right">Custo Médio</th><th class="py-4 px-4 text-right">Cotação Atual</th><th class="py-4 px-4 text-right">Total Investido</th><th class="py-4 px-6 text-right">L/P Absoluto</th></tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
-                    </div>`;
-                container.appendChild(section);
-            });
-        }
-
-        function renderCharts() {
-            const isDark = document.body.classList.contains('dark-mode');
-            const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
-            const labelColor = isDark ? '#94a3b8' : '#64748b';
-            
-            Object.values(charts).forEach(c => c.destroy());
-
-            // 1. Gráfico de Comparação Temporal
-            const d2026 = (dividendosHistorico["2026"] || []).map(d => d.valor);
-            const d2025 = (dividendosHistorico["2025"] || []).map(d => d.valor);
-
-            charts.divs = new Chart(document.getElementById('chartDividendosAnual'), {
-                type: 'bar',
-                data: {
-                    labels: NOMES_MESES,
-                    datasets: [
-                        {
-                            label: '2026 (Atual)',
-                            data: d2026,
-                            backgroundColor: '#6366f1',
-                            borderRadius: 6,
-                            barPercentage: 0.8,
-                            order: 1
-                        },
-                        {
-                            label: '2025 (Anterior)',
-                            data: d2025,
-                            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.3)',
-                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            borderWidth: 1,
-                            borderRadius: 6,
-                            barPercentage: 0.8,
-                            order: 2
-                        }
-                    ]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: gridColor }, 
-                            ticks: { color: labelColor, font: { size: 10, weight: '700' }, callback: (v) => 'R$ ' + v } 
-                        },
-                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 10, weight: '800' } } }
-                    }
-                }
-            });
-
-            // 2. Gráfico de Rosca Alocação
-            const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
-            const tipoData = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
-            
-            charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
-                type: 'doughnut',
-                data: { 
-                    labels: tipoLabels, 
-                    datasets: [{ 
-                        data: tipoData, 
-                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
-                        borderWidth: isDark ? 4 : 3,
-                        borderColor: isDark ? '#161e31' : '#ffffff',
-                        hoverOffset: 15
-                    }] 
-                },
-                options: { 
-                    maintainAspectRatio: false, 
-                    cutout: '65%', 
-                    plugins: { 
-                        legend: { 
-                            position: 'bottom', 
-                            labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 20, usePointStyle: true, boxWidth: 8 } 
-                        } 
-                    }
-                }
-            });
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            document.body.classList.toggle('light-mode');
-            renderCharts();
-        }
-
-        function toggleGroup(header) {
-            header.nextElementSibling.classList.toggle('expanded');
-        }
-
-        function expandAll() {
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded'));
-        }
-
-        function collapseAll() {
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('remove'));
-        }
-
-        function setupSearchListener() {
-            document.getElementById('searchInput').addEventListener('input', renderAssetGroups);
-        }
-
-        window.onload = init;
-    </script>
-</body>
-</html>
+export default App;
