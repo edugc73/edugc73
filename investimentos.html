@@ -153,7 +153,6 @@
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         
-        <!-- KPIs Principais -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="glass-card p-6 border-b-4 border-indigo-500 relative glow-indigo">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Líquido</p>
@@ -183,7 +182,6 @@
             </div>
         </div>
 
-        <!-- Meta e Calculadora -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
             <div class="glass-card p-7 lg:col-span-2 flex flex-col justify-center relative overflow-hidden">
                 <div class="relative z-10">
@@ -203,9 +201,9 @@
                 </div>
             </div>
 
-            <!-- CARD CALCULADORA (CORRIGIDO: BUSCA EXTERNA) -->
+            <!-- CARD CALCULADORA (BRAPI INTEGRADA) -->
             <div class="glass-card p-6 flex flex-col justify-center bg-indigo-500/[0.03] border-l-4 border-indigo-500">
-                <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Calculadora de Proventos (B3)</h4>
+                <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Calculadora de Reinvestimento (Brapi)</h4>
                 <div class="space-y-3">
                     <div class="relative">
                         <input type="text" id="calc-asset-input" placeholder="Ticker (Ex: PETR4, MXRF11)" class="calc-input uppercase text-indigo-600 dark:text-indigo-400">
@@ -226,7 +224,6 @@
             </div>
         </div>
 
-        <!-- Gráficos Principais -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <div class="glass-card p-6">
                 <div class="flex justify-between items-start mb-6">
@@ -253,7 +250,6 @@
             </div>
         </div>
 
-        <!-- Filtro e Lista -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">Meus Ativos</h3>
             <div class="flex flex-wrap gap-3 items-center w-full md:w-auto">
@@ -271,6 +267,7 @@
     <script>
         const URL_CARTEIRA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1550358623&single=true&output=csv';
         const URL_DIVIDENDOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=440281931&single=true&output=csv';
+        const BRAPI_TOKEN = '8pbgSS4WziVDE6WYApyhVx'; // Seu token de API Brapi
         
         const META_FINAL = 1000000;
         const NOMES_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -387,7 +384,7 @@
             renderCharts();
         }
 
-        // --- LÓGICA DA CALCULADORA COM BUSCA EXTERNA (B3) ---
+        // --- LÓGICA DA CALCULADORA INTEGRADA COM BRAPI ---
         function setupCalculatorListener() {
             const input = document.getElementById('calc-asset-input');
             const label = document.getElementById('calc-result-label');
@@ -401,43 +398,38 @@
                 if (!ticker) {
                     label.innerText = "Aguardando ticker...";
                     value.innerText = "-- Cotas";
+                    label.classList.remove('text-rose-500');
                     return;
                 }
 
-                // Aguarda o usuário parar de digitar (600ms)
                 debounceTimer = setTimeout(async () => {
                     spinner.classList.remove('hidden');
-                    label.innerText = "Consultando B3...";
+                    label.innerText = "Consultando Brapi...";
                     label.classList.add('loading-pulse');
+                    label.classList.remove('text-rose-500');
 
                     try {
-                        let precoAtual = 0;
-
-                        // 1. Tenta buscar primeiro nos dados locais da carteira
-                        const localAsset = fullData.find(a => a.ativo === ticker);
-                        if (localAsset && localAsset.pAtual > 0) {
-                            precoAtual = localAsset.pAtual;
-                        } else {
-                            // 2. Se não estiver na carteira, busca na API externa (Brapi)
-                            // Usamos o proxy da brapi para evitar problemas de CORS em alguns navegadores
-                            const response = await fetch(`https://brapi.dev/api/quote/${ticker}`);
-                            const data = await response.json();
+                        // Faz a requisição para a Brapi usando seu token
+                        const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`);
+                        
+                        if (!response.ok) throw new Error("Erro na requisição");
+                        
+                        const data = await response.json();
+                        
+                        if (data.results && data.results[0]) {
+                            const precoAtual = data.results[0].regularMarketPrice;
+                            const nomeAtivo = data.results[0].shortName || ticker;
                             
-                            if (data.results && data.results[0]) {
-                                precoAtual = data.results[0].regularMarketPrice;
-                            }
-                        }
-
-                        if (precoAtual > 0) {
-                            const cotas = Math.ceil(globalMediaMensal / precoAtual);
-                            label.innerText = `Cotação ${ticker}: R$ ${precoAtual.toFixed(2)}`;
-                            value.innerText = `${cotas} cotas reinvestidas p/ mês`;
-                            label.classList.remove('text-rose-500');
+                            // Calcula quantas cotas a média mensal de dividendos compraria
+                            const cotas = precoAtual > 0 ? Math.floor(globalMediaMensal / precoAtual) : 0;
+                            
+                            label.innerText = `${nomeAtivo}: R$ ${precoAtual.toFixed(2)}`;
+                            value.innerText = `${cotas} cotas/mês c/ rendimentos`;
                         } else {
-                            throw new Error("Não encontrado");
+                            throw new Error("Ativo não encontrado");
                         }
                     } catch (err) {
-                        label.innerText = "Ativo não encontrado na B3";
+                        label.innerText = "Ticker não encontrado na B3";
                         label.classList.add('text-rose-500');
                         value.innerText = "0 Cotas";
                     } finally {
