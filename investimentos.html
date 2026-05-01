@@ -93,6 +93,22 @@
             position: relative;
             filter: drop-shadow(0px 10px 8px rgba(0,0,0,0.2));
         }
+
+        /* Custom Input for Calculator */
+        .calc-input {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            padding: 10px 15px;
+            font-weight: 700;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+        .calc-input:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -179,15 +195,21 @@
                 </div>
             </div>
 
-            <div class="glass-card p-6 flex flex-col justify-center bg-emerald-500/[0.03] border-l-4 border-emerald-500">
-                <h4 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-3">Reinvestimento Automático</h4>
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            <!-- NOVO CARD: CALCULADORA DE APORTES -->
+            <div class="glass-card p-6 flex flex-col justify-center bg-indigo-500/[0.03] border-l-4 border-indigo-500">
+                <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Calculadora de Proventos</h4>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <input type="text" id="calc-asset-input" placeholder="Digite o Ticker (Ex: MXRF11)" class="calc-input uppercase text-indigo-600 dark:text-indigo-400">
                     </div>
-                    <div>
-                        <p class="text-[11px] text-slate-500 font-bold uppercase">Poder de compra mensal:</p>
-                        <p id="snowball-metric" class="text-xl font-black text-emerald-500 leading-tight">--</p>
+                    <div class="flex items-center gap-4 bg-black/5 dark:bg-white/5 p-3 rounded-xl">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        </div>
+                        <div>
+                            <p id="calc-result-label" class="text-[9px] text-slate-500 font-bold uppercase">Aguardando ticker...</p>
+                            <p id="calc-result-value" class="text-lg font-black text-indigo-500 leading-tight">-- Cotas</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -245,6 +267,7 @@
         let fullData = [];
         let dividendosHistorico = {};
         let charts = {};
+        let globalMediaMensal = 0;
 
         async function init() {
             try {
@@ -255,6 +278,7 @@
                 processMatrizHistorica(dividendosRows);
                 processCarteira(carteiraRows);
                 setupSearchListener();
+                setupCalculatorListener();
                 document.getElementById('loading-overlay').style.display = 'none';
             } catch (error) {
                 console.error("Erro ao carregar dados:", error);
@@ -319,7 +343,7 @@
             const totalProventosAnual = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
             
             const mesesAtivos = dados2026.filter(d => d.valor > 0).length || 1;
-            const mediaMensal = totalProventosAnual / mesesAtivos;
+            globalMediaMensal = totalProventosAnual / mesesAtivos;
 
             const totalLucro = totalPatrimonio - totalDoBolso;
             const rentabilidadeGlobal = totalDoBolso > 0 ? (totalLucro / totalDoBolso) * 100 : 0;
@@ -339,10 +363,7 @@
             document.getElementById('total-proventos').innerText = fmt(totalProventosAnual);
             document.getElementById('total-resultado').innerText = fmt(totalLucro);
             document.getElementById('yield-on-cost').innerText = `YoC: ${yocGlobal.toFixed(2)}%`;
-            document.getElementById('monthly-avg').innerText = `Média: R$ ${mediaMensal.toFixed(0)}`;
-            
-            const snowballCotas = Math.floor(mediaMensal / 10.50); 
-            document.getElementById('snowball-metric').innerText = `+ ${snowballCotas} Cotas (Base R$ 10,50)`;
+            document.getElementById('monthly-avg').innerText = `Média: R$ ${globalMediaMensal.toFixed(0)}`;
             
             const percEl = document.getElementById('perc-total');
             percEl.className = `mt-2 text-[11px] font-black uppercase flex items-center gap-1 ${rentabilidadeGlobal >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
@@ -352,6 +373,32 @@
 
             renderAssetGroups();
             renderCharts();
+        }
+
+        // FUNÇÃO DA CALCULADORA
+        function setupCalculatorListener() {
+            const input = document.getElementById('calc-asset-input');
+            const label = document.getElementById('calc-result-label');
+            const value = document.getElementById('calc-result-value');
+
+            input.addEventListener('input', (e) => {
+                const ticker = e.target.value.toUpperCase().trim();
+                if (!ticker) {
+                    label.innerText = "Aguardando ticker...";
+                    value.innerText = "-- Cotas";
+                    return;
+                }
+
+                const asset = fullData.find(a => a.ativo === ticker);
+                if (asset && asset.pAtual > 0) {
+                    const cotas = Math.floor(globalMediaMensal / asset.pAtual);
+                    label.innerText = `Cotação ${ticker}: R$ ${asset.pAtual.toFixed(2)}`;
+                    value.innerText = `+ ${cotas} Cotas / mês`;
+                } else {
+                    label.innerText = "Ativo não encontrado";
+                    value.innerText = "0 Cotas";
+                }
+            });
         }
 
         function renderAssetGroups() {
@@ -508,7 +555,7 @@
         }
 
         function collapseAll() {
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded'));
+            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('remove'));
         }
 
         function setupSearchListener() {
