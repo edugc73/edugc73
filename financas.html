@@ -49,13 +49,19 @@
 
         header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 20px;
             margin-bottom: 24px;
-            padding: 16px;
+            padding: 20px;
             background: var(--glass);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: 24px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .brand { display: flex; align-items: center; gap: 12px; }
@@ -64,22 +70,47 @@
             padding: 10px;
             border-radius: 12px;
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .brand h1 { font-size: 1.25rem; font-weight: 700; }
 
-        .controls { display: flex; align-items: center; gap: 12px; }
-        
-        select {
+        /* Estilização dos Chips */
+        .month-chips-container {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .month-chips-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+        .chip {
+            padding: 8px 18px;
             background: var(--surface-accent);
-            color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 8px 32px 8px 16px;
-            border-radius: 10px;
+            border-radius: 100px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%3E%3Cpath%20fill%3D%22%239ca3af%22%20d%3D%22M5%207l5%205%205-5z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .chip:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+        }
+
+        .chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #030712;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transform: scale(1.05);
         }
 
         .stats-grid {
@@ -154,15 +185,22 @@
 
 <div class="container" id="main-content" style="display: none;">
     <header>
-        <div class="brand">
-            <div class="brand-icon"><i data-lucide="shield-check" size="20"></i></div>
-            <div>
-                <h1>Gestão de Patrimônio</h1>
-                <p id="sync-status" style="font-size: 0.7rem; color: var(--primary);">Base de dados online</p>
+        <div class="header-top">
+            <div class="brand">
+                <div class="brand-icon"><i data-lucide="shield-check" size="20"></i></div>
+                <div>
+                    <h1>Gestão de Patrimônio</h1>
+                    <p id="sync-status" style="font-size: 0.7rem; color: var(--primary);">Base de dados online • V4.0</p>
+                </div>
+            </div>
+            <div class="controls">
+                <i data-lucide="calendar" size="18" color="var(--text-muted)"></i>
             </div>
         </div>
-        <div class="controls">
-            <select id="monthSelect"></select>
+        
+        <!-- Substituição do Select por Chips -->
+        <div class="month-chips-container" id="monthChips">
+            <!-- Chips gerados dinamicamente -->
         </div>
     </header>
 
@@ -191,7 +229,6 @@
 
     <div class="main-grid">
         <div class="left-col" style="display: flex; flex-direction: column; gap: 16px;">
-            <!-- Histórico -->
             <div class="card chart-box">
                 <div class="chart-header">
                     <div class="chart-title"><i data-lucide="bar-chart" size="18" color="var(--primary)"></i> Comparativo de Gastos</div>
@@ -201,12 +238,10 @@
             </div>
 
             <div class="grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <!-- Divisão de Cartões -->
                 <div class="card">
                     <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="credit-card" size="18"></i> Concentração de Cartão</div>
                     <div class="chart-container" style="height: 180px;"><canvas id="cardsPieChart"></canvas></div>
                 </div>
-                <!-- Divisão de Fixos -->
                 <div class="card">
                     <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="home" size="18"></i> Top Custos Fixos</div>
                     <div id="top-fixed-list">
@@ -301,20 +336,32 @@
                     const currentIdx = new Date().getMonth();
                     const targetIdx = currentIdx < globalData.length ? currentIdx : globalData.length - 1;
                     
-                    const sel = document.getElementById('monthSelect');
+                    const chipsContainer = document.getElementById('monthChips');
                     globalData.forEach((row, i) => {
-                        const opt = document.createElement('option');
-                        opt.value = i;
-                        opt.innerText = row.MÊS || row.Mes;
-                        if(i === targetIdx) opt.selected = true;
-                        sel.appendChild(opt);
+                        const chip = document.createElement('div');
+                        chip.className = `chip ${i === targetIdx ? 'active' : ''}`;
+                        chip.innerText = row.MÊS || row.Mes;
+                        chip.onclick = () => {
+                            // Atualiza UI dos chips
+                            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                            chip.classList.add('active');
+                            // Renderiza Dashboard
+                            renderDashboard(i);
+                            // Scroll suave para o chip selecionado
+                            chip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        };
+                        chipsContainer.appendChild(chip);
                     });
-                    sel.onchange = (e) => renderDashboard(parseInt(e.target.value));
 
                     renderDashboard(targetIdx);
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
                     lucide.createIcons();
+
+                    // Centraliza chip inicial após o carregamento
+                    setTimeout(() => {
+                        document.querySelector('.chip.active')?.scrollIntoView({ inline: 'center' });
+                    }, 500);
                 }
             }
         });
