@@ -433,8 +433,14 @@
                 });
                 
                 if(globalData.length > 0) {
-                    fillMonthSelector();
-                    renderDashboard(globalData.length - 1);
+                    // Descobre o mês atual (0 = Jan, 1 = Fev, ..., 11 = Dez)
+                    const currentMonthIndex = new Date().getMonth();
+                    
+                    // Verifica se a planilha já tem dados até esse mês, senão mostra o último preenchido
+                    const targetIndex = currentMonthIndex < globalData.length ? currentMonthIndex : globalData.length - 1;
+
+                    fillMonthSelector(targetIndex);
+                    renderDashboard(targetIndex);
                     
                     // Atualizar UI de Loading
                     document.getElementById('loader').style.opacity = '0';
@@ -454,13 +460,13 @@
         });
     }
 
-    function fillMonthSelector() {
+    function fillMonthSelector(targetIndex) {
         const sel = document.getElementById('monthSelect');
         globalData.forEach((row, i) => {
             const opt = document.createElement('option');
             opt.value = i;
             opt.innerText = row.MÊS || row.Mes || `Mês ${i+1}`;
-            if(i === globalData.length - 1) opt.selected = true;
+            if(i === targetIndex) opt.selected = true;
             sel.appendChild(opt);
         });
         sel.onchange = (e) => renderDashboard(parseInt(e.target.value));
