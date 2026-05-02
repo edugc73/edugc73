@@ -378,20 +378,16 @@
             const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
             const totalDoBolso = fullData.reduce((acc, curr) => acc + curr.investidoBolso, 0);
             
-            // Lógica de Proventos Reais (2026)
             const dados2026 = dividendosHistorico["2026"] || NOMES_MESES.map(m => ({mes: m, valor: 0}));
             const totalProventosReal = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
             const mesesAtivos = dados2026.filter(d => d.valor > 0).length || 1;
             globalMediaMensal = totalProventosReal / mesesAtivos;
 
-            // Projeção Mensal baseada no YoC médio do portfólio (aprox. 1% ao mês ou o yield real)
-            const yieldMedioEstimado = totalDoBolso > 0 ? (totalProventosReal / mesesAtivos) : 0;
             const yieldPercentual = totalDoBolso > 0 ? ( (totalProventosReal / totalDoBolso) * 100 ) : 0;
 
             const totalLucro = totalPatrimonio - totalDoBolso;
             const rentabilidadeGlobal = totalDoBolso > 0 ? (totalLucro / totalDoBolso) * 100 : 0;
 
-            // Meta de Independência
             const percMeta = Math.min((totalPatrimonio / META_FINAL) * 100, 100);
             document.getElementById('meta-progress').style.width = `${percMeta}%`;
             document.getElementById('meta-percent').innerText = `${percMeta.toFixed(2)}%`;
@@ -510,7 +506,9 @@
                         <div class="flex items-center gap-4">
                             <div class="p-1.5 bg-indigo-600/10 rounded-lg text-indigo-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></div>
                             <span class="text-[10px] font-black px-2.5 py-1 bg-indigo-600 text-white rounded uppercase tracking-wider">${tipo}</span>
-                            <span class="stat-badge ${subRent >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">${subRent >= 0 ? '+' : ''}${subRent.toFixed(1)}% de lucro</span>
+                            <span class="stat-badge ${subRent >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">
+                                ${subRent >= 0 ? '+' : ''}${subRent.toFixed(1)}% ${subRent >= 0 ? 'DE LUCRO' : 'DE PREJUÍZO'}
+                            </span>
                         </div>
                         <div class="text-right flex items-center gap-4">
                              <div class="text-[10px] text-slate-500 font-bold uppercase">${assets.length} ativos</div>
