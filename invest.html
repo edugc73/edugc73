@@ -90,8 +90,9 @@
 <body class="dark-mode">
 
     <div id="loading-overlay">
-        <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Atualizando Cálculos v5.0...</p>
+        <div id="loading-spinner" class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+        <p id="loading-text" class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Validando Integridade dos Dados...</p>
+        <button id="retry-button" onclick="location.reload()" class="hidden mt-6 px-6 py-2 bg-cyan-500 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-cyan-400 transition-colors">Tentar Novamente</button>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
@@ -132,7 +133,7 @@
             </div>
 
             <div class="glass-card p-6 border-b-4 border-amber-500">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Média Mensal (2026)</p>
+                <p id="label-media-mensal" class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Média Mensal (--)</p>
                 <h2 id="total-projeção" class="text-3xl font-black text-amber-500">R$ 0,00</h2>
                 <div class="mt-2 flex items-center gap-2">
                     <span id="yield-anual" class="stat-badge bg-amber-500/10 text-amber-500">DY: 0.00%</span>
@@ -231,19 +232,38 @@
         const URL_PROVENTOS_POR_ATIVO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1319017325&single=true&output=csv';
         
         const NOMES_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const FETCH_TIMEOUT = 12000; // 12 segundos de limite
 
         let fullData = [];
         let dividendosHistorico = {};
         let proventosAtivos = {}; 
         let charts = {};
+        let anoMaisRecente = ""; 
 
         async function init() {
+            const loadingText = document.getElementById('loading-text');
+            const retryButton = document.getElementById('retry-button');
+            const spinner = document.getElementById('loading-spinner');
+
             try {
-                const [carteiraRows, dividendosRows, proventosAtivosRows] = await Promise.all([
-                    fetchCSV(URL_CARTEIRA),
-                    fetchCSV(URL_DIVIDENDOS),
-                    fetchCSV(URL_PROVENTOS_POR_ATIVO)
+                // Fetch com Promise.race para implementar timeout
+                const results = await Promise.race([
+                    Promise.all([
+                        fetchCSV(URL_CARTEIRA),
+                        fetchCSV(URL_DIVIDENDOS),
+                        fetchCSV(URL_PROVENTOS_POR_ATIVO)
+                    ]),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error("Timeout: A API do Google demorou demasiado a responder.")), FETCH_TIMEOUT)
+                    )
                 ]);
+                
+                const [carteiraRows, dividendosRows, proventosAtivosRows] = results;
+
+                // Validação básica se os dados retornaram como arrays
+                if (!Array.isArray(carteiraRows) || !Array.isArray(dividendosRows)) {
+                    throw new Error("Dados corrompidos ou em formato inválido.");
+                }
                 
                 processMatrizHistorica(dividendosRows);
                 processProventosAtivos(proventosAtivosRows);
@@ -251,41 +271,107 @@
                 
                 document.getElementById('searchInput').addEventListener('input', renderAssetGroups);
                 document.getElementById('loading-overlay').style.display = 'none';
+                
+                triggerKPIAnimations();
+
             } catch (error) {
-                console.error(error);
-                document.querySelector('#loading-overlay p').innerText = "Erro ao carregar dados.";
+                console.error("Erro de Carregamento:", error);
+                spinner.style.display = 'none';
+                loadingText.innerText = `Lamentamos, mas ocorreu um erro: ${error.message}`;
+                loadingText.classList.replace('text-slate-400', 'text-rose-500');
+                retryButton.classList.remove('hidden');
             }
         }
 
         function fetchCSV(url) {
             return new Promise((resolve, reject) => {
-                Papa.parse(url, { download: true, header: false, skipEmptyLines: 'greedy', complete: (r) => resolve(r.data), error: (e) => reject(e) });
+                Papa.parse(url, { 
+                    download: true, 
+                    header: false, 
+                    skipEmptyLines: 'greedy', 
+                    complete: (r) => {
+                        if (r.errors.length > 0) reject(new Error("Erro ao processar o ficheiro CSV."));
+                        else resolve(r.data);
+                    }, 
+                    error: (e) => reject(new Error(`Falha na conexão com o servidor de dados.`)) 
+                });
             });
         }
 
         function parseNum(val) {
-            if (!val) return 0;
+            if (val === undefined || val === null || val === '') return 0;
             let clean = val.toString().replace(/R\$|\s|%/g, '').trim();
             if (clean.includes(',') && clean.includes('.')) clean = clean.replace(/\./g, '').replace(',', '.');
             else if (clean.includes(',')) clean = clean.replace(',', '.');
-            return parseFloat(clean) || 0;
+            const parsed = parseFloat(clean);
+            return isNaN(parsed) ? 0 : parsed;
         }
 
         function fmtBRL(v) {
-            return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function animateValue(obj, start, end, duration) {
+            if (!obj) return;
+            let startTimestamp = null;
+            const targetEnd = isNaN(end) ? 0 : end;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const current = progress * (targetEnd - start) + start;
+                obj.innerText = fmtBRL(current);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function triggerKPIAnimations() {
+            const totalPatrimonio = fullData.reduce((acc, curr) => acc + (curr.atual || 0), 0);
+            const totalInvestido = fullData.reduce((acc, curr) => acc + (curr.investido || 0), 0);
+            const totalLucro = totalPatrimonio - totalInvestido;
+            
+            // Verificação de segurança para o ano e dados
+            const dadosRecentes = (anoMaisRecente && dividendosHistorico[anoMaisRecente]) ? dividendosHistorico[anoMaisRecente] : [];
+            const somaProv = dadosRecentes.reduce((acc, curr) => acc + (curr.valor || 0), 0);
+            const meses = dadosRecentes.filter(d => d.valor > 0).length || 1;
+            const mediaMensal = somaProv / meses;
+
+            animateValue(document.getElementById('total-atual'), 0, totalPatrimonio, 1000);
+            animateValue(document.getElementById('total-investido'), 0, totalInvestido, 1000);
+            animateValue(document.getElementById('total-projeção'), 0, mediaMensal, 1000);
+            animateValue(document.getElementById('total-resultado'), 0, totalLucro, 1000);
         }
 
         function processMatrizHistorica(rows) {
             dividendosHistorico = {};
+            let anosEncontrados = [];
+
+            if (!rows || rows.length <= 1) return;
+
             rows.slice(1).forEach(row => {
-                const ano = row[0] ? row[0].toString().trim() : null;
-                if (!ano) return;
-                dividendosHistorico[ano] = NOMES_MESES.map((nome, i) => ({ mes: nome, valor: parseNum(row[i + 1]) }));
+                const ano = (row[0] && row[0].toString().trim().length === 4) ? row[0].toString().trim() : null;
+                if (!ano || isNaN(ano)) return;
+                
+                anosEncontrados.push(parseInt(ano));
+                dividendosHistorico[ano] = NOMES_MESES.map((nome, i) => ({ 
+                    mes: nome, 
+                    valor: parseNum(row[i + 1]) 
+                }));
             });
+
+            if (anosEncontrados.length > 0) {
+                anoMaisRecente = Math.max(...anosEncontrados).toString();
+                document.getElementById('label-media-mensal').innerText = `Média Mensal (${anoMaisRecente})`;
+            } else {
+                document.getElementById('label-media-mensal').innerText = `Média Mensal (N/A)`;
+            }
         }
 
         function processProventosAtivos(rows) {
             proventosAtivos = {};
+            if (!rows) return;
             rows.forEach((row, index) => {
                 if (index < 2) return; 
                 const ativo = row[0] ? row[0].toString().trim().toUpperCase() : '';
@@ -301,6 +387,9 @@
                             div: parseNum(row[baseIdx + 1]),    
                             yoc: parseNum(row[baseIdx + 2])     
                         });
+                    } else {
+                        // Preenchimento de segurança caso falte colunas no CSV
+                        dadosMensais.push({ mes: NOMES_MESES[i], cotas: 0, div: 0, yoc: 0 });
                     }
                 }
                 proventosAtivos[ativo] = dadosMensais;
@@ -308,6 +397,10 @@
         }
 
         function processCarteira(rows) {
+            if (!rows || rows.length <= 1) {
+                fullData = [];
+                return;
+            }
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
                 if (!ticker || ticker.toLowerCase().includes('total')) return null;
@@ -340,21 +433,32 @@
             const totalLucro = totalPatrimonio - totalInvestido;
             const perf = totalInvestido > 0 ? (totalLucro / totalInvestido) * 100 : 0;
 
-            const dados2026 = dividendosHistorico["2026"] || [];
-            const somaProv = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
-            const meses = dados2026.filter(d => d.valor > 0).length || 1;
+            const dadosRecentes = (anoMaisRecente && dividendosHistorico[anoMaisRecente]) ? dividendosHistorico[anoMaisRecente] : [];
+            const somaProv = dadosRecentes.reduce((acc, curr) => acc + curr.valor, 0);
 
             document.getElementById('total-atual').innerText = fmtBRL(totalPatrimonio);
             document.getElementById('total-investido').innerText = fmtBRL(totalInvestido);
-            document.getElementById('total-projeção').innerText = fmtBRL(somaProv / meses);
-            document.getElementById('total-resultado').innerText = fmtBRL(totalLucro);
-            document.getElementById('yield-anual').innerText = `DY: ${totalInvestido > 0 ? ((somaProv/totalInvestido)*100).toFixed(2) : '0.00'}%`;
-            document.getElementById('asset-count').innerText = `(${fullData.length})`;
+            
+            const totalResEl = document.getElementById('total-resultado');
+            if (totalResEl) {
+                totalResEl.innerText = fmtBRL(totalLucro);
+                totalResEl.className = `text-3xl font-black ${totalLucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
+            }
+            
+            const dyAnualEl = document.getElementById('yield-anual');
+            if (dyAnualEl) dyAnualEl.innerText = `DY: ${totalInvestido > 0 ? ((somaProv/totalInvestido)*100).toFixed(2) : '0.00'}%`;
+            
+            const assetCountEl = document.getElementById('asset-count');
+            if (assetCountEl) assetCountEl.innerText = `(${fullData.length})`;
 
             const pEl = document.getElementById('perc-total');
-            pEl.className = `mt-2 text-[10px] font-black uppercase ${perf >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
-            pEl.innerText = `${perf >= 0 ? '▲' : '▼'} ${perf.toFixed(2)}% Performance Total`;
-            document.getElementById('kpi-resultado-border').style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
+            if (pEl) {
+                pEl.className = `mt-2 text-[10px] font-black uppercase ${perf >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
+                pEl.innerText = `${perf >= 0 ? '▲' : '▼'} ${perf.toFixed(2)}% Performance Total`;
+            }
+
+            const borderEl = document.getElementById('kpi-resultado-border');
+            if (borderEl) borderEl.style.borderColor = totalLucro >= 0 ? '#10b981' : '#f43f5e';
 
             fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
             
@@ -365,6 +469,8 @@
 
         function populateRaioXSelect() {
             const select = document.getElementById('select-ativo');
+            if (!select) return;
+            const currentVal = select.value;
             select.innerHTML = '<option value="">Selecione um ativo...</option>';
             const ativosDisponiveis = Object.keys(proventosAtivos).sort();
             ativosDisponiveis.forEach(ativo => {
@@ -373,6 +479,7 @@
                 opt.textContent = ativo;
                 select.appendChild(opt);
             });
+            if (currentVal && proventosAtivos[currentVal]) select.value = currentVal;
         }
 
         function renderRaioXAtivo() {
@@ -393,10 +500,10 @@
             tabelaBody.innerHTML = dados.map(d => {
                 const teveProvento = d.div > 0;
                 return `
-                    <div class="grid grid-cols-4 gap-2 px-4 py-2.5 rounded-lg ${teveProvento ? 'bg-cyan-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'} transition-colors">
-                        <div class="font-bold text-xs ${teveProvento ? 'text-cyan-500' : 'text-slate-500'}">${d.mes}</div>
+                    <div class="grid grid-cols-4 gap-2 px-4 py-2.5 rounded-lg ${teveProvento ? 'bg-emerald-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'} transition-colors">
+                        <div class="font-bold text-xs ${teveProvento ? 'text-emerald-500' : 'text-slate-500'}">${d.mes}</div>
                         <div class="text-right font-bold text-xs text-slate-800 dark:text-slate-100">${d.cotas > 0 ? d.cotas.toLocaleString('pt-BR') : '-'}</div>
-                        <div class="text-right font-black text-xs ${teveProvento ? 'text-amber-500' : 'text-slate-500'}">${teveProvento ? fmtBRL(d.div) : '-'}</div>
+                        <div class="text-right font-black text-xs ${teveProvento ? 'text-emerald-500' : 'text-slate-500'}">${teveProvento ? fmtBRL(d.div) : '-'}</div>
                         <div class="text-right font-bold text-[10px] text-slate-400 self-center">${d.yoc > 0 ? d.yoc.toFixed(2) + '%' : '-'}</div>
                     </div>
                 `;
@@ -405,8 +512,8 @@
             if (charts.raiox) charts.raiox.destroy();
 
             const labels = dados.map(d => d.mes);
-            const dataTotalPago = dados.map(d => d.cotas * d.div);
-            const dataCotas = dados.map(d => d.cotas);
+            const dataTotalPago = dados.map(d => (d.cotas || 0) * (d.div || 0));
+            const dataCotas = dados.map(d => (d.cotas || 0));
 
             charts.raiox = new Chart(document.getElementById('chartRaioX'), {
                 data: {
@@ -416,7 +523,7 @@
                             type: 'bar',
                             label: 'Total Recebido (R$)',
                             data: dataTotalPago,
-                            backgroundColor: '#22d3ee',
+                            backgroundColor: '#10b981',
                             borderRadius: 4,
                             yAxisID: 'y',
                             order: 2
@@ -449,7 +556,7 @@
                                     if (context.datasetIndex === 0) {
                                         label += fmtBRL(context.parsed.y);
                                     } else {
-                                        label += context.parsed.y.toLocaleString('pt-BR') + ' cotas';
+                                        label += (context.parsed.y || 0).toLocaleString('pt-BR') + ' cotas';
                                     }
                                     return label;
                                 }
@@ -460,7 +567,7 @@
                         x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: '700' } } },
                         y: { 
                             type: 'linear', display: true, position: 'left',
-                            title: { display: true, text: 'Valor Total (R$)', color: '#22d3ee', font: {size: 10, weight: 'bold'} },
+                            title: { display: true, text: 'Valor Total (R$)', color: '#10b981', font: {size: 10, weight: 'bold'} },
                             grid: { color: gridColor }, ticks: { color: textColor } 
                         },
                         y1: { 
@@ -475,9 +582,15 @@
 
         function renderAssetGroups() {
             const container = document.getElementById('assetsContainer');
-            const search = document.getElementById('searchInput').value.toUpperCase();
+            if (!container) return;
+            const search = (document.getElementById('searchInput')?.value || "").toUpperCase();
             container.innerHTML = '';
             
+            if (fullData.length === 0) {
+                container.innerHTML = `<div class="p-10 text-center font-bold text-slate-500">Nenhum dado de ativos disponível para exibir.</div>`;
+                return;
+            }
+
             const groups = fullData.reduce((acc, curr) => {
                 if (!acc[curr.tipo]) acc[curr.tipo] = [];
                 if (curr.ativo.includes(search)) acc[curr.tipo].push(curr);
@@ -513,7 +626,7 @@
                         </div>
                         <div class="text-right">
                             <span class="text-sm font-black text-slate-400 mr-4">Investido: ${fmtBRL(subInvestido)}</span>
-                            <span class="text-sm font-black">${fmtBRL(subAtual)}</span>
+                            <span class="text-sm font-black ${subAtual >= subInvestido ? 'text-emerald-500' : 'text-rose-500'}">${fmtBRL(subAtual)}</span>
                         </div>
                     </div>
                     <div class="collapsible-content ${initialClass}">
@@ -536,11 +649,11 @@
                                                 <div class="font-black text-cyan-400 text-sm tracking-tight cursor-pointer hover:underline" onclick="verRaioX('${d.ativo}')" title="Ver Raio-X">${d.ativo}</div>
                                             </td>
                                             <td class="py-4 px-4 text-right">
-                                                <div class="font-bold">${d.quantidade.toLocaleString('pt-BR')} un.</div>
+                                                <div class="font-bold text-slate-500 dark:text-slate-400">${(d.quantidade || 0).toLocaleString('pt-BR')} un.</div>
                                                 <div class="flex flex-col items-end gap-1.5 mt-1">
-                                                    <div class="text-[9px] font-bold text-slate-500">${d.peso.toFixed(2)}% da Carteira</div>
+                                                    <div class="text-[9px] font-bold text-slate-500">${(d.peso || 0).toFixed(2)}% da Carteira</div>
                                                     <div class="w-16 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                        <div class="h-full bg-cyan-500" style="width: ${Math.min(d.peso * 2.5, 100)}%"></div>
+                                                        <div class="h-full bg-cyan-500" style="width: ${Math.min((d.peso || 0) * 2.5, 100)}%"></div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -549,17 +662,17 @@
                                                 <div class="font-medium opacity-60">Médio: ${fmtBRL(d.pMedio)}</div>
                                             </td>
                                             <td class="py-4 px-4 text-right">
-                                                <div class="font-black">${fmtBRL(d.atual)}</div>
+                                                <div class="font-black ${d.atual >= d.investido ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.atual)}</div>
                                                 <div class="text-[9px] opacity-60 font-medium">Invest: ${fmtBRL(d.investido)}</div>
                                             </td>
                                             <td class="py-4 px-4 text-right">
-                                                <div class="font-black text-amber-500">${fmtBRL(d.proventos)}</div>
-                                                <div class="text-[9px] font-bold opacity-60">${d.yoc.toFixed(2)}% YoC</div>
+                                                <div class="font-black text-emerald-500">${fmtBRL(d.proventos)}</div>
+                                                <div class="text-[9px] font-bold opacity-60">${(d.yoc || 0).toFixed(2)}% YoC</div>
                                             </td>
                                             <td class="py-4 px-6 text-right">
                                                 <div class="font-black ${d.lucroPrejuizo >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.lucroPrejuizo)}</div>
                                                 <div class="text-[10px] font-bold ${d.valorizacaoPerc >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'}">
-                                                    ${d.valorizacaoPerc >= 0 ? '▲' : '▼'} ${Math.abs(d.valorizacaoPerc).toFixed(2)}%
+                                                    ${d.valorizacaoPerc >= 0 ? '▲' : '▼'} ${Math.abs(d.valorizacaoPerc || 0).toFixed(2)}%
                                                 </div>
                                             </td>
                                         </tr>`).join('')}
@@ -573,7 +686,7 @@
         
         function verRaioX(ativo) {
             const select = document.getElementById('select-ativo');
-            if(select.querySelector(`option[value="${ativo}"]`)) {
+            if(select && select.querySelector(`option[value="${ativo}"]`)) {
                 select.value = ativo;
                 renderRaioXAtivo();
                 select.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -588,54 +701,85 @@
             if(charts.divs) charts.divs.destroy();
             if(charts.aloc) charts.aloc.destroy();
 
-            charts.divs = new Chart(document.getElementById('chartDividendosAnual'), {
-                type: 'bar',
-                data: {
-                    labels: NOMES_MESES,
-                    datasets: [
-                        { label: '2026', data: (dividendosHistorico["2026"]||[]).map(d=>d.valor), backgroundColor: '#22d3ee', borderRadius: 4, barThickness: 8 },
-                        { label: '2025', data: (dividendosHistorico["2025"]||[]).map(d=>d.valor), backgroundColor: '#10b981', borderRadius: 4, barThickness: 8 },
-                        { label: '2024', data: (dividendosHistorico["2024"]||[]).map(d=>d.valor), backgroundColor: '#f59e0b', borderRadius: 4, barThickness: 8 }
-                    ]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: true, labels: { color: labelColor, font: { size: 9, weight: '700' } } } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9, weight: '700' } } },
-                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9, weight: '800' } } }
+            // Proteção contra dados de histórico vazios
+            const anosDisponiveis = Object.keys(dividendosHistorico).sort((a,b) => b-a);
+            const cores = ['#10b981', '#059669', '#f59e0b', '#d97706'];
+            
+            const datasets = anosDisponiveis.length > 0 ? anosDisponiveis.map((ano, idx) => ({
+                label: ano,
+                data: dividendosHistorico[ano].map(d => d.valor),
+                backgroundColor: cores[idx % cores.length],
+                borderRadius: 4,
+                barThickness: 8
+            })) : [{ label: 'Sem Dados', data: Array(12).fill(0), backgroundColor: '#ccc' }];
+
+            const ctxDivs = document.getElementById('chartDividendosAnual');
+            if (ctxDivs) {
+                charts.divs = new Chart(ctxDivs, {
+                    type: 'bar',
+                    data: {
+                        labels: NOMES_MESES,
+                        datasets: datasets
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true, labels: { color: labelColor, font: { size: 9, weight: '700' } } } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9, weight: '700' } } },
+                            x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9, weight: '800' } } }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
             const tipoDataValues = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
 
-            charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
-                type: 'doughnut',
-                data: { 
-                    labels: tipoLabels, 
-                    datasets: [{ 
-                        data: tipoDataValues, 
-                        backgroundColor: ['#22d3ee', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#3b82f6'],
-                        borderWidth: isDark ? 4 : 3, borderColor: isDark ? '#161e31' : '#ffffff',
-                    }] 
-                },
-                options: { 
-                    maintainAspectRatio: false, cutout: '72%', 
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } }
+            const ctxAloc = document.getElementById('chartAlocacaoTipo');
+            if (ctxAloc) {
+                charts.aloc = new Chart(ctxAloc, {
+                    type: 'doughnut',
+                    data: { 
+                        labels: tipoLabels.length > 0 ? tipoLabels : ['Nenhum Ativo'], 
+                        datasets: [{ 
+                            data: tipoDataValues.length > 0 ? tipoDataValues : [1], 
+                            backgroundColor: tipoLabels.length > 0 ? ['#22d3ee', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#3b82f6'] : ['#334155'],
+                            borderWidth: isDark ? 4 : 3, borderColor: isDark ? '#161e31' : '#ffffff',
+                        }] 
+                    },
+                    options: { 
+                        maintainAspectRatio: false, cutout: '72%', 
+                        plugins: { 
+                            legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } }
+                        }
                     }
-                }
-            });
+                });
+            }
             
-            if(document.getElementById('select-ativo').value) renderRaioXAtivo();
+            if(document.getElementById('select-ativo')?.value) renderRaioXAtivo();
         }
 
-        function toggleTheme() { document.body.classList.toggle('dark-mode'); document.body.classList.toggle('light-mode'); renderCharts(); }
-        function toggleGroup(h) { h.classList.toggle('expanded-icon'); h.nextElementSibling.classList.toggle('expanded'); }
-        function expandAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded')); document.querySelectorAll('.group-header').forEach(h => h.classList.add('expanded-icon')); }
-        function collapseAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded')); document.querySelectorAll('.group-header').forEach(h => h.classList.remove('expanded-icon')); }
+        function toggleTheme() { 
+            document.body.classList.toggle('dark-mode'); 
+            document.body.classList.toggle('light-mode'); 
+            renderCharts(); 
+        }
+
+        function toggleGroup(h) { 
+            if (!h) return;
+            h.classList.toggle('expanded-icon'); 
+            h.nextElementSibling?.classList.toggle('expanded'); 
+        }
+
+        function expandAll() { 
+            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded')); 
+            document.querySelectorAll('.group-header').forEach(h => h.classList.add('expanded-icon')); 
+        }
+
+        function collapseAll() { 
+            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded')); 
+            document.querySelectorAll('.group-header').forEach(h => h.classList.remove('expanded-icon')); 
+        }
 
         window.onload = init;
     </script>
