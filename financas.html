@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Intelligence | Multi-Year Dashboard</title>
+    <title>Financial Intelligence | Pro Dashboard</title>
     
-    <!-- Dependências -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -26,7 +25,6 @@
             --border: rgba(255, 255, 255, 0.08);
             --accent-purple: #8b5cf6;
             --chart-grid: rgba(255, 255, 255, 0.05);
-            --focus-ring: #3b82f6;
         }
 
         [data-theme="light"] {
@@ -43,30 +41,20 @@
             --border: rgba(0, 0, 0, 0.08);
             --accent-purple: #7c3aed;
             --chart-grid: rgba(0, 0, 0, 0.1);
-            --focus-ring: #2563eb;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             background-color: var(--bg);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
-            background-attachment: fixed;
             color: var(--text-main);
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
             padding: 15px;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; animation: fadeIn 0.6s ease-out; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .container { max-width: 1400px; margin: 0 auto; }
 
         header {
             display: flex;
@@ -80,173 +68,77 @@
             backdrop-filter: blur(10px);
         }
 
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
         .brand { display: flex; align-items: center; gap: 10px; }
         .brand-icon { 
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            padding: 8px;
-            border-radius: 10px;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .brand h1 { font-size: 1.1rem; font-weight: 700; }
-
-        .actions-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            padding: 8px; border-radius: 10px; color: white; display: flex;
         }
 
+        .actions-group { display: flex; align-items: center; gap: 10px; }
         .theme-toggle {
-            background: var(--surface-accent);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 6px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            background: var(--surface-accent); border: 1px solid var(--border);
+            color: var(--text-main); padding: 8px; border-radius: 10px; cursor: pointer;
         }
 
         .year-selector {
-            display: flex;
-            background: var(--surface-accent);
-            padding: 3px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
+            display: flex; background: var(--surface-accent); padding: 3px; border-radius: 12px;
         }
-
         .year-btn {
-            padding: 6px 14px;
-            border-radius: 9px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            font-weight: 700;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
+            padding: 6px 14px; border-radius: 9px; border: none; background: transparent;
+            color: var(--text-muted); font-weight: 700; font-size: 0.8rem; cursor: pointer;
         }
+        .year-btn.active { background: var(--primary); color: white; }
 
-        .year-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        /* Ajuste dos Meses (Chips) */
         .month-chips-container {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding: 2px;
-            margin: 0;
-            scrollbar-width: none;
-            justify-content: space-between; /* Tenta distribuir se houver espaço */
+            display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
         }
-        .month-chips-container::-webkit-scrollbar { display: none; }
-
         .chip {
-            padding: 6px 12px;
-            background: var(--surface-accent);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s ease;
-            flex: 1; /* Faz com que todos tentem ter o mesmo tamanho */
-            text-align: center;
-            max-width: 100px;
+            padding: 8px 12px; background: var(--surface-accent); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; flex: 1; text-align: center; min-width: 80px; transition: 0.2s;
         }
-
-        .chip.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
-        }
-
-        .chip.special {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: var(--secondary);
-            color: var(--secondary);
-            flex: 1.5; /* Dá um pouco mais de destaque ao resumo anual */
-        }
-
-        .chip.special.active {
-            background: var(--secondary);
-            color: white;
-        }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .chip.special { border-color: var(--secondary); color: var(--secondary); }
+        .chip.special.active { background: var(--secondary); color: white; }
 
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;
         }
-
         .card {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 18px;
+            background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 18px;
+            position: relative; overflow: hidden;
         }
-
         .kpi-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .kpi-value { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; display: block; }
+        .kpi-value { font-size: 1.4rem; font-weight: 700; display: block; }
+        .trend { font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .trend.up { color: var(--danger); }
+        .trend.down { color: var(--primary); }
 
-        .main-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 16px;
-        }
-
-        .chart-box { min-height: 350px; display: flex; flex-direction: column; }
-        .chart-container { flex-grow: 1; position: relative; }
-        .chart-title { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+        .chart-box { min-height: 380px; }
+        .chart-container { flex-grow: 1; position: relative; height: 300px; }
+        
+        .progress-list { display: flex; flex-direction: column; gap: 15px; }
+        .progress-item { background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; }
+        .progress-bar-bg { background: var(--surface-accent); height: 6px; border-radius: 3px; margin-top: 8px; }
+        .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease-in-out; }
 
         .category-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: var(--surface-accent);
-            border-radius: 10px;
-            margin-bottom: 6px;
+            display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--border);
         }
+        .category-item:last-child { border: none; }
 
-        .progress-list { display: flex; flex-direction: column; gap: 14px; }
-        .progress-bar-bg { background: var(--surface-accent); height: 6px; border-radius: 3px; margin-top: 5px; }
-        .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-
-        /* Loader */
         #loader {
-            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            position: fixed; inset: 0; background: var(--bg); z-index: 100;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-        .spinner { width: 30px; height: 30px; border: 3px solid var(--surface-accent); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        @media (max-width: 1200px) {
-            .month-chips-container { justify-content: flex-start; }
-            .chip { flex: none; }
-        }
 
         @media (max-width: 1024px) { 
             .stats-grid { grid-template-columns: repeat(2, 1fr); } 
-            .main-grid { grid-template-columns: 1fr; } 
+            .main-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -254,27 +146,24 @@
 
 <div id="loader">
     <div class="spinner"></div>
-    <p style="margin-top: 15px; font-size: 0.8rem; color: var(--text-muted);">Sincronizando dados...</p>
+    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-muted);">Processando inteligência financeira...</p>
 </div>
 
 <div class="container" id="main-content" style="display: none;">
     <header>
         <div class="header-top">
             <div class="brand">
-                <div class="brand-icon"><i data-lucide="bar-chart-big" size="18"></i></div>
+                <div class="brand-icon"><i data-lucide="shield-check" size="20"></i></div>
                 <div>
-                    <h1>Gestão de Patrimônio</h1>
-                    <p style="font-size: 0.65rem; color: var(--primary);">Inteligência Financeira</p>
+                    <h1 style="font-size: 1.1rem;">Patrimônio Inteligente</h1>
+                    <p style="font-size: 0.65rem; color: var(--primary);">Análise Proativa v2.5</p>
                 </div>
             </div>
             <div class="actions-group">
-                <button class="theme-toggle" id="themeSwitcher">
-                    <i data-lucide="sun" id="sunIcon" style="display:none" size="16"></i>
-                    <i data-lucide="moon" id="moonIcon" size="16"></i>
-                </button>
+                <button class="theme-toggle" id="themeSwitcher"><i data-lucide="sun" size="16"></i></button>
                 <div class="year-selector">
-                    <button class="year-btn active" id="btn-2025" onclick="changeYear('2025', this)">2025</button>
-                    <button class="year-btn" id="btn-2026" onclick="changeYear('2026', this)">2026</button>
+                    <button class="year-btn active" onclick="changeYear('2025', this)">2025</button>
+                    <button class="year-btn" onclick="changeYear('2026', this)">2026</button>
                 </div>
             </div>
         </div>
@@ -282,50 +171,84 @@
     </header>
 
     <div class="stats-grid">
-        <div class="card"><span class="kpi-label">Entrada</span><span class="kpi-value" id="kpi-receita">R$ 0,00</span></div>
-        <div class="card"><span class="kpi-label">Saída Total</span><span class="kpi-value" id="kpi-gastos">R$ 0,00</span></div>
-        <div class="card"><span class="kpi-label">Investido</span><span class="kpi-value" id="kpi-invest">R$ 0,00</span></div>
-        <div class="card"><span class="kpi-label">Saldo</span><span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span></div>
+        <div class="card">
+            <span class="kpi-label">Renda Mensal</span>
+            <span class="kpi-value" id="kpi-receita">R$ 0,00</span>
+            <div id="trend-receita" class="trend">--</div>
+        </div>
+        <div class="card">
+            <span class="kpi-label">Gastos Totais</span>
+            <span class="kpi-value" id="kpi-gastos">R$ 0,00</span>
+            <div id="trend-gastos" class="trend">--</div>
+        </div>
+        <div class="card">
+            <span class="kpi-label">Investimentos</span>
+            <span class="kpi-value" id="kpi-invest">R$ 0,00</span>
+            <div id="trend-invest" class="trend">--</div>
+        </div>
+        <div class="card">
+            <span class="kpi-label">Saldo Disponível</span>
+            <span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
+            <div id="trend-saldo" class="trend">--</div>
+        </div>
     </div>
 
     <div class="main-grid">
         <div class="left-col">
             <div class="card chart-box">
-                <div class="chart-header" style="margin-bottom: 12px;">
-                    <div class="chart-title"><i data-lucide="trending-up" size="16" color="var(--primary)"></i> Comparativo Renda vs Gastos</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 0.9rem; font-weight: 600;"><i data-lucide="bar-chart-3" size="16" style="vertical-align: middle; margin-right: 8px;"></i>Desempenho Anual vs Média</h3>
+                    <div id="avg-indicator" style="font-size: 0.7rem; background: var(--surface-accent); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);">
+                        Média Mensal: R$ 0,00
+                    </div>
                 </div>
                 <div class="chart-container"><canvas id="mainChart"></canvas></div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 12px;"><i data-lucide="pie-chart" size="16" color="var(--secondary)"></i> Composição</div>
-                    <div class="chart-container" style="height: 160px;"><canvas id="compositionChart"></canvas></div>
+                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="pie-chart" size="16" style="margin-right: 8px;"></i>Alocação</h3>
+                    <div style="height: 180px;"><canvas id="compositionChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 12px;"><i data-lucide="list" size="16"></i> Detalhes</div>
+                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="layers" size="16" style="margin-right: 8px;"></i>Top Despesas</h3>
                     <div id="composition-list"></div>
                 </div>
             </div>
         </div>
+
         <div class="right-col">
             <div class="card" style="height: 100%;">
-                <div class="chart-title" style="margin-bottom: 20px;"><i data-lucide="activity" size="16" color="var(--accent-purple)"></i> Saúde do Mês</div>
+                <h3 style="font-size: 0.9rem; margin-bottom: 20px;"><i data-lucide="Zap" size="16" color="var(--warning)" style="margin-right: 8px;"></i>Insights e Saúde</h3>
                 <div class="progress-list">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;"><span>Comprometimento</span><span id="perc-gastos">0%</span></div>
-                        <div class="progress-bar-bg"><div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger)"></div></div>
+                    <div class="progress-item">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600;">
+                            <span>Teto de Gastos (70% da Renda)</span>
+                            <span id="perc-gastos">0%</span>
+                        </div>
+                        <div class="progress-bar-bg"><div id="bar-gastos" class="progress-bar-fill"></div></div>
                     </div>
-                    <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;"><span>Investimento</span><span id="perc-invest">0%</span></div>
-                        <div class="progress-bar-bg"><div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary)"></div></div>
-                    </div>
-                    <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;"><span>Margem</span><span id="perc-saldo">0%</span></div>
-                        <div class="progress-bar-bg"><div id="bar-saldo" class="progress-bar-fill" style="background: var(--primary)"></div></div>
+                    <div class="progress-item">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600;">
+                            <span>Meta Investimento (15%)</span>
+                            <span id="perc-invest">0%</span>
+                        </div>
+                        <div class="progress-bar-bg"><div id="bar-invest" class="progress-bar-fill"></div></div>
                     </div>
                 </div>
-                <div style="margin-top: 25px; padding: 15px; background: rgba(139, 92, 246, 0.05); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.1);">
-                    <p id="analysis-text" style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">---</p>
+
+                <div id="projection-card" style="margin-top: 24px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i data-lucide="trending-up" size="18" color="var(--primary)"></i>
+                        <span style="font-size: 0.8rem; font-weight: 700;">Projeção de Acúmulo</span>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;" id="projection-text">
+                        Selecione o Resumo Anual para ver a projeção do ano.
+                    </p>
+                </div>
+
+                <div style="margin-top: 16px; padding: 15px; background: var(--surface-accent); border-radius: 16px;">
+                    <h4 style="font-size: 0.75rem; margin-bottom: 8px;">Dica do Especialista:</h4>
+                    <p id="analysis-text" style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.5;"></p>
                 </div>
             </div>
         </div>
@@ -340,73 +263,47 @@
 
     let currentData = [];
     let charts = {};
-    let lastActiveIdx = 0;
-    let currentYear = '2025';
-
+    let activeIdx = 0;
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-    const MESES_NOMES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    const MESES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
     document.getElementById('themeSwitcher').onclick = () => {
-        const body = document.body;
-        const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        body.setAttribute('data-theme', newTheme);
-        document.getElementById('sunIcon').style.display = newTheme === 'light' ? 'none' : 'block';
-        document.getElementById('moonIcon').style.display = newTheme === 'light' ? 'block' : 'none';
-        updateCharts(lastActiveIdx, getActiveStats());
+        document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+        selectMonth(activeIdx, document.querySelector(`.chip[data-idx="${activeIdx}"]`));
     };
 
-    function normalize(str) { return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : ""; }
+    function normalize(s) { return s ? s.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : ""; }
     function parseVal(v) {
         if (!v) return 0;
-        if (typeof v === 'number') return v;
         let n = parseFloat(v.toString().replace(/\s/g, '').replace('R$', '').replace(/\./g, '').replace(',', '.'));
         return isNaN(n) ? 0 : n;
     }
+
     function getVal(row, key) {
-        const t = normalize(key);
-        for (let k in row) if (normalize(k) === t) return row[k];
-        return undefined;
+        const kNorm = normalize(key);
+        for (let k in row) if (normalize(k) === kNorm) return row[k];
+        return 0;
     }
 
-    function getMonthStats(row) {
-        if (!row) return null;
-        const c6 = parseVal(getVal(row, "Cartao C6")), ml = parseVal(getVal(row, "Cartao ML"));
+    function getStats(row) {
+        if(!row) return null;
+        const receita = parseVal(getVal(row, "Salario Aposentadoria")) + parseVal(getVal(row, "Salario PTTC"));
         const fixos = parseVal(getVal(row, "Luz")) + parseVal(getVal(row, "Agua")) + parseVal(getVal(row, "DESKTOP")) + parseVal(getVal(row, "Internet Mae")) + parseVal(getVal(row, "IPTU")) + parseVal(getVal(row, "Celular"));
-        const gTotal = fixos + c6 + ml + parseVal(getVal(row, "Outros Gastos")) + parseVal(getVal(row, "IPVA")) + parseVal(getVal(row, "Cancao Nova"));
-        const rTotal = parseVal(getVal(row, "Salario Aposentadoria")) + parseVal(getVal(row, "Salario PTTC"));
+        const cartoes = parseVal(getVal(row, "Cartao C6")) + parseVal(getVal(row, "Cartao ML"));
+        const outros = parseVal(getVal(row, "Outros Gastos")) + parseVal(getVal(row, "IPVA")) + parseVal(getVal(row, "Cancao Nova"));
+        const gastos = fixos + cartoes + outros;
         return { 
-            mes: getVal(row, "Mes") || "---", rTotal, gTotal, invest: parseVal(getVal(row, "Investimentos")), 
-            saldo: parseVal(getVal(row, "Saldo Final do Mes")), totalCartoes: c6 + ml, custosFixos: fixos,
-            totalOutros: parseVal(getVal(row, "Outros Gastos")) + parseVal(getVal(row, "IPVA")) + parseVal(getVal(row, "Cancao Nova"))
+            mes: getVal(row, "Mes"), r: receita, g: gastos, i: parseVal(getVal(row, "Investimentos")), 
+            s: parseVal(getVal(row, "Saldo Final do Mes")), cartoes, fixos, outros 
         };
-    }
-
-    function getActiveStats() {
-        if (lastActiveIdx === 'annual') {
-            return currentData.reduce((acc, row) => {
-                const s = getMonthStats(row);
-                Object.keys(s).forEach(k => { if(k !== 'mes') acc[k] = (acc[k] || 0) + s[k]; });
-                return acc;
-            }, { mes: 'Resumo Anual' });
-        }
-        return getMonthStats(currentData[lastActiveIdx]);
-    }
-
-    async function changeYear(year, btn) {
-        currentYear = year;
-        document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        await loadYearData(year);
     }
 
     async function loadYearData(year) {
         document.getElementById('loader').style.display = 'flex';
-        document.getElementById('main-content').style.display = 'none';
-
         Papa.parse(SOURCES[year], {
             download: true, header: true, skipEmptyLines: true,
-            complete: (r) => {
-                currentData = r.data.filter(row => MESES_NOMES.includes(normalize(getVal(row, "Mes"))));
+            complete: (res) => {
+                currentData = res.data.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
                 renderUI();
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
@@ -414,57 +311,88 @@
         });
     }
 
+    function changeYear(year, btn) {
+        document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadYearData(year);
+    }
+
     function renderUI() {
-        const c = document.getElementById('monthChips'); c.innerHTML = '';
-        const addBtn = (idx, label, cls) => {
-            const b = document.createElement('div'); b.className = 'chip ' + cls;
-            b.innerText = label; b.onclick = () => selectMonth(idx, b);
-            c.appendChild(b); return b;
-        };
-        addBtn('annual', 'Anual', 'special');
-        currentData.forEach((row, i) => addBtn(i, getVal(row, "Mes"), ''));
-        selectMonth(0, c.children[1]);
+        const container = document.getElementById('monthChips');
+        container.innerHTML = `<div class="chip special" data-idx="annual" onclick="selectMonth('annual', this)">Anual</div>`;
+        currentData.forEach((r, i) => {
+            const m = getVal(r, "Mes");
+            container.innerHTML += `<div class="chip" data-idx="${i}" onclick="selectMonth(${i}, this)">${m}</div>`;
+        });
+        selectMonth(0, document.querySelector('.chip[data-idx="0"]'));
         lucide.createIcons();
     }
 
     function selectMonth(idx, el) {
-        lastActiveIdx = idx;
+        activeIdx = idx;
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        const stats = getActiveStats();
-        
-        document.getElementById('kpi-receita').innerText = fmt.format(stats.rTotal);
-        document.getElementById('kpi-gastos').innerText = fmt.format(stats.gTotal);
-        document.getElementById('kpi-invest').innerText = fmt.format(stats.invest);
-        document.getElementById('kpi-saldo').innerText = fmt.format(stats.saldo);
 
-        const pG = stats.rTotal > 0 ? (stats.gTotal / stats.rTotal * 100) : 0;
-        const pI = stats.rTotal > 0 ? (stats.invest / stats.rTotal * 100) : 0;
-        const pS = stats.rTotal > 0 ? (stats.saldo / stats.rTotal * 100) : 0;
+        let current, prev;
+        const allStats = currentData.map(r => getStats(r));
+        const avgGastos = allStats.reduce((a, b) => a + b.g, 0) / allStats.length;
 
+        if(idx === 'annual') {
+            current = allStats.reduce((a, b) => ({
+                r: a.r + b.r, g: a.g + b.g, i: a.i + b.i, s: a.s + b.s, 
+                cartoes: a.cartoes + b.cartoes, fixos: a.fixos + b.fixos, outros: a.outros + b.outros
+            }), { r:0, g:0, i:0, s:0, cartoes:0, fixos:0, outros:0 });
+            document.getElementById('projection-text').innerText = `Mantendo a média de sobra mensal de ${fmt.format(current.s / allStats.length)}, você acumulará ${fmt.format(current.s)} até o final deste exercício.`;
+        } else {
+            current = allStats[idx];
+            prev = idx > 0 ? allStats[idx-1] : null;
+            document.getElementById('projection-text').innerText = `Neste mês, seus gastos estão ${(current.g > avgGastos ? 'acima' : 'abaixo')} da sua média anual de ${fmt.format(avgGastos)}.`;
+        }
+
+        // Update KPIs
+        document.getElementById('kpi-receita').innerText = fmt.format(current.r);
+        document.getElementById('kpi-gastos').innerText = fmt.format(current.g);
+        document.getElementById('kpi-invest').innerText = fmt.format(current.i);
+        document.getElementById('kpi-saldo').innerText = fmt.format(current.s);
+        document.getElementById('avg-indicator').innerText = `Média Gastos: ${fmt.format(avgGastos)}`;
+
+        // Trends
+        const updateTrend = (id, cur, pr) => {
+            const tid = document.getElementById('trend-' + id);
+            if(!pr) { tid.innerHTML = '--'; return; }
+            const diff = ((cur - pr) / pr * 100);
+            const isUp = diff > 0;
+            tid.className = `trend ${isUp ? 'up' : 'down'}`;
+            tid.innerHTML = `<i data-lucide="trending-${isUp?'up':'down'}" size="12"></i> ${Math.abs(diff).toFixed(1)}% vs mês ant.`;
+        };
+        updateTrend('receita', current.r, prev?.r);
+        updateTrend('gastos', current.g, prev?.g);
+        updateTrend('invest', current.i, prev?.i);
+        updateTrend('saldo', current.s, prev?.s);
+
+        // Bars
+        const pG = current.r > 0 ? (current.g / current.r * 100) : 0;
+        const pI = current.r > 0 ? (current.i / current.r * 100) : 0;
         document.getElementById('perc-gastos').innerText = pG.toFixed(1) + '%';
         document.getElementById('bar-gastos').style.width = Math.min(pG, 100) + '%';
+        document.getElementById('bar-gastos').style.backgroundColor = pG > 70 ? 'var(--danger)' : 'var(--secondary)';
         document.getElementById('perc-invest').innerText = pI.toFixed(1) + '%';
         document.getElementById('bar-invest').style.width = Math.min(pI, 100) + '%';
-        document.getElementById('perc-saldo').innerText = pS.toFixed(1) + '%';
-        document.getElementById('bar-saldo').style.width = Math.min(pS, 100) + '%';
+        document.getElementById('bar-invest').style.backgroundColor = pI < 15 ? 'var(--warning)' : 'var(--primary)';
 
+        // Analysis
         const analysis = document.getElementById('analysis-text');
-        if (pI >= 15) analysis.innerText = "Excelente! Você está investindo uma parte significativa da sua renda.";
-        else if (pS > 0) analysis.innerText = "Bom trabalho. O saldo está positivo, tente alocar mais em investimentos.";
-        else analysis.innerText = "Atenção: Os gastos superaram a renda ou a margem está muito apertada.";
+        if(pG > 85) analysis.innerText = "Cuidado! Seus gastos fixos e variáveis estão consumindo quase toda sua renda. Tente revisar os cartões.";
+        else if(pI > 20) analysis.innerText = "Parabéns! Sua taxa de poupança está acima da média de mercado. Continue diversificando.";
+        else analysis.innerText = "Seu fluxo de caixa está saudável. Considere automatizar uma parte do saldo para investimentos.";
 
-        updateCharts(idx, stats);
+        updateCharts(idx, current, allStats, avgGastos);
+        lucide.createIcons();
     }
 
-    function updateCharts(activeIdx, stats) {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        const colorIncome = isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(5, 150, 105, 0.15)';
-        const colorIncomeActive = isDark ? '#10b981' : '#059669';
-        const colorExpActive = isDark ? '#3b82f6' : '#1d4ed8';
-        const colorExpInactive = isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.12)';
-        const textColor = isDark ? '#9ca3af' : '#1f2937';
-        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
+    function updateCharts(activeIdx, current, allStats, avg) {
+        const isDark = document.body.dataset.theme === 'dark';
+        const colors = isDark ? { text: '#9ca3af', grid: 'rgba(255,255,255,0.05)' } : { text: '#4b5563', grid: 'rgba(0,0,0,0.05)' };
 
         if(charts.main) charts.main.destroy();
         if(charts.comp) charts.comp.destroy();
@@ -472,30 +400,35 @@
         charts.main = new Chart(document.getElementById('mainChart'), {
             type: 'bar',
             data: {
-                labels: currentData.map(d => getVal(d, "Mes")),
+                labels: allStats.map(s => s.mes),
                 datasets: [
                     {
                         label: 'Entrada',
-                        data: currentData.map(d => getMonthStats(d).rTotal),
-                        backgroundColor: currentData.map((_, i) => i === activeIdx ? colorIncomeActive : colorIncome),
-                        borderColor: currentData.map((_, i) => i === activeIdx ? colorIncomeActive : 'transparent'),
-                        borderWidth: 1, borderRadius: 4
+                        data: allStats.map(s => s.r),
+                        backgroundColor: allStats.map((_, i) => i === activeIdx ? '#10b981' : 'rgba(16, 185, 129, 0.2)'),
+                        borderRadius: 5, barPercentage: 0.6
                     },
                     {
                         label: 'Saída',
-                        data: currentData.map(d => getMonthStats(d).gTotal),
-                        backgroundColor: currentData.map((_, i) => i === activeIdx ? colorExpActive : colorExpInactive),
-                        borderColor: currentData.map((_, i) => i === activeIdx ? colorExpActive : 'transparent'),
-                        borderWidth: 1, borderRadius: 4
+                        data: allStats.map(s => s.g),
+                        backgroundColor: allStats.map((_, i) => i === activeIdx ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)'),
+                        borderRadius: 5, barPercentage: 0.6
                     }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
-                scales: { 
-                    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: '600' } } }
+                plugins: {
+                    legend: { display: false },
+                    annotation: { // Polyfill manual simples via draw
+                        annotations: {
+                            line1: { type: 'line', yMin: avg, yMax: avg, borderColor: 'rgba(245, 158, 11, 0.5)', borderWidth: 2, borderDash: [5, 5] }
+                        }
+                    }
+                },
+                scales: {
+                    y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { color: colors.text, font: { size: 10, weight: '600' } } }
                 }
             }
         });
@@ -503,29 +436,31 @@
         charts.comp = new Chart(document.getElementById('compositionChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Investimentos', 'Cartões', 'Fixos', 'Outros', 'Saldo'],
+                labels: ['Invest', 'Cartões', 'Fixos', 'Outros'],
                 datasets: [{
-                    data: [stats.invest, stats.totalCartoes, stats.custosFixos, stats.totalOutros, Math.max(0, stats.saldo)],
-                    backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
-                    borderWidth: isDark ? 0 : 2, borderColor: '#fff'
+                    data: [current.i, current.cartoes, current.fixos, current.outros],
+                    backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
+                    borderWidth: 0, cutout: '75%'
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
+        const list = document.getElementById('composition-list');
         const items = [
-            {n: 'Investimentos', v: stats.invest, c: '#3b82f6'},
-            {n: 'Cartões', v: stats.totalCartoes, c: '#f59e0b'},
-            {n: 'Custos Fixos', v: stats.custosFixos, c: '#ef4444'}
+            { n: 'Investimentos', v: current.i, c: '#3b82f6' },
+            { n: 'Cartões', v: current.cartoes, c: '#f59e0b' },
+            { n: 'Contas Fixas', v: current.fixos, c: '#ef4444' },
+            { n: 'Outros', v: current.outros, c: '#8b5cf6' }
         ].sort((a,b) => b.v - a.v);
-        
-        document.getElementById('composition-list').innerHTML = items.map(f => `
+
+        list.innerHTML = items.map(it => `
             <div class="category-item">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <div style="width: 6px; height: 6px; border-radius: 50%; background: ${f.c}"></div>
-                    <span style="font-size: 0.75rem;">${f.n}</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:8px; height:8px; border-radius:50%; background:${it.c}"></div>
+                    <span style="font-size:0.75rem;">${it.n}</span>
                 </div>
-                <div style="font-size: 0.75rem; font-weight: 700;">${fmt.format(f.v)}</div>
+                <span style="font-size:0.75rem; font-weight:700;">${fmt.format(it.v)}</span>
             </div>
         `).join('');
     }
