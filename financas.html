@@ -57,7 +57,7 @@
             color: var(--text-main);
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -71,12 +71,12 @@
         header {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            margin-bottom: 24px;
-            padding: 24px;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px 20px;
             background: var(--glass);
             border: 1px solid var(--border);
-            border-radius: 24px;
+            border-radius: 20px;
             backdrop-filter: blur(10px);
         }
 
@@ -86,30 +86,30 @@
             align-items: center;
         }
 
-        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand { display: flex; align-items: center; gap: 10px; }
         .brand-icon { 
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            padding: 10px;
-            border-radius: 12px;
+            padding: 8px;
+            border-radius: 10px;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .brand h1 { font-size: 1.25rem; font-weight: 700; }
+        .brand h1 { font-size: 1.1rem; font-weight: 700; }
 
         .actions-group {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .theme-toggle {
             background: var(--surface-accent);
             border: 1px solid var(--border);
             color: var(--text-main);
-            padding: 8px;
-            border-radius: 12px;
+            padding: 6px;
+            border-radius: 10px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -120,18 +120,19 @@
         .year-selector {
             display: flex;
             background: var(--surface-accent);
-            padding: 4px;
-            border-radius: 14px;
+            padding: 3px;
+            border-radius: 12px;
             border: 1px solid var(--border);
         }
 
         .year-btn {
-            padding: 8px 20px;
-            border-radius: 10px;
+            padding: 6px 14px;
+            border-radius: 9px;
             border: none;
             background: transparent;
             color: var(--text-muted);
             font-weight: 700;
+            font-size: 0.8rem;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -141,40 +142,46 @@
             color: white;
         }
 
+        /* Ajuste dos Meses (Chips) */
         .month-chips-container {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             overflow-x: auto;
-            padding: 4px;
-            margin: -4px;
+            padding: 2px;
+            margin: 0;
             scrollbar-width: none;
+            justify-content: space-between; /* Tenta distribuir se houver espaço */
         }
         .month-chips-container::-webkit-scrollbar { display: none; }
 
         .chip {
-            padding: 8px 18px;
+            padding: 6px 12px;
             background: var(--surface-accent);
             border: 1px solid var(--border);
-            border-radius: 100px;
+            border-radius: 8px;
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
+            flex: 1; /* Faz com que todos tentem ter o mesmo tamanho */
+            text-align: center;
+            max-width: 100px;
         }
 
         .chip.active {
             background: var(--primary);
             border-color: var(--primary);
             color: white;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
         }
 
         .chip.special {
             background: rgba(59, 130, 246, 0.1);
             border-color: var(--secondary);
             color: var(--secondary);
+            flex: 1.5; /* Dá um pouco mais de destaque ao resumo anual */
         }
 
         .chip.special.active {
@@ -193,12 +200,12 @@
             background: var(--glass);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 20px;
+            border-radius: 20px;
+            padding: 18px;
         }
 
-        .kpi-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .kpi-value { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; display: block; }
+        .kpi-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .kpi-value { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; display: block; }
 
         .main-grid {
             display: grid;
@@ -206,53 +213,36 @@
             gap: 16px;
         }
 
-        .chart-box { min-height: 380px; display: flex; flex-direction: column; }
+        .chart-box { min-height: 350px; display: flex; flex-direction: column; }
         .chart-container { flex-grow: 1; position: relative; }
-        
-        .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-        .chart-title { font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+        .chart-title { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
 
         .category-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 10px;
             background: var(--surface-accent);
-            border-radius: 12px;
-            margin-bottom: 8px;
+            border-radius: 10px;
+            margin-bottom: 6px;
         }
 
-        .progress-list { display: flex; flex-direction: column; gap: 16px; }
-        .progress-bar-bg { background: var(--surface-accent); height: 8px; border-radius: 4px; margin-top: 6px; }
-        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+        .progress-list { display: flex; flex-direction: column; gap: 14px; }
+        .progress-bar-bg { background: var(--surface-accent); height: 6px; border-radius: 3px; margin-top: 5px; }
+        .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
 
-        /* Loader & Error */
+        /* Loader */
         #loader {
             position: fixed; inset: 0; background: var(--bg); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px; text-align: center;
         }
-        .spinner { width: 32px; height: 32px; border: 3px solid var(--surface-accent); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        
-        .error-container {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            max-width: 400px;
-        }
-        .error-icon { color: var(--danger); }
-        .retry-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
+        .spinner { width: 30px; height: 30px; border: 3px solid var(--surface-accent); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 1200px) {
+            .month-chips-container { justify-content: flex-start; }
+            .chip { flex: none; }
+        }
 
         @media (max-width: 1024px) { 
             .stats-grid { grid-template-columns: repeat(2, 1fr); } 
@@ -263,30 +253,24 @@
 <body data-theme="dark">
 
 <div id="loader">
-    <div id="loading-spinner" class="spinner"></div>
-    <div id="error-content" class="error-container">
-        <div class="error-icon"><i data-lucide="alert-circle" size="48"></i></div>
-        <h2 style="font-size: 1.25rem; font-weight: 700; margin: 12px 0;">Falha na Conexão</h2>
-        <p id="error-text" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Não foi possível carregar os dados financeiros.</p>
-        <button class="retry-btn" onclick="retryLoad()">Tentar Novamente</button>
-    </div>
-    <p style="margin-top: 16px; font-size: 0.9rem; color: var(--text-muted);" id="loader-text">Carregando Finanças...</p>
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; font-size: 0.8rem; color: var(--text-muted);">Sincronizando dados...</p>
 </div>
 
 <div class="container" id="main-content" style="display: none;">
     <header>
         <div class="header-top">
             <div class="brand">
-                <div class="brand-icon"><i data-lucide="layout-dashboard" size="20"></i></div>
+                <div class="brand-icon"><i data-lucide="bar-chart-big" size="18"></i></div>
                 <div>
                     <h1>Gestão de Patrimônio</h1>
-                    <p style="font-size: 0.7rem; color: var(--primary);">Atualizado em tempo real</p>
+                    <p style="font-size: 0.65rem; color: var(--primary);">Inteligência Financeira</p>
                 </div>
             </div>
             <div class="actions-group">
                 <button class="theme-toggle" id="themeSwitcher">
-                    <i data-lucide="sun" id="sunIcon" style="display:none"></i>
-                    <i data-lucide="moon" id="moonIcon"></i>
+                    <i data-lucide="sun" id="sunIcon" style="display:none" size="16"></i>
+                    <i data-lucide="moon" id="moonIcon" size="16"></i>
                 </button>
                 <div class="year-selector">
                     <button class="year-btn active" id="btn-2025" onclick="changeYear('2025', this)">2025</button>
@@ -307,41 +291,41 @@
     <div class="main-grid">
         <div class="left-col">
             <div class="card chart-box">
-                <div class="chart-header">
-                    <div class="chart-title"><i data-lucide="bar-chart-3" size="18" color="var(--primary)"></i> Comparativo Renda vs Gastos</div>
+                <div class="chart-header" style="margin-bottom: 12px;">
+                    <div class="chart-title"><i data-lucide="trending-up" size="16" color="var(--primary)"></i> Comparativo Renda vs Gastos</div>
                 </div>
                 <div class="chart-container"><canvas id="mainChart"></canvas></div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="pie-chart" size="18" color="var(--secondary)"></i> Composição do Mês</div>
-                    <div class="chart-container" style="height: 180px;"><canvas id="compositionChart"></canvas></div>
+                    <div class="chart-title" style="margin-bottom: 12px;"><i data-lucide="pie-chart" size="16" color="var(--secondary)"></i> Composição</div>
+                    <div class="chart-container" style="height: 160px;"><canvas id="compositionChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="home" size="18"></i> Distribuição</div>
+                    <div class="chart-title" style="margin-bottom: 12px;"><i data-lucide="list" size="16"></i> Detalhes</div>
                     <div id="composition-list"></div>
                 </div>
             </div>
         </div>
         <div class="right-col">
             <div class="card" style="height: 100%;">
-                <div class="chart-title" style="margin-bottom: 24px;"><i data-lucide="target" size="18" color="var(--accent-purple)"></i> Saúde Financeira</div>
+                <div class="chart-title" style="margin-bottom: 20px;"><i data-lucide="activity" size="16" color="var(--accent-purple)"></i> Saúde do Mês</div>
                 <div class="progress-list">
                     <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span>Comprometimento Renda</span><span id="perc-gastos">0%</span></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;"><span>Comprometimento</span><span id="perc-gastos">0%</span></div>
                         <div class="progress-bar-bg"><div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger)"></div></div>
                     </div>
                     <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span>Taxa de Investimento</span><span id="perc-invest">0%</span></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;"><span>Investimento</span><span id="perc-invest">0%</span></div>
                         <div class="progress-bar-bg"><div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary)"></div></div>
                     </div>
                     <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span>Margem Líquida</span><span id="perc-saldo">0%</span></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;"><span>Margem</span><span id="perc-saldo">0%</span></div>
                         <div class="progress-bar-bg"><div id="bar-saldo" class="progress-bar-fill" style="background: var(--primary)"></div></div>
                     </div>
                 </div>
-                <div style="margin-top: 32px; padding: 20px; background: rgba(139, 92, 246, 0.05); border-radius: 16px; border: 1px solid rgba(139, 92, 246, 0.1);">
-                    <p id="analysis-text" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">Analisando dados...</p>
+                <div style="margin-top: 25px; padding: 15px; background: rgba(139, 92, 246, 0.05); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.1);">
+                    <p id="analysis-text" style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">---</p>
                 </div>
             </div>
         </div>
@@ -358,7 +342,6 @@
     let charts = {};
     let lastActiveIdx = 0;
     let currentYear = '2025';
-    let timeoutHandle = null;
 
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const MESES_NOMES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -419,31 +402,17 @@
     async function loadYearData(year) {
         document.getElementById('loader').style.display = 'flex';
         document.getElementById('main-content').style.display = 'none';
-        timeoutHandle = setTimeout(() => showError("Tempo limite excedido."), 15000);
 
         Papa.parse(SOURCES[year], {
             download: true, header: true, skipEmptyLines: true,
             complete: (r) => {
-                clearTimeout(timeoutHandle);
                 currentData = r.data.filter(row => MESES_NOMES.includes(normalize(getVal(row, "Mes"))));
-                if (currentData.length > 0) {
-                    renderUI();
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('main-content').style.display = 'block';
-                } else showError("Nenhum dado encontrado.");
-            },
-            error: () => showError("Erro ao carregar planilha.")
+                renderUI();
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+            }
         });
     }
-
-    function showError(m) {
-        document.getElementById('loading-spinner').style.display = 'none';
-        document.getElementById('error-content').style.display = 'flex';
-        document.getElementById('error-text').innerText = m;
-        lucide.createIcons();
-    }
-
-    function retryLoad() { loadYearData(currentYear); }
 
     function renderUI() {
         const c = document.getElementById('monthChips'); c.innerHTML = '';
@@ -452,7 +421,7 @@
             b.innerText = label; b.onclick = () => selectMonth(idx, b);
             c.appendChild(b); return b;
         };
-        const ann = addBtn('annual', 'Resumo Anual', 'special');
+        addBtn('annual', 'Anual', 'special');
         currentData.forEach((row, i) => addBtn(i, getVal(row, "Mes"), ''));
         selectMonth(0, c.children[1]);
         lucide.createIcons();
@@ -480,6 +449,11 @@
         document.getElementById('perc-saldo').innerText = pS.toFixed(1) + '%';
         document.getElementById('bar-saldo').style.width = Math.min(pS, 100) + '%';
 
+        const analysis = document.getElementById('analysis-text');
+        if (pI >= 15) analysis.innerText = "Excelente! Você está investindo uma parte significativa da sua renda.";
+        else if (pS > 0) analysis.innerText = "Bom trabalho. O saldo está positivo, tente alocar mais em investimentos.";
+        else analysis.innerText = "Atenção: Os gastos superaram a renda ou a margem está muito apertada.";
+
         updateCharts(idx, stats);
     }
 
@@ -501,29 +475,27 @@
                 labels: currentData.map(d => getVal(d, "Mes")),
                 datasets: [
                     {
-                        label: 'Renda (Entrada)',
+                        label: 'Entrada',
                         data: currentData.map(d => getMonthStats(d).rTotal),
                         backgroundColor: currentData.map((_, i) => i === activeIdx ? colorIncomeActive : colorIncome),
                         borderColor: currentData.map((_, i) => i === activeIdx ? colorIncomeActive : 'transparent'),
-                        borderWidth: 1.5,
-                        borderRadius: 4
+                        borderWidth: 1, borderRadius: 4
                     },
                     {
-                        label: 'Despesa (Saída)',
+                        label: 'Saída',
                         data: currentData.map(d => getMonthStats(d).gTotal),
                         backgroundColor: currentData.map((_, i) => i === activeIdx ? colorExpActive : colorExpInactive),
                         borderColor: currentData.map((_, i) => i === activeIdx ? colorExpActive : 'transparent'),
-                        borderWidth: 1.5,
-                        borderRadius: 4
+                        borderWidth: 1, borderRadius: 4
                     }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: textColor, font: { weight: '600' } } } },
+                plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
                 scales: { 
-                    y: { grid: { color: gridColor }, ticks: { color: textColor } },
-                    x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600' } } }
+                    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: '600' } } }
                 }
             }
         });
@@ -531,32 +503,29 @@
         charts.comp = new Chart(document.getElementById('compositionChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Investimentos', 'Cartões', 'Custos Fixos', 'Outros', 'Saldo'],
+                labels: ['Investimentos', 'Cartões', 'Fixos', 'Outros', 'Saldo'],
                 datasets: [{
                     data: [stats.invest, stats.totalCartoes, stats.custosFixos, stats.totalOutros, Math.max(0, stats.saldo)],
                     backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
                     borderWidth: isDark ? 0 : 2, borderColor: '#fff'
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
         });
 
         const items = [
             {n: 'Investimentos', v: stats.invest, c: '#3b82f6'},
             {n: 'Cartões', v: stats.totalCartoes, c: '#f59e0b'},
-            {n: 'Custos Fixos', v: stats.custosFixos, c: '#ef4444'},
-            {n: 'Saldo Livre', v: stats.saldo, c: '#10b981'}
+            {n: 'Custos Fixos', v: stats.custosFixos, c: '#ef4444'}
         ].sort((a,b) => b.v - a.v);
         
         document.getElementById('composition-list').innerHTML = items.map(f => `
             <div class="category-item">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${f.c}"></div>
-                    <span style="font-size: 0.8rem;">${f.n}</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 6px; height: 6px; border-radius: 50%; background: ${f.c}"></div>
+                    <span style="font-size: 0.75rem;">${f.n}</span>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 0.8rem; font-weight: 700;">${fmt.format(f.v)}</div>
-                </div>
+                <div style="font-size: 0.75rem; font-weight: 700;">${fmt.format(f.v)}</div>
             </div>
         `).join('');
     }
