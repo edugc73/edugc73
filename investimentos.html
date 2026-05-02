@@ -423,7 +423,19 @@
                 },
                 options: { 
                     maintainAspectRatio: false, cutout: '72%', 
-                    plugins: { legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } } }
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percentage = ((value / total) * 100).toFixed(2);
+                                    return `${context.label}: ${percentage}%`;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
