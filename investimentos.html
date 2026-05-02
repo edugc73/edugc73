@@ -247,7 +247,7 @@
                     quantidade: quantidade,
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
-                    valorizacaoPerc: parseNum(row[7]), // Coluna H (Índice 7) - Valorização %
+                    valorizacaoPerc: parseNum(row[7]), 
                     proventos: parseNum(row[8]),
                     yoc: parseNum(row[11]),
                     investido: investido,
@@ -337,10 +337,10 @@
                                 <thead class="bg-slate-50 dark:bg-slate-900/50 text-[9px] text-slate-500 uppercase font-black">
                                     <tr>
                                         <th class="py-3 px-6">Ativo</th>
-                                        <th class="py-3 px-4 text-right">Qtd | Investido</th>
-                                        <th class="py-3 px-4 text-right">P. Médio | Cotação</th>
+                                        <th class="py-3 px-4 text-right">Qtd | Peso</th>
+                                        <th class="py-3 px-4 text-right">Cotação | P. Médio</th>
+                                        <th class="py-3 px-4 text-right">V. Atual | Investido</th>
                                         <th class="py-3 px-4 text-right">Proventos | YoC</th>
-                                        <th class="py-3 px-4 text-right">Valor Atual | Peso</th>
                                         <th class="py-3 px-6 text-right">Lucro/Prejuízo</th>
                                     </tr>
                                 </thead>
@@ -352,19 +352,19 @@
                                             </td>
                                             <td class="py-4 px-4 text-right">
                                                 <div class="font-bold">${d.quantidade.toLocaleString('pt-BR')} un.</div>
-                                                <div class="text-[9px] opacity-60 font-medium">Invest: ${fmtBRL(d.investido)}</div>
+                                                <div class="text-[9px] font-bold text-slate-500">${d.peso.toFixed(2)}% da Carteira</div>
                                             </td>
                                             <td class="py-4 px-4 text-right">
-                                                <div class="font-medium opacity-60">Médio: ${fmtBRL(d.pMedio)}</div>
                                                 <div class="font-black ${d.pAtual >= d.pMedio ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.pAtual)}</div>
+                                                <div class="font-medium opacity-60">Médio: ${fmtBRL(d.pMedio)}</div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
+                                                <div class="font-black">${fmtBRL(d.atual)}</div>
+                                                <div class="text-[9px] opacity-60 font-medium">Invest: ${fmtBRL(d.investido)}</div>
                                             </td>
                                             <td class="py-4 px-4 text-right">
                                                 <div class="font-black text-amber-500">${fmtBRL(d.proventos)}</div>
                                                 <div class="text-[9px] font-bold opacity-60">${d.yoc.toFixed(2)}% YoC</div>
-                                            </td>
-                                            <td class="py-4 px-4 text-right">
-                                                <div class="font-black">${fmtBRL(d.atual)}</div>
-                                                <div class="text-[9px] font-bold text-slate-500">${d.peso.toFixed(2)}% da Carteira</div>
                                             </td>
                                             <td class="py-4 px-6 text-right">
                                                 <div class="font-black ${d.lucroPrejuizo >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.lucroPrejuizo)}</div>
