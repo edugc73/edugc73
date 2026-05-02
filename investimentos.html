@@ -62,6 +62,14 @@
         }
         .collapsible-content.expanded { max-height: 5000px; }
 
+        /* Estilo para a seta de expansão */
+        .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+        .expanded-icon .chevron-icon {
+            transform: rotate(180deg);
+        }
+
         .stat-badge {
             font-size: 0.65rem; padding: 4px 10px; border-radius: 20px;
             font-weight: 800; text-transform: uppercase;
@@ -77,7 +85,7 @@
 
     <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Restaurando Versão Completa 3.9...</p>
+        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Configurando Meus Ativos 4.1...</p>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
@@ -276,7 +284,8 @@
 
         function renderAssetGroups() {
             const container = document.getElementById('assetsContainer');
-            const search = document.getElementById('searchInput').value.toUpperCase();
+            const searchInput = document.getElementById('searchInput');
+            const search = searchInput.value.toUpperCase();
             container.innerHTML = '';
             
             const groups = fullData.reduce((acc, curr) => {
@@ -295,10 +304,19 @@
                 const section = document.createElement('div');
                 section.className = 'glass-card overflow-hidden border border-black/5 dark:border-white/5';
                 
+                const isExpanded = search.length > 0;
+                const initialClass = isExpanded ? 'expanded' : '';
+                const headerClass = isExpanded ? 'expanded-icon' : '';
+
                 section.innerHTML = `
-                    <div class="group-header p-5 flex justify-between items-center" onclick="toggleGroup(this)">
+                    <div class="group-header p-5 flex justify-between items-center ${headerClass}" onclick="toggleGroup(this)">
                         <div class="flex items-center gap-3">
-                            <span class="text-[10px] font-black px-2 py-0.5 bg-indigo-600 text-white rounded uppercase">${tipo}</span>
+                            <span class="text-[10px] font-black px-2 py-0.5 bg-indigo-600 text-white rounded uppercase flex items-center gap-2">
+                                ${tipo}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </span>
                             <span class="text-[10px] font-bold ${subLucroPerc >= 0 ? 'text-emerald-500' : 'text-rose-500'}">
                                 ${subLucroPerc >= 0 ? '▲' : '▼'} ${subLucroPerc.toFixed(2)}%
                             </span>
@@ -307,7 +325,7 @@
                             <span class="text-sm font-black">${fmtBRL(subAtual)}</span>
                         </div>
                     </div>
-                    <div class="collapsible-content expanded">
+                    <div class="collapsible-content ${initialClass}">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-[11px]">
                                 <thead class="bg-slate-50 dark:bg-slate-900/50 text-[9px] text-slate-500 uppercase font-black">
@@ -395,9 +413,21 @@
         }
 
         function toggleTheme() { document.body.classList.toggle('dark-mode'); document.body.classList.toggle('light-mode'); renderCharts(); }
-        function toggleGroup(h) { h.nextElementSibling.classList.toggle('expanded'); }
-        function expandAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded')); }
-        function collapseAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded')); }
+        
+        function toggleGroup(h) { 
+            h.classList.toggle('expanded-icon');
+            h.nextElementSibling.classList.toggle('expanded'); 
+        }
+
+        function expandAll() { 
+            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded'));
+            document.querySelectorAll('.group-header').forEach(h => h.classList.add('expanded-icon'));
+        }
+
+        function collapseAll() { 
+            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded'));
+            document.querySelectorAll('.group-header').forEach(h => h.classList.remove('expanded-icon'));
+        }
 
         window.onload = init;
     </script>
