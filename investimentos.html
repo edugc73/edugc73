@@ -81,7 +81,7 @@
             text-transform: uppercase; cursor: pointer; border: 1px solid rgba(34, 211, 238, 0.3);
         }
         
-        /* Custom Scrollbar for mini table */
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(34, 211, 238, 0.3); border-radius: 10px; }
@@ -146,7 +146,7 @@
             </div>
         </div>
 
-        <!-- NOVA SEÇÃO: Raio-X por Ativo -->
+        <!-- Raio-X por Ativo -->
         <div class="glass-card p-6 mb-10 border border-cyan-500/20 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl -z-10"></div>
             
@@ -159,6 +159,7 @@
                     <p class="text-xs font-bold text-slate-400">Evolução de Cotas vs Rendimentos</p>
                 </div>
                 <div class="w-full md:w-64">
+                    <!-- Ajuste de cor de texto no Select para dark mode -->
                     <select id="select-ativo" onchange="renderRaioXAtivo()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
                         <option value="">Selecione um ativo...</option>
                     </select>
@@ -166,7 +167,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Gráfico Misto (Cotas x Dividendos) -->
+                <!-- Gráfico Misto -->
                 <div class="lg:col-span-2 h-72">
                     <canvas id="chartRaioX"></canvas>
                 </div>
@@ -176,11 +177,10 @@
                     <div class="grid grid-cols-4 gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800/80 text-[9px] font-black text-slate-500 uppercase tracking-wider">
                         <div>Mês</div>
                         <div class="text-right">Cotas</div>
-                        <div class="text-right">Provento</div>
+                        <div class="text-right">P. Unit.</div>
                         <div class="text-right">YoC</div>
                     </div>
                     <div id="tabela-raiox-body" class="overflow-y-auto custom-scrollbar flex-1 p-2 space-y-1">
-                        <!-- Linhas geradas via JS -->
                         <div class="flex items-center justify-center h-full text-xs font-bold text-slate-500">
                             Selecione um ativo para visualizar.
                         </div>
@@ -212,7 +212,7 @@
             </div>
         </div>
 
-        <!-- Filtros e Ações da Carteira -->
+        <!-- Filtros -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <div class="flex items-center gap-4">
                 <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">MEUS ATIVOS <span id="asset-count" class="text-cyan-400">(0)</span></h3>
@@ -237,7 +237,7 @@
 
         let fullData = [];
         let dividendosHistorico = {};
-        let proventosAtivos = {}; // Nova variável para armazenar os detalhes por ativo
+        let proventosAtivos = {}; 
         let charts = {};
 
         async function init() {
@@ -256,7 +256,7 @@
                 document.getElementById('loading-overlay').style.display = 'none';
             } catch (error) {
                 console.error(error);
-                document.querySelector('#loading-overlay p').innerText = "Erro ao carregar dados. Verifique os links.";
+                document.querySelector('#loading-overlay p').innerText = "Erro ao carregar dados.";
             }
         }
 
@@ -287,34 +287,22 @@
             });
         }
 
-        // --- NOVA FUNÇÃO: Processar aba de Ativos detalhados ---
         function processProventosAtivos(rows) {
             proventosAtivos = {};
-            
-            // Assumindo que a linha 0 tem cabeçalhos ou meses, e a linha 1 tem sub-cabeçalhos
-            // E que a partir da linha 2 começam os dados.
-            // Estrutura Assumida das Colunas:
-            // [0] Ativo | [1] Jan Cotas | [2] Jan Div | [3] Jan YOC | [4] Fev Cotas | [5] Fev Div ...
-            
-            // Se sua planilha tiver uma estrutura diferente, você deve alterar as posições "baseIdx" abaixo.
             rows.forEach((row, index) => {
-                if (index < 2) return; // Pula as 2 primeiras linhas de cabeçalho
-                
+                if (index < 2) return; 
                 const ativo = row[0] ? row[0].toString().trim().toUpperCase() : '';
                 if (!ativo) return;
 
                 let dadosMensais = [];
-                
                 for(let i = 0; i < 12; i++) {
-                    // Calcula a posição das colunas para cada mês (pula de 3 em 3 a partir da coluna 1)
                     let baseIdx = 1 + (i * 3); 
-                    
                     if(row.length > baseIdx) {
                         dadosMensais.push({
                             mes: NOMES_MESES[i],
-                            cotas: parseNum(row[baseIdx]),       // Coluna de Cotas
-                            div: parseNum(row[baseIdx + 1]),     // Coluna de Dividendo
-                            yoc: parseNum(row[baseIdx + 2])      // Coluna de YOC
+                            cotas: parseNum(row[baseIdx]),      
+                            div: parseNum(row[baseIdx + 1]),    
+                            yoc: parseNum(row[baseIdx + 2])     
                         });
                     }
                 }
@@ -373,21 +361,15 @@
 
             fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
             
-            // Popula o select do Raio-X
             populateRaioXSelect();
-
             renderAssetGroups();
             renderCharts();
         }
 
-        // --- NOVA FUNÇÃO: Popula o Select com os ativos que tem histórico ---
         function populateRaioXSelect() {
             const select = document.getElementById('select-ativo');
             select.innerHTML = '<option value="">Selecione um ativo...</option>';
-            
-            // Pega os ativos ordenados alfabeticamente que existem na nova planilha
             const ativosDisponiveis = Object.keys(proventosAtivos).sort();
-            
             ativosDisponiveis.forEach(ativo => {
                 const opt = document.createElement('option');
                 opt.value = ativo;
@@ -396,7 +378,6 @@
             });
         }
 
-        // --- NOVA FUNÇÃO: Renderiza os dados do Raio-X do ativo selecionado ---
         function renderRaioXAtivo() {
             const ativo = document.getElementById('select-ativo').value;
             const tabelaBody = document.getElementById('tabela-raiox-body');
@@ -412,24 +393,25 @@
 
             const dados = proventosAtivos[ativo];
             
-            // 1. Atualizar Tabela
+            // 1. Atualizar Tabela (Ajuste de visibilidade dark mode aplicado)
             tabelaBody.innerHTML = dados.map(d => {
                 const teveProvento = d.div > 0;
                 return `
                     <div class="grid grid-cols-4 gap-2 px-4 py-2.5 rounded-lg ${teveProvento ? 'bg-cyan-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'} transition-colors">
                         <div class="font-bold text-xs ${teveProvento ? 'text-cyan-500' : 'text-slate-500'}">${d.mes}</div>
-                        <div class="text-right font-bold text-xs text-slate-800 dark:text-slate-200">${d.cotas > 0 ? d.cotas : '-'}</div>
+                        <div class="text-right font-bold text-xs text-slate-800 dark:text-slate-100">${d.cotas > 0 ? d.cotas.toLocaleString('pt-BR') : '-'}</div>
                         <div class="text-right font-black text-xs ${teveProvento ? 'text-amber-500' : 'text-slate-500'}">${teveProvento ? fmtBRL(d.div) : '-'}</div>
                         <div class="text-right font-bold text-[10px] text-slate-400 self-center">${d.yoc > 0 ? d.yoc.toFixed(2) + '%' : '-'}</div>
                     </div>
                 `;
             }).join('');
 
-            // 2. Atualizar Gráfico (Misto: Linha para Cotas, Barra para Dividendos)
+            // 2. Atualizar Gráfico 
             if (charts.raiox) charts.raiox.destroy();
 
             const labels = dados.map(d => d.mes);
-            const dataDiv = dados.map(d => d.div);
+            // Lógica solicitada: Multiplicar cotas pelo dividendo para o valor total na barra
+            const dataTotalPago = dados.map(d => d.cotas * d.div);
             const dataCotas = dados.map(d => d.cotas);
 
             charts.raiox = new Chart(document.getElementById('chartRaioX'), {
@@ -438,8 +420,8 @@
                     datasets: [
                         {
                             type: 'bar',
-                            label: 'Proventos (R$)',
-                            data: dataDiv,
+                            label: 'Total Recebido (R$)',
+                            data: dataTotalPago,
                             backgroundColor: '#22d3ee',
                             borderRadius: 4,
                             yAxisID: 'y',
@@ -447,7 +429,7 @@
                         },
                         {
                             type: 'line',
-                            label: 'Evolução de Cotas',
+                            label: 'Qtd de Cotas',
                             data: dataCotas,
                             borderColor: '#f59e0b',
                             backgroundColor: '#f59e0b',
@@ -464,13 +446,27 @@
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        legend: { position: 'top', labels: { color: textColor, font: { size: 10, weight: '700' }, usePointStyle: true } }
+                        legend: { position: 'top', labels: { color: textColor, font: { size: 10, weight: '700' }, usePointStyle: true } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.datasetIndex === 0) {
+                                        label += fmtBRL(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y.toLocaleString('pt-BR') + ' cotas';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
                     },
                     scales: {
                         x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: '700' } } },
                         y: { 
                             type: 'linear', display: true, position: 'left',
-                            title: { display: true, text: 'Valor (R$)', color: '#22d3ee', font: {size: 10, weight: 'bold'} },
+                            title: { display: true, text: 'Valor Total (R$)', color: '#22d3ee', font: {size: 10, weight: 'bold'} },
                             grid: { color: gridColor }, ticks: { color: textColor } 
                         },
                         y1: { 
@@ -485,8 +481,7 @@
 
         function renderAssetGroups() {
             const container = document.getElementById('assetsContainer');
-            const searchInput = document.getElementById('searchInput');
-            const search = searchInput.value.toUpperCase();
+            const search = document.getElementById('searchInput').value.toUpperCase();
             container.innerHTML = '';
             
             const groups = fullData.reduce((acc, curr) => {
@@ -500,8 +495,7 @@
                 const assets = groups[tipo].sort((a, b) => b.atual - a.atual);
                 const subAtual = assets.reduce((s, a) => s + a.atual, 0);
                 const subInvestido = assets.reduce((s, a) => s + a.investido, 0);
-                const subLucroPrejuizoTotal = subAtual - subInvestido;
-                const subPerc = subInvestido > 0 ? (subLucroPrejuizoTotal / subInvestido) * 100 : 0;
+                const subPerc = subInvestido > 0 ? ((subAtual - subInvestido) / subInvestido) * 100 : 0;
 
                 const section = document.createElement('div');
                 section.className = 'glass-card overflow-hidden border border-black/5 dark:border-white/5';
@@ -578,15 +572,12 @@
             });
         }
         
-        // Atalho para clicar no nome do ativo na tabela e abrir o Raio-X
         function verRaioX(ativo) {
             const select = document.getElementById('select-ativo');
             if(select.querySelector(`option[value="${ativo}"]`)) {
                 select.value = ativo;
                 renderRaioXAtivo();
                 select.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                alert(`Histórico detalhado para ${ativo} não encontrado na nova planilha.`);
             }
         }
 
@@ -634,43 +625,18 @@
                 options: { 
                     maintainAspectRatio: false, cutout: '72%', 
                     plugins: { 
-                        legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const value = context.raw;
-                                    const percentage = ((value / total) * 100).toFixed(2);
-                                    return `${context.label}: ${percentage}%`;
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } }
                     }
                 }
             });
             
-            // Re-renderizar o gráfico de Raio-X se houver um ativo selecionado para aplicar as cores do tema
-            if(document.getElementById('select-ativo').value) {
-                renderRaioXAtivo();
-            }
+            if(document.getElementById('select-ativo').value) renderRaioXAtivo();
         }
 
         function toggleTheme() { document.body.classList.toggle('dark-mode'); document.body.classList.toggle('light-mode'); renderCharts(); }
-        
-        function toggleGroup(h) { 
-            h.classList.toggle('expanded-icon');
-            h.nextElementSibling.classList.toggle('expanded'); 
-        }
-
-        function expandAll() { 
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded'));
-            document.querySelectorAll('.group-header').forEach(h => h.classList.add('expanded-icon'));
-        }
-
-        function collapseAll() { 
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded'));
-            document.querySelectorAll('.group-header').forEach(h => h.classList.remove('expanded-icon'));
-        }
+        function toggleGroup(h) { h.classList.toggle('expanded-icon'); h.nextElementSibling.classList.toggle('expanded'); }
+        function expandAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded')); document.querySelectorAll('.group-header').forEach(h => h.classList.add('expanded-icon')); }
+        function collapseAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded')); document.querySelectorAll('.group-header').forEach(h => h.classList.remove('expanded-icon')); }
 
         window.onload = init;
     </script>
