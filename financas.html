@@ -28,6 +28,7 @@
             --accent-purple: #8b5cf6;
             --chart-grid: rgba(255, 255, 255, 0.05);
             --focus-ring: #3b82f6;
+            --chart-bar-inactive: rgba(59, 130, 246, 0.2);
         }
 
         [data-theme="light"] {
@@ -43,8 +44,9 @@
             --glass: rgba(255, 255, 255, 0.8);
             --border: rgba(0, 0, 0, 0.08);
             --accent-purple: #7c3aed;
-            --chart-grid: rgba(0, 0, 0, 0.05);
+            --chart-grid: rgba(0, 0, 0, 0.1);
             --focus-ring: #2563eb;
+            --chart-bar-inactive: rgba(37, 99, 235, 0.15);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -240,11 +242,38 @@
         .progress-bar-bg { background: var(--surface-accent); height: 8px; border-radius: 4px; margin-top: 6px; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
 
+        /* Loader & Error States */
         #loader {
             position: fixed; inset: 0; background: var(--bg); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 20px; text-align: center;
         }
         .spinner { width: 32px; height: 32px; border: 3px solid var(--surface-accent); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        
+        .error-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            max-width: 400px;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .error-icon { color: var(--danger); margin-bottom: 8px; }
+        .error-title { font-size: 1.25rem; font-weight: 700; }
+        .error-msg { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+        
+        .retry-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .retry-btn:hover { transform: translateY(-2px); }
+
         @keyframes spin { to { transform: rotate(360deg); } }
 
         @media (max-width: 1024px) { 
@@ -256,8 +285,14 @@
 <body data-theme="dark">
 
 <div id="loader">
-    <div class="spinner"></div>
-    <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);" id="loader-text">Carregando Dashboard...</p>
+    <div id="loading-spinner" class="spinner"></div>
+    <div id="error-content" class="error-container">
+        <div class="error-icon"><i data-lucide="alert-circle" size="48"></i></div>
+        <h2 class="error-title">Falha na Sincronização</h2>
+        <p id="error-text" class="error-msg">Não foi possível carregar os dados financeiros. Verifique sua conexão com a internet.</p>
+        <button class="retry-btn" onclick="retryLoad()">Tentar Novamente</button>
+    </div>
+    <p style="margin-top: 16px; font-size: 0.9rem; color: var(--text-muted);" id="loader-text">Carregando Dashboard...</p>
 </div>
 
 <div class="container" id="main-content" style="display: none;">
@@ -276,8 +311,8 @@
                     <i data-lucide="moon" id="moonIcon"></i>
                 </button>
                 <div class="year-selector" role="group" aria-label="Seleção de Ano">
-                    <button class="year-btn active" onclick="changeYear('2025', this)">2025</button>
-                    <button class="year-btn" onclick="changeYear('2026', this)">2026</button>
+                    <button class="year-btn active" id="btn-2025" onclick="changeYear('2025', this)">2025</button>
+                    <button class="year-btn" id="btn-2026" onclick="changeYear('2026', this)">2026</button>
                 </div>
             </div>
         </div>
@@ -366,7 +401,6 @@
 </div>
 
 <script>
-    // Configurações Globais
     const SOURCES = {
         '2025': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=256105834&single=true&output=csv',
         '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv'
@@ -374,11 +408,13 @@
 
     let currentData = [];
     let charts = {};
-    let lastActiveIdx = 1;
+    let lastActiveIdx = 0;
+    let currentYear = '2025';
+    let timeoutHandle = null;
+
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const MESES_NOMES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
-    // Gerenciador de Tema
     const themeSwitcher = document.getElementById('themeSwitcher');
     themeSwitcher.onclick = () => {
         const body = document.body;
@@ -390,11 +426,10 @@
         document.getElementById('moonIcon').style.display = newTheme === 'light' ? 'block' : 'none';
         
         if (currentData.length > 0) {
-            selectMonth(lastActiveIdx, document.querySelector(`.chip.active`));
+            updateCharts(lastActiveIdx, getActiveStats());
         }
     };
 
-    // Utilitários de Dados
     function normalize(str) {
         if (!str) return "";
         return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -418,7 +453,6 @@
 
     function getMonthStats(row) {
         if (!row) return null;
-        
         const c6 = parseVal(getVal(row, "Cartao C6"));
         const ml = parseVal(getVal(row, "Cartao ML"));
         const luz = parseVal(getVal(row, "Luz"));
@@ -447,22 +481,55 @@
         };
     }
 
-    // Fluxo de UI
+    function getActiveStats() {
+        if (lastActiveIdx === 'annual') {
+            return currentData.reduce((acc, row) => {
+                const s = getMonthStats(row);
+                Object.keys(s).forEach(k => { if(k !== 'mes') acc[k] = (acc[k] || 0) + s[k]; });
+                return acc;
+            }, { mes: 'Resumo Anual' });
+        }
+        return getMonthStats(currentData[lastActiveIdx]);
+    }
+
     async function changeYear(year, btn) {
+        currentYear = year;
         document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         await loadYearData(year);
     }
 
-    async function loadYearData(year) {
+    function showLoader() {
         document.getElementById('loader').style.display = 'flex';
-        document.getElementById('loader-text').innerText = `Sincronizando ${year}...`;
+        document.getElementById('loading-spinner').style.display = 'block';
+        document.getElementById('error-content').style.display = 'none';
+        document.getElementById('loader-text').style.display = 'block';
+        document.getElementById('main-content').style.display = 'none';
+    }
+
+    function showError(msg) {
+        clearTimeout(timeoutHandle);
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('error-content').style.display = 'flex';
+        document.getElementById('loader-text').style.display = 'none';
+        if (msg) document.getElementById('error-text').innerText = msg;
+        lucide.createIcons();
+    }
+
+    function retryLoad() { loadYearData(currentYear); }
+
+    async function loadYearData(year) {
+        showLoader();
+        timeoutHandle = setTimeout(() => {
+            showError("O servidor do Google Sheets demorou muito para responder.");
+        }, 12000);
 
         Papa.parse(SOURCES[year], {
             download: true,
             header: true,
             skipEmptyLines: true,
             complete: (results) => {
+                clearTimeout(timeoutHandle);
                 currentData = results.data.filter(row => {
                     const m = normalize(getVal(row, "Mes"));
                     return MESES_NOMES.includes(m);
@@ -472,17 +539,20 @@
                     renderUI();
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
+                } else {
+                    showError(`Não foram encontrados dados válidos para ${year}.`);
                 }
+            },
+            error: () => {
+                clearTimeout(timeoutHandle);
+                showError("Erro na conexão com a base de dados.");
             }
         });
     }
 
-    // Função de tratamento de clique/teclado para chips
     function handleChipInteraction(idx, el, event) {
-        // Se for evento de teclado, permitir apenas Enter ou Espaço
         if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-        
-        if (event.type === 'keydown') event.preventDefault(); // Evita scroll no espaço
+        if (event.type === 'keydown') event.preventDefault();
         selectMonth(idx, el);
     }
 
@@ -490,69 +560,44 @@
         const container = document.getElementById('monthChips');
         container.innerHTML = '';
 
-        // Botão Resumo Anual
         const annualBtn = document.createElement('div');
         annualBtn.className = 'chip special';
         annualBtn.innerText = 'Resumo Anual';
         annualBtn.tabIndex = 0;
-        annualBtn.role = "tab";
+        annualBtn.role = "button";
         annualBtn.onclick = (e) => handleChipInteraction('annual', annualBtn, e);
         annualBtn.onkeydown = (e) => handleChipInteraction('annual', annualBtn, e);
         container.appendChild(annualBtn);
 
-        // Meses individuais
         currentData.forEach((row, i) => {
             const btn = document.createElement('div');
             btn.className = 'chip';
             btn.innerText = getVal(row, "Mes");
             btn.tabIndex = 0;
-            btn.role = "tab";
+            btn.role = "button";
             btn.onclick = (e) => handleChipInteraction(i, btn, e);
             btn.onkeydown = (e) => handleChipInteraction(i, btn, e);
             container.appendChild(btn);
         });
 
-        // Seleciona o primeiro mês por padrão
-        const firstMonth = container.children[1];
-        if(firstMonth) selectMonth(0, firstMonth);
-        
+        selectMonth(0, container.children[1]);
         lucide.createIcons();
     }
 
     function selectMonth(idx, el) {
         if (!el) return;
-        lastActiveIdx = idx === 'annual' ? 'annual' : idx;
-        
-        document.querySelectorAll('.chip').forEach(c => {
-            c.classList.remove('active');
-            c.setAttribute('aria-selected', 'false');
-        });
-        
+        lastActiveIdx = idx;
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        el.setAttribute('aria-selected', 'true');
-
-        let stats;
-        if (idx === 'annual') {
-            stats = currentData.reduce((acc, row) => {
-                const s = getMonthStats(row);
-                Object.keys(s).forEach(k => { if(k !== 'mes') acc[k] = (acc[k] || 0) + s[k]; });
-                return acc;
-            }, { mes: 'Resumo Anual' });
-        } else {
-            stats = getMonthStats(currentData[idx]);
-        }
-
-        updateDashboard(stats, idx);
+        updateDashboard(getActiveStats(), idx);
     }
 
     function updateDashboard(stats, idx) {
-        // KPIs
         document.getElementById('kpi-receita').innerText = fmt.format(stats.rTotal);
         document.getElementById('kpi-gastos').innerText = fmt.format(stats.gTotal);
         document.getElementById('kpi-invest').innerText = fmt.format(stats.invest);
         document.getElementById('kpi-saldo').innerText = fmt.format(stats.saldo);
 
-        // Barras de Progresso
         const pG = stats.rTotal > 0 ? (stats.gTotal / stats.rTotal) * 100 : 0;
         const pI = stats.rTotal > 0 ? (stats.invest / stats.rTotal) * 100 : 0;
         const pS = stats.rTotal > 0 ? (stats.saldo / stats.rTotal) * 100 : 0;
@@ -564,13 +609,11 @@
         document.getElementById('perc-saldo').innerText = pS.toFixed(1) + '%';
         document.getElementById('bar-saldo').style.width = Math.min(pS, 100) + '%';
 
-        // Análise Simples
         const analysis = document.getElementById('analysis-text');
         if (pI >= 20) analysis.innerText = "Excelente taxa de investimento! Você está construindo patrimônio de forma sólida.";
         else if (pI > 0) analysis.innerText = "Bom trabalho mantendo investimentos. Tente reduzir custos fixos para aumentar essa margem.";
-        else analysis.innerText = "Mês desafiador. Foco em controlar os gastos no cartão para recuperar o fôlego financeiro.";
+        else analysis.innerText = "Mês desafiador. Foco em controlar os gastos para recuperar o fôlego financeiro.";
 
-        // Lista de Composição
         const calcPerc = (val) => stats.rTotal > 0 ? (val / stats.rTotal * 100).toFixed(1) + '%' : '0%';
         const items = [
             {n: 'Investimentos', v: stats.invest, p: calcPerc(stats.invest), c: 'var(--secondary)'},
@@ -597,13 +640,20 @@
 
     function updateCharts(activeIdx, stats) {
         const theme = document.body.getAttribute('data-theme');
-        const textColor = theme === 'dark' ? '#9ca3af' : '#4b5563';
-        const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+        const isDark = theme === 'dark';
+        
+        // Configuração de cores para alto contraste
+        const colorMainActive = isDark ? '#3b82f6' : '#1d4ed8'; // Azul mais escuro no modo claro
+        const colorMainInactive = isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.12)';
+        const colorIncome = isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(5, 150, 105, 0.08)';
+        const borderColorIncome = isDark ? '#10b981' : '#059669';
+        
+        const textColor = isDark ? '#9ca3af' : '#1f2937';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
 
         if(charts.main) charts.main.destroy();
         if(charts.comp) charts.comp.destroy();
 
-        // Gráfico de Barras
         const ctxMain = document.getElementById('mainChart').getContext('2d');
         charts.main = new Chart(ctxMain, {
             type: 'bar',
@@ -613,16 +663,18 @@
                     {
                         label: 'Renda',
                         data: currentData.map(d => getMonthStats(d).rTotal),
-                        backgroundColor: theme === 'dark' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)',
-                        borderColor: '#10b981',
-                        borderWidth: 1,
+                        backgroundColor: colorIncome,
+                        borderColor: borderColorIncome,
+                        borderWidth: 1.5,
                         borderRadius: 4,
                         hidden: activeIdx !== 'annual'
                     },
                     {
                         label: 'Total Gasto',
                         data: currentData.map(d => getMonthStats(d).gTotal),
-                        backgroundColor: currentData.map((_, i) => i === activeIdx ? '#3b82f6' : (theme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)')),
+                        backgroundColor: currentData.map((_, i) => i === activeIdx ? colorMainActive : colorMainInactive),
+                        borderColor: currentData.map((_, i) => i === activeIdx ? colorMainActive : 'transparent'),
+                        borderWidth: 1,
                         borderRadius: 6
                     }
                 ]
@@ -630,18 +682,19 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: activeIdx === 'annual', labels: { color: textColor } } },
+                plugins: { 
+                    legend: { display: activeIdx === 'annual', labels: { color: textColor, font: { weight: '600' } } },
+                    tooltip: { backgroundColor: isDark ? '#1f2937' : '#ffffff', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1 }
+                },
                 scales: { 
-                    y: { grid: { color: gridColor }, ticks: { color: textColor } },
-                    x: { ticks: { color: textColor } }
+                    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { weight: '500' } } },
+                    x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600' } } }
                 }
             }
         });
 
-        // Gráfico de Rosca
         const ctxComp = document.getElementById('compositionChart').getContext('2d');
         const totalBase = stats.rTotal || 1;
-        
         charts.comp = new Chart(ctxComp, {
             type: 'doughnut',
             data: {
@@ -655,22 +708,16 @@
                         (stats.saldo / totalBase * 100)
                     ],
                     backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    borderWidth: isDark ? 0 : 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 12
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => (context.label + ': ' + context.parsed.toFixed(1) + '%')
-                        }
-                    }
-                }
+                cutout: '72%',
+                plugins: { legend: { display: false } }
             }
         });
     }
