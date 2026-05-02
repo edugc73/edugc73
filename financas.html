@@ -24,6 +24,7 @@
             --text-muted: #9ca3af;
             --glass: rgba(17, 24, 39, 0.7);
             --border: rgba(255, 255, 255, 0.08);
+            --accent-purple: #8b5cf6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -254,31 +255,31 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="credit-card" size="18"></i> Divisão de Cartões</div>
-                    <div class="chart-container" style="height: 180px;"><canvas id="cardsChart"></canvas></div>
+                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="pie-chart" size="18" color="var(--secondary)"></i> Composição Relativa (%)</div>
+                    <div class="chart-container" style="height: 180px;"><canvas id="compositionChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="home" size="18"></i> Despesas Fixas</div>
-                    <div id="fixed-expenses-list"></div>
+                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="home" size="18"></i> Distribuição dos Recursos</div>
+                    <div id="composition-list"></div>
                 </div>
             </div>
         </div>
 
         <div class="right-col">
             <div class="card" style="height: 100%;">
-                <div class="chart-title" style="margin-bottom: 24px;"><i data-lucide="pie-chart" size="18" color="var(--secondary)"></i> Alocação de Renda</div>
+                <div class="chart-title" style="margin-bottom: 24px;"><i data-lucide="target" size="18" color="var(--accent-purple)"></i> Performance Financeira</div>
                 
                 <div class="progress-list">
                     <div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                            <span>Gastos Gerais</span>
+                            <span>Comprometimento Renda</span>
                             <span id="perc-gastos">0%</span>
                         </div>
                         <div class="progress-bar-bg"><div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger)"></div></div>
                     </div>
                     <div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                            <span>Investimentos</span>
+                            <span>Taxa de Investimento</span>
                             <span id="perc-invest">0%</span>
                         </div>
                         <div class="progress-bar-bg"><div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary)"></div></div>
@@ -292,9 +293,9 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 32px; padding: 20px; background: rgba(16, 185, 129, 0.05); border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.1);">
+                <div style="margin-top: 32px; padding: 20px; background: rgba(139, 92, 246, 0.05); border-radius: 16px; border: 1px solid rgba(139, 92, 246, 0.1);">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <i data-lucide="info" size="16" color="var(--primary)"></i>
+                        <i data-lucide="info" size="16" color="var(--accent-purple)"></i>
                         <span style="font-weight: 600; font-size: 0.85rem;">Status Financeiro</span>
                     </div>
                     <p id="analysis-text" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">Carregando análise...</p>
@@ -345,15 +346,27 @@
         const agua = parseVal(getVal(row, "Agua"));
         const desktop = parseVal(getVal(row, "DESKTOP"));
         const iMae = parseVal(getVal(row, "Internet Mae"));
+        const iptu = parseVal(getVal(row, "IPTU"));
+        const celular = parseVal(getVal(row, "Celular"));
+        const outros = parseVal(getVal(row, "Outros Gastos"));
+        const ipva = parseVal(getVal(row, "IPVA"));
+        const cancao = parseVal(getVal(row, "Cancao Nova"));
+
+        const custosFixos = luz + agua + desktop + iMae + iptu + celular;
+        const totalCartoes = c6 + ml;
+        const totalOutros = outros + ipva + cancao;
         
-        const gTotal = parseVal(getVal(row, "Total de Gastos")) || (c6 + ml + luz + agua + desktop + iMae + parseVal(getVal(row, "IPTU")) + parseVal(getVal(row, "Celular")) + parseVal(getVal(row, "Outros Gastos")));
+        const gTotal = custosFixos + totalCartoes + totalOutros;
         const rTotal = parseVal(getVal(row, "Salario Aposentadoria")) + parseVal(getVal(row, "Salario PTTC"));
         const invest = parseVal(getVal(row, "Investimentos"));
         const saldo = parseVal(getVal(row, "Saldo Final do Mes"));
         
         let mes = getVal(row, "Mes") || "---";
         
-        return { mes, c6, ml, luz, agua, desktop, iMae, gTotal, rTotal, invest, saldo };
+        return { 
+            mes, c6, ml, luz, agua, desktop, iMae, gTotal, rTotal, invest, saldo,
+            custosFixos, totalCartoes, totalOutros
+        };
     }
 
     async function changeYear(year, btn) {
@@ -371,7 +384,6 @@
             header: true,
             skipEmptyLines: true,
             complete: (results) => {
-                // Filtra apenas linhas que possuem um mês válido na coluna "Mês"
                 currentData = results.data.filter(row => {
                     const m = normalize(getVal(row, "Mes"));
                     return MESES_NOMES.includes(m);
@@ -382,7 +394,7 @@
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
                 } else {
-                    document.getElementById('loader-text').innerText = "Nenhum dado encontrado para este ano.";
+                    document.getElementById('loader-text').innerText = "Nenhum dado encontrado.";
                 }
             }
         });
@@ -392,7 +404,6 @@
         const container = document.getElementById('monthChips');
         container.innerHTML = '';
 
-        // Botão de Resumo
         const annualBtn = document.createElement('div');
         annualBtn.className = 'chip special';
         annualBtn.innerText = 'Resumo Anual';
@@ -426,13 +437,11 @@
             stats = getMonthStats(currentData[idx]);
         }
 
-        // Update KPIs
         document.getElementById('kpi-receita').innerText = fmt.format(stats.rTotal);
         document.getElementById('kpi-gastos').innerText = fmt.format(stats.gTotal);
         document.getElementById('kpi-invest').innerText = fmt.format(stats.invest);
         document.getElementById('kpi-saldo').innerText = fmt.format(stats.saldo);
 
-        // Progress bars
         const pG = stats.rTotal > 0 ? (stats.gTotal / stats.rTotal) * 100 : 0;
         const pI = stats.rTotal > 0 ? (stats.invest / stats.rTotal) * 100 : 0;
         const pS = stats.rTotal > 0 ? (stats.saldo / stats.rTotal) * 100 : 0;
@@ -444,32 +453,40 @@
         document.getElementById('perc-saldo').innerText = pS.toFixed(1) + '%';
         document.getElementById('bar-saldo').style.width = Math.min(pS, 100) + '%';
 
-        // Fixed Expenses
-        const fixos = [
-            {n: 'Energia', v: stats.luz},
-            {n: 'Água', v: stats.agua},
-            {n: 'Internet', v: stats.desktop},
-            {n: 'Internet Mãe', v: stats.iMae}
+        // Detalhamento de Categorias em % em relação à RECEITA TOTAL
+        const calcPerc = (val) => stats.rTotal > 0 ? (val / stats.rTotal * 100).toFixed(1) + '%' : '0%';
+
+        const items = [
+            {n: 'Investimentos', v: stats.invest, p: calcPerc(stats.invest), c: 'var(--secondary)'},
+            {n: 'Cartões', v: stats.totalCartoes, p: calcPerc(stats.totalCartoes), c: 'var(--warning)'},
+            {n: 'Custos Fixos', v: stats.custosFixos, p: calcPerc(stats.custosFixos), c: 'var(--danger)'},
+            {n: 'Outros/IPVA', v: stats.totalOutros, p: calcPerc(stats.totalOutros), c: 'var(--accent-purple)'},
+            {n: 'Margem Livre', v: stats.saldo, p: calcPerc(stats.saldo), c: 'var(--primary)'}
         ].sort((a,b) => b.v - a.v);
         
-        document.getElementById('fixed-expenses-list').innerHTML = fixos.map(f => `
+        document.getElementById('composition-list').innerHTML = items.map(f => `
             <div class="category-item">
-                <span style="font-size: 0.8rem;">${f.n}</span>
-                <span style="font-size: 0.8rem; font-weight: 700;">${fmt.format(f.v)}</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${f.c}"></div>
+                    <span style="font-size: 0.8rem;">${f.n}</span>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.8rem; font-weight: 700;">${f.p}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">${fmt.format(f.v)}</div>
+                </div>
             </div>
         `).join('');
 
-        // Analysis
-        document.getElementById('analysis-text').innerText = pS > 15 
-            ? "Excelente! Você está mantendo uma margem líquida saudável acima de 15%. Continue com essa estratégia de alocação."
-            : "Atenção: Sua margem líquida está reduzida. Tente revisar os gastos de cartões ou despesas variáveis para o próximo período.";
+        document.getElementById('analysis-text').innerText = pI > 20 
+            ? "Fabuloso! Você está investindo mais de 20% da sua receita total."
+            : "Tente equilibrar as despesas de cartões para que o percentual de investimento cresça.";
 
         updateCharts(idx, stats);
     }
 
     function updateCharts(activeIdx, stats) {
         if(charts.main) charts.main.destroy();
-        if(charts.cards) charts.cards.destroy();
+        if(charts.comp) charts.comp.destroy();
 
         const ctxMain = document.getElementById('mainChart').getContext('2d');
         charts.main = new Chart(ctxMain, {
@@ -478,7 +495,7 @@
                 labels: currentData.map(d => getVal(d, "Mes")),
                 datasets: [
                     {
-                        label: 'Entradas',
+                        label: 'Renda',
                         data: currentData.map(d => getMonthStats(d).rTotal),
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         borderColor: '#10b981',
@@ -487,7 +504,7 @@
                         hidden: activeIdx !== 'annual'
                     },
                     {
-                        label: 'Saídas',
+                        label: 'Total Gasto',
                         data: currentData.map(d => getMonthStats(d).gTotal),
                         backgroundColor: currentData.map((_, i) => i === activeIdx ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)'),
                         borderRadius: 6
@@ -502,22 +519,44 @@
             }
         });
 
-        const ctxCards = document.getElementById('cardsChart').getContext('2d');
-        charts.cards = new Chart(ctxCards, {
+        // Gráfico de Composição em Porcentagem
+        const ctxComp = document.getElementById('compositionChart').getContext('2d');
+        const totalBase = stats.rTotal || 1; // Evita divisão por zero
+        
+        charts.comp = new Chart(ctxComp, {
             type: 'doughnut',
             data: {
-                labels: ['C6 Bank', 'ML'],
+                labels: ['Investimentos', 'Cartões', 'Custos Fixos', 'Outros', 'Margem'],
                 datasets: [{
-                    data: [stats.c6, stats.ml],
-                    backgroundColor: ['#111827', '#facc15'],
-                    borderWidth: 0
+                    data: [
+                        (stats.invest / totalBase * 100),
+                        (stats.totalCartoes / totalBase * 100),
+                        (stats.custosFixos / totalBase * 100),
+                        (stats.totalOutros / totalBase * 100),
+                        (stats.saldo / totalBase * 100)
+                    ],
+                    backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
+                    borderWidth: 0,
+                    hoverOffset: 10
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: { legend: { position: 'bottom' } }
+                cutout: '70%',
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed !== null) label += context.parsed.toFixed(1) + '%';
+                                return label;
+                            }
+                        }
+                    }
+                }
             }
         });
     }
