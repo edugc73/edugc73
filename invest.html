@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GonçaInvest | Premium Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #22d3ee; 
+            --brand-primary-dark: #0891b2;
+            --brand-success: #10b981;
+            --bg-light: #f8fafc;
+            --card-light: #ffffff;
+            --text-light: #1e293b;
+            --bg-dark: #0b0f1a;
+            --card-dark: #161e31;
+            --text-dark: #f1f5f9;
+        }
+
+        * { font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s ease-in-out; }
+        
+        body.light-mode { background-color: var(--bg-light); color: var(--text-light); }
+        body.dark-mode { background-color: var(--bg-dark); color: var(--text-dark); }
+
+        .glass-card {
+            border-radius: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
+        }
+        .light-mode .glass-card { background-color: var(--card-light); border-color: #e2e8f0; }
+        .dark-mode .glass-card { background-color: var(--card-dark); }
+
+        .theme-switch {
+            background: #e2e8f0; padding: 4px; border-radius: 50px;
+            display: flex; gap: 4px; cursor: pointer;
+        }
+        .dark-mode .theme-switch { background: #1e293b; }
+        .theme-btn {
+            padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .light-mode .sun-icon { background: white; color: #f59e0b; }
+        .dark-mode .moon-icon { background: #334155; color: #818cf8; }
+
+        #loading-overlay {
+            position: fixed; inset: 0; background: var(--bg-dark);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .light-mode #loading-overlay { background: var(--bg-light); }
+
+        .group-header {
+            background: rgba(34, 211, 238, 0.05);
+            border-left: 4px solid var(--brand-primary);
+            cursor: pointer;
+        }
+        .dark-mode .group-header:hover { background: rgba(34, 211, 238, 0.1); }
+
+        .collapsible-content {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .collapsible-content.expanded { max-height: 5000px; }
+
+        .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+        .expanded-icon .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        .stat-badge {
+            font-size: 0.65rem; padding: 4px 10px; border-radius: 20px;
+            font-weight: 800; text-transform: uppercase;
+        }
+        
+        .action-btn {
+            padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: 800;
+            text-transform: uppercase; cursor: pointer; border: 1px solid rgba(34, 211, 238, 0.3);
+        }
+        
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(34, 211, 238, 0.3); border-radius: 10px; }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <div id="loading-overlay">
+        <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Atualizando Cálculos v5.0...</p>
+    </div>
+
+    <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black tracking-tighter">Gonça<span class="text-cyan-400">Invest</span></h1>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">High Visibility Edition</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="theme-switch" onclick="toggleTheme()">
+                <div class="theme-btn sun-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.657 7.657l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg></div>
+                <div class="theme-btn moon-icon"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 pb-20">
+        
+        <!-- KPIs Principais -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-6 border-b-4 border-cyan-500">
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Total</p>
+                <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
+                <div id="perc-total" class="mt-2 text-[10px] font-bold">--</div>
+            </div>
+
+            <div class="glass-card p-6 border-b-4 border-slate-400">
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Investido</p>
+                <h2 id="total-investido" class="text-3xl font-black">R$ 0,00</h2>
+                <p class="mt-2 text-[10px] text-slate-400 font-bold uppercase">Aportes + Dividendos</p>
+            </div>
+
+            <div class="glass-card p-6 border-b-4 border-amber-500">
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Média Mensal (2026)</p>
+                <h2 id="total-projeção" class="text-3xl font-black text-amber-500">R$ 0,00</h2>
+                <div class="mt-2 flex items-center gap-2">
+                    <span id="yield-anual" class="stat-badge bg-amber-500/10 text-amber-500">DY: 0.00%</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 border-b-4" id="kpi-resultado-border">
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Lucro/Prejuízo Total</p>
+                <h2 id="total-resultado" class="text-3xl font-black">R$ 0,00</h2>
+                <p class="mt-2 text-[10px] font-black uppercase">Ganho de Capital</p>
+            </div>
+        </div>
+
+        <!-- Raio-X por Ativo -->
+        <div class="glass-card p-6 mb-10 border border-cyan-500/20 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl -z-10"></div>
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h3 class="text-[12px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        Raio-X de Proventos Mensais
+                    </h3>
+                    <p class="text-xs font-bold text-slate-400">Evolução de Cotas vs Rendimentos</p>
+                </div>
+                <div class="w-full md:w-64">
+                    <select id="select-ativo" onchange="renderRaioXAtivo()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
+                        <option value="">Selecione um ativo...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 h-72">
+                    <canvas id="chartRaioX"></canvas>
+                </div>
+                
+                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-black/5 dark:border-white/5 overflow-hidden flex flex-col h-72">
+                    <div class="grid grid-cols-4 gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800/80 text-[9px] font-black text-slate-500 uppercase tracking-wider">
+                        <div>Mês</div>
+                        <div class="text-right">Cotas</div>
+                        <div class="text-right">P. Unit.</div>
+                        <div class="text-right">YoC</div>
+                    </div>
+                    <div id="tabela-raiox-body" class="overflow-y-auto custom-scrollbar flex-1 p-2 space-y-1">
+                        <div class="flex items-center justify-center h-full text-xs font-bold text-slate-500">
+                            Selecione um ativo para visualizar.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos Gerais -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <div class="glass-card p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Dividendos Recebidos (Geral)</h3>
+                        <p class="text-xs font-bold text-slate-400">Análise Comparativa Anual</p>
+                    </div>
+                </div>
+                <div class="h-80"><canvas id="chartDividendosAnual"></canvas></div>
+            </div>
+            
+            <div class="glass-card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Composição da Carteira</h3>
+                        <p class="text-xs font-bold text-slate-400">Distribuição Estratégica</p>
+                    </div>
+                </div>
+                <div class="h-80"><canvas id="chartAlocacaoTipo"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+            <div class="flex items-center gap-4">
+                <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">MEUS ATIVOS <span id="asset-count" class="text-cyan-400">(0)</span></h3>
+                <div class="flex gap-2">
+                    <button onclick="expandAll()" class="action-btn hover:bg-cyan-500 hover:text-slate-900">Expandir Tudo</button>
+                    <button onclick="collapseAll()" class="action-btn hover:bg-cyan-500 hover:text-slate-900">Recolher Tudo</button>
+                </div>
+            </div>
+            <input type="text" id="searchInput" placeholder="Filtrar por Ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-cyan-500/30 w-full md:w-64">
+        </div>
+
+        <!-- Lista de Ativos -->
+        <div id="assetsContainer" class="space-y-4"></div>
+    </main>
+
+    <script>
+        const URL_CARTEIRA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1550358623&single=true&output=csv';
+        const URL_DIVIDENDOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=440281931&single=true&output=csv';
+        const URL_PROVENTOS_POR_ATIVO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1319017325&single=true&output=csv';
+        
+        const NOMES_MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+        let fullData = [];
+        let dividendosHistorico = {};
+        let proventosAtivos = {}; 
+        let charts = {};
+
+        async function init() {
+            try {
+                const [carteiraRows, dividendosRows, proventosAtivosRows] = await Promise.all([
+                    fetchCSV(URL_CARTEIRA),
+                    fetchCSV(URL_DIVIDENDOS),
+                    fetchCSV(URL_PROVENTOS_POR_ATIVO)
+                ]);
+                
+                processMatrizHistorica(dividendosRows);
+                processProventosAtivos(proventosAtivosRows);
+                processCarteira(carteiraRows);
+                
+                document.getElementById('searchInput').addEventListener('input', renderAssetGroups);
+                document.getElementById('loading-overlay').style.display = 'none';
+            } catch (error) {
+                console.error(error);
+                document.querySelector('#loading-overlay p').innerText = "Erro ao carregar dados.";
+            }
+        }
+
+        function fetchCSV(url) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(url, { download: true, header: false, skipEmptyLines: 'greedy', complete: (r) => resolve(r.data), error: (e) => reject(e) });
+            });
+        }
+
+        function parseNum(val) {
+            if (!val) return 0;
+            let clean = val.toString().replace(/R\$|\s|%/g, '').trim();
+            if (clean.includes(',') && clean.includes('.')) clean = clean.replace(/\./g, '').replace(',', '.');
+            else if (clean.includes(',')) clean = clean.replace(',', '.');
+            return parseFloat(clean) || 0;
+        }
+
+        function fmtBRL(v) {
+            return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function processMatrizHistorica(rows) {
+            dividendosHistorico = {};
+            rows.slice(1).forEach(row => {
+                const ano = row[0] ? row[0].toString().trim() : null;
+                if (!ano) return;
+                dividendosHistorico[ano] = NOMES_MESES.map((nome, i) => ({ mes: nome, valor: parseNum(row[i + 1]) }));
+            });
+        }
+
+        function processProventosAtivos(rows) {
+            proventosAtivos = {};
+            rows.forEach((row, index) => {
+                if (index < 2) return; 
+                const ativo = row[0] ? row[0].toString().trim().toUpperCase() : '';
+                if (!ativo) return;
+
+                let dadosMensais = [];
+                for(let i = 0; i < 12; i++) {
+                    let baseIdx = 1 + (i * 3); 
+                    if(row.length > baseIdx) {
+                        dadosMensais.push({
+                            mes: NOMES_MESES[i],
+                            cotas: parseNum(row[baseIdx]),      
+                            div: parseNum(row[baseIdx + 1]),    
+                            yoc: parseNum(row[baseIdx + 2])     
+                        });
+                    }
+                }
+                proventosAtivos[ativo] = dadosMensais;
+            });
+        }
+
+        function processCarteira(rows) {
+            fullData = rows.slice(1).map(row => {
+                const ticker = row[1] ? row[1].trim() : '';
+                if (!ticker || ticker.toLowerCase().includes('total')) return null;
+                
+                const quantidade = parseNum(row[3]);
+                const investido = parseNum(row[9]);
+                const atual = parseNum(row[10]);
+                
+                return {
+                    tipo: row[0] ? row[0].trim() : 'Outros',
+                    ativo: ticker.toUpperCase(),
+                    quantidade: quantidade,
+                    pMedio: parseNum(row[4]),
+                    pAtual: parseNum(row[5]),
+                    valorizacaoPerc: parseNum(row[7]), 
+                    proventos: parseNum(row[8]),
+                    yoc: parseNum(row[11]),
+                    investido: investido,
+                    atual: atual,
+                    lucroPrejuizo: atual - investido,
+                    peso: 0
+                };
+            }).filter(d => d !== null);
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
+            const totalInvestido = fullData.reduce((acc, curr) => acc + curr.investido, 0);
+            const totalLucro = totalPatrimonio - totalInvestido;
+            const perf = totalInvestido > 0 ? (totalLucro / totalInvestido) * 100 : 0;
+
+            const dados2026 = dividendosHistorico["2026"] || [];
+            const somaProv = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
+            const meses = dados2026.filter(d => d.valor > 0).length || 1;
+
+            document.getElementById('total-atual').innerText = fmtBRL(totalPatrimonio);
+            document.getElementById('total-investido').innerText = fmtBRL(totalInvestido);
+            document.getElementById('total-projeção').innerText = fmtBRL(somaProv / meses);
+            document.getElementById('total-resultado').innerText = fmtBRL(totalLucro);
+            document.getElementById('yield-anual').innerText = `DY: ${totalInvestido > 0 ? ((somaProv/totalInvestido)*100).toFixed(2) : '0.00'}%`;
+            document.getElementById('asset-count').innerText = `(${fullData.length})`;
+
+            const pEl = document.getElementById('perc-total');
+            pEl.className = `mt-2 text-[10px] font-black uppercase ${perf >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
+            pEl.innerText = `${perf >= 0 ? '▲' : '▼'} ${perf.toFixed(2)}% Performance Total`;
+            document.getElementById('kpi-resultado-border').style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
+
+            fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
+            
+            populateRaioXSelect();
+            renderAssetGroups();
+            renderCharts();
+        }
+
+        function populateRaioXSelect() {
+            const select = document.getElementById('select-ativo');
+            select.innerHTML = '<option value="">Selecione um ativo...</option>';
+            const ativosDisponiveis = Object.keys(proventosAtivos).sort();
+            ativosDisponiveis.forEach(ativo => {
+                const opt = document.createElement('option');
+                opt.value = ativo;
+                opt.textContent = ativo;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderRaioXAtivo() {
+            const ativo = document.getElementById('select-ativo').value;
+            const tabelaBody = document.getElementById('tabela-raiox-body');
+            const isDark = document.body.classList.contains('dark-mode');
+            const textColor = isDark ? '#f1f5f9' : '#1e293b';
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+            if (!ativo || !proventosAtivos[ativo]) {
+                if(charts.raiox) charts.raiox.destroy();
+                tabelaBody.innerHTML = `<div class="flex items-center justify-center h-full text-xs font-bold text-slate-500">Selecione um ativo para visualizar.</div>`;
+                return;
+            }
+
+            const dados = proventosAtivos[ativo];
+            
+            tabelaBody.innerHTML = dados.map(d => {
+                const teveProvento = d.div > 0;
+                return `
+                    <div class="grid grid-cols-4 gap-2 px-4 py-2.5 rounded-lg ${teveProvento ? 'bg-cyan-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'} transition-colors">
+                        <div class="font-bold text-xs ${teveProvento ? 'text-cyan-500' : 'text-slate-500'}">${d.mes}</div>
+                        <div class="text-right font-bold text-xs text-slate-800 dark:text-slate-100">${d.cotas > 0 ? d.cotas.toLocaleString('pt-BR') : '-'}</div>
+                        <div class="text-right font-black text-xs ${teveProvento ? 'text-amber-500' : 'text-slate-500'}">${teveProvento ? fmtBRL(d.div) : '-'}</div>
+                        <div class="text-right font-bold text-[10px] text-slate-400 self-center">${d.yoc > 0 ? d.yoc.toFixed(2) + '%' : '-'}</div>
+                    </div>
+                `;
+            }).join('');
+
+            if (charts.raiox) charts.raiox.destroy();
+
+            const labels = dados.map(d => d.mes);
+            const dataTotalPago = dados.map(d => d.cotas * d.div);
+            const dataCotas = dados.map(d => d.cotas);
+
+            charts.raiox = new Chart(document.getElementById('chartRaioX'), {
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Total Recebido (R$)',
+                            data: dataTotalPago,
+                            backgroundColor: '#22d3ee',
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            type: 'line',
+                            label: 'Qtd de Cotas',
+                            data: dataCotas,
+                            borderColor: '#f59e0b',
+                            backgroundColor: '#f59e0b',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: isDark ? '#161e31' : '#ffffff',
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { color: textColor, font: { size: 10, weight: '700' }, usePointStyle: true } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.datasetIndex === 0) {
+                                        label += fmtBRL(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y.toLocaleString('pt-BR') + ' cotas';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10, weight: '700' } } },
+                        y: { 
+                            type: 'linear', display: true, position: 'left',
+                            title: { display: true, text: 'Valor Total (R$)', color: '#22d3ee', font: {size: 10, weight: 'bold'} },
+                            grid: { color: gridColor }, ticks: { color: textColor } 
+                        },
+                        y1: { 
+                            type: 'linear', display: true, position: 'right',
+                            title: { display: true, text: 'Qtd Cotas', color: '#f59e0b', font: {size: 10, weight: 'bold'} },
+                            grid: { drawOnChartArea: false }, ticks: { color: textColor } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderAssetGroups() {
+            const container = document.getElementById('assetsContainer');
+            const search = document.getElementById('searchInput').value.toUpperCase();
+            container.innerHTML = '';
+            
+            const groups = fullData.reduce((acc, curr) => {
+                if (!acc[curr.tipo]) acc[curr.tipo] = [];
+                if (curr.ativo.includes(search)) acc[curr.tipo].push(curr);
+                return acc;
+            }, {});
+
+            Object.keys(groups).sort().forEach(tipo => {
+                if (groups[tipo].length === 0) return;
+                const assets = groups[tipo].sort((a, b) => b.atual - a.atual);
+                const subAtual = assets.reduce((s, a) => s + a.atual, 0);
+                const subInvestido = assets.reduce((s, a) => s + a.investido, 0);
+                const subPerc = subInvestido > 0 ? ((subAtual - subInvestido) / subInvestido) * 100 : 0;
+
+                const section = document.createElement('div');
+                section.className = 'glass-card overflow-hidden border border-black/5 dark:border-white/5';
+                
+                const isExpanded = search.length > 0;
+                const initialClass = isExpanded ? 'expanded' : '';
+                const headerClass = isExpanded ? 'expanded-icon' : '';
+
+                section.innerHTML = `
+                    <div class="group-header p-5 flex justify-between items-center ${headerClass}" onclick="toggleGroup(this)">
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-black px-2 py-0.5 bg-cyan-500 text-slate-900 rounded uppercase flex items-center gap-2">
+                                ${tipo}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </span>
+                            <span class="text-[10px] font-bold ${subPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                                ${subPerc >= 0 ? '▲' : '▼'} ${subPerc.toFixed(2)}%
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-black text-slate-400 mr-4">Investido: ${fmtBRL(subInvestido)}</span>
+                            <span class="text-sm font-black">${fmtBRL(subAtual)}</span>
+                        </div>
+                    </div>
+                    <div class="collapsible-content ${initialClass}">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px]">
+                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-[9px] text-slate-500 uppercase font-black">
+                                    <tr>
+                                        <th class="py-3 px-6">Ativo</th>
+                                        <th class="py-3 px-4 text-right">Qtd | Peso</th>
+                                        <th class="py-3 px-4 text-right">Cotação | P. Médio</th>
+                                        <th class="py-3 px-4 text-right">V. Atual | Investido</th>
+                                        <th class="py-3 px-4 text-right">Proventos | YoC</th>
+                                        <th class="py-3 px-6 text-right">Lucro/Prejuízo</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                                    ${assets.map(d => `
+                                        <tr class="hover:bg-cyan-500/[0.03]">
+                                            <td class="py-4 px-6">
+                                                <div class="font-black text-cyan-400 text-sm tracking-tight cursor-pointer hover:underline" onclick="verRaioX('${d.ativo}')" title="Ver Raio-X">${d.ativo}</div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
+                                                <div class="font-bold">${d.quantidade.toLocaleString('pt-BR')} un.</div>
+                                                <div class="flex flex-col items-end gap-1.5 mt-1">
+                                                    <div class="text-[9px] font-bold text-slate-500">${d.peso.toFixed(2)}% da Carteira</div>
+                                                    <div class="w-16 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                        <div class="h-full bg-cyan-500" style="width: ${Math.min(d.peso * 2.5, 100)}%"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
+                                                <div class="font-black ${d.pAtual >= d.pMedio ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.pAtual)}</div>
+                                                <div class="font-medium opacity-60">Médio: ${fmtBRL(d.pMedio)}</div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
+                                                <div class="font-black">${fmtBRL(d.atual)}</div>
+                                                <div class="text-[9px] opacity-60 font-medium">Invest: ${fmtBRL(d.investido)}</div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
+                                                <div class="font-black text-amber-500">${fmtBRL(d.proventos)}</div>
+                                                <div class="text-[9px] font-bold opacity-60">${d.yoc.toFixed(2)}% YoC</div>
+                                            </td>
+                                            <td class="py-4 px-6 text-right">
+                                                <div class="font-black ${d.lucroPrejuizo >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.lucroPrejuizo)}</div>
+                                                <div class="text-[10px] font-bold ${d.valorizacaoPerc >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'}">
+                                                    ${d.valorizacaoPerc >= 0 ? '▲' : '▼'} ${Math.abs(d.valorizacaoPerc).toFixed(2)}%
+                                                </div>
+                                            </td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                container.appendChild(section);
+            });
+        }
+        
+        function verRaioX(ativo) {
+            const select = document.getElementById('select-ativo');
+            if(select.querySelector(`option[value="${ativo}"]`)) {
+                select.value = ativo;
+                renderRaioXAtivo();
+                select.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function renderCharts() {
+            const isDark = document.body.classList.contains('dark-mode');
+            const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+            const labelColor = isDark ? '#94a3b8' : '#64748b';
+            
+            if(charts.divs) charts.divs.destroy();
+            if(charts.aloc) charts.aloc.destroy();
+
+            charts.divs = new Chart(document.getElementById('chartDividendosAnual'), {
+                type: 'bar',
+                data: {
+                    labels: NOMES_MESES,
+                    datasets: [
+                        { label: '2026', data: (dividendosHistorico["2026"]||[]).map(d=>d.valor), backgroundColor: '#22d3ee', borderRadius: 4, barThickness: 8 },
+                        { label: '2025', data: (dividendosHistorico["2025"]||[]).map(d=>d.valor), backgroundColor: '#10b981', borderRadius: 4, barThickness: 8 },
+                        { label: '2024', data: (dividendosHistorico["2024"]||[]).map(d=>d.valor), backgroundColor: '#f59e0b', borderRadius: 4, barThickness: 8 }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: true, labels: { color: labelColor, font: { size: 9, weight: '700' } } } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9, weight: '700' } } },
+                        x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9, weight: '800' } } }
+                    }
+                }
+            });
+
+            const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
+            const tipoDataValues = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
+
+            charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
+                type: 'doughnut',
+                data: { 
+                    labels: tipoLabels, 
+                    datasets: [{ 
+                        data: tipoDataValues, 
+                        backgroundColor: ['#22d3ee', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#3b82f6'],
+                        borderWidth: isDark ? 4 : 3, borderColor: isDark ? '#161e31' : '#ffffff',
+                    }] 
+                },
+                options: { 
+                    maintainAspectRatio: false, cutout: '72%', 
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } }
+                    }
+                }
+            });
+            
+            if(document.getElementById('select-ativo').value) renderRaioXAtivo();
+        }
+
+        function toggleTheme() { document.body.classList.toggle('dark-mode'); document.body.classList.toggle('light-mode'); renderCharts(); }
+        function toggleGroup(h) { h.classList.toggle('expanded-icon'); h.nextElementSibling.classList.toggle('expanded'); }
+        function expandAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded')); document.querySelectorAll('.group-header').forEach(h => h.classList.add('expanded-icon')); }
+        function collapseAll() { document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded')); document.querySelectorAll('.group-header').forEach(h => h.classList.remove('expanded-icon')); }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
