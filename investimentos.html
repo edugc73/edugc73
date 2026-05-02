@@ -108,34 +108,13 @@
             border-color: var(--brand-primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
-
-        .loading-pulse {
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* Tooltip customizado */
-        .custom-tooltip {
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            color: white;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 11px;
-            font-weight: 700;
-            backdrop-filter: blur(4px);
-        }
     </style>
 </head>
 <body class="dark-mode">
 
     <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Analisando Portfólio 3.5...</p>
+        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">A Sincronizar Histórico 3.7...</p>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
@@ -167,9 +146,9 @@
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="glass-card p-6 border-b-4 border-indigo-500 relative glow-indigo">
-                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Líquido</p>
+                <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Património Líquido</p>
                 <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
-                <div id="perc-total" class="mt-2 text-[10px] font-bold">Aguardando dados...</div>
+                <div id="perc-total" class="mt-2 text-[10px] font-bold">A calcular performance...</div>
             </div>
 
             <div class="glass-card p-6 border-b-4 border-slate-400">
@@ -194,60 +173,17 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            <div class="glass-card p-7 lg:col-span-2 flex flex-col justify-center relative overflow-hidden">
-                <div class="relative z-10">
-                    <div class="flex justify-between items-end mb-4">
-                        <div>
-                            <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Rumo à Independência</h4>
-                            <p class="text-3xl font-black">Meta: R$ 1.000.000</p>
-                        </div>
-                        <div class="text-right">
-                            <span id="meta-percent" class="text-2xl font-black text-indigo-500">0%</span>
-                        </div>
-                    </div>
-                    <div class="progress-bar-bg mb-2">
-                        <div id="meta-progress" class="progress-bar-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <p id="meta-renda-estimada" class="text-[9px] text-slate-400 font-bold uppercase">Renda Estimada na Meta: R$ 8.500,00</p>
-                        <p id="meta-restante" class="text-[10px] text-slate-500 font-bold uppercase text-right">Falta R$ 0,00</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-card p-6 flex flex-col justify-center bg-indigo-500/[0.03] border-l-4 border-indigo-500">
-                <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Assistente de Reinvestimento</h4>
-                <div class="space-y-3">
-                    <div class="relative">
-                        <input type="text" id="calc-asset-input" placeholder="Ticker (Ex: PETR4, MXRF11)" class="calc-input uppercase text-indigo-600 dark:text-indigo-400">
-                        <div id="calc-spinner" class="absolute right-3 top-3 hidden">
-                            <div class="w-4 h-4 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-black/5 dark:bg-white/5 p-3 rounded-xl border border-indigo-500/10">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                        <div>
-                            <p id="calc-result-label" class="text-[9px] text-slate-500 font-bold uppercase">Aguardando ticker...</p>
-                            <p id="calc-result-value" class="text-lg font-black text-indigo-500 leading-tight">-- Cotas</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <div class="glass-card p-6">
                 <div class="flex justify-between items-start mb-6">
                     <div>
                         <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Evolução de Dividendos</h3>
-                        <p class="text-xs font-bold text-slate-400">Análise de Crescimento 2025-2026</p>
+                        <p class="text-xs font-bold text-slate-400">Análise Multi-Ano</p>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-indigo-500 rounded-full"></span><span class="text-[10px] font-bold">2026</span></div>
-                        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-slate-400/40 rounded-full"></span><span class="text-[10px] font-bold text-slate-400">2025</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 bg-indigo-500 rounded-full"></span><span class="text-[10px] font-bold">2026</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 bg-emerald-500 rounded-full"></span><span class="text-[10px] font-bold text-emerald-500">2025</span></div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 bg-amber-500 rounded-full"></span><span class="text-[10px] font-bold text-amber-500">2024</span></div>
                     </div>
                 </div>
                 <div class="h-80"><canvas id="chartDividendosAnual"></canvas></div>
@@ -270,21 +206,12 @@
                 <span id="total-ativos-count" class="px-2 py-0.5 bg-indigo-500/10 text-indigo-500 text-[11px] font-black rounded-md">--</span>
             </div>
             <div class="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                <input type="text" id="searchInput" placeholder="Buscar ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30 w-full md:w-64 font-bold">
-                <div class="flex gap-2">
-                    <button onclick="expandAll()" class="px-4 py-2.5 text-[10px] font-black uppercase bg-indigo-600/10 text-indigo-500 rounded-xl hover:bg-indigo-600 hover:text-white transition-all">Expandir</button>
-                    <button onclick="collapseAll()" class="px-4 py-2.5 text-[10px] font-black uppercase bg-slate-600/10 text-slate-500 rounded-xl hover:bg-slate-600 hover:text-white transition-all">Recolher</button>
-                </div>
+                <input type="text" id="searchInput" placeholder="Procurar ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500/30 w-full md:w-64 font-bold">
             </div>
         </div>
 
         <div id="assetsContainer" class="space-y-4"></div>
     </main>
-
-    <footer class="max-w-7xl mx-auto px-6 py-10 border-t border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center opacity-40 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
-        <p class="text-[10px] font-bold uppercase tracking-widest">GonçaInvest v3.5 Alpha</p>
-        <p class="text-[10px] font-bold uppercase tracking-widest">Dados atualizados via API Brapi & Google Sheets</p>
-    </footer>
 
     <script>
         const URL_CARTEIRA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=1550358623&single=true&output=csv';
@@ -297,8 +224,6 @@
         let fullData = [];
         let dividendosHistorico = {};
         let charts = {};
-        let globalMediaMensal = 0;
-        let debounceTimer;
 
         async function init() {
             try {
@@ -309,11 +234,10 @@
                 processMatrizHistorica(dividendosRows);
                 processCarteira(carteiraRows);
                 setupSearchListener();
-                setupCalculatorListener();
                 document.getElementById('loading-overlay').style.display = 'none';
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
-                document.querySelector('#loading-overlay p').innerText = "Erro ao conectar. Verifique os links.";
+                console.error("Erro:", error);
+                document.querySelector('#loading-overlay p').innerText = "Erro ao carregar dados.";
             }
         }
 
@@ -353,21 +277,19 @@
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
                 if (!ticker || ticker.toLowerCase().includes('total')) return null;
-                
                 const investidoBolso = parseNum(row[9]);
-                const proventosRecebidos = parseNum(row[8]);
-                
+                const atual = parseNum(row[10]);
                 return {
                     tipo: row[0] ? row[0].trim() : 'Outros',
                     ativo: ticker.toUpperCase(),
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
                     valorizacao: parseNum(row[7]), 
-                    proventosRecebidos: proventosRecebidos,
+                    proventosRecebidos: parseNum(row[8]),
                     yoc: parseNum(row[11]),
                     investidoBolso: investidoBolso,
-                    atual: parseNum(row[10]),
-                    lucro: parseNum(row[10]) - investidoBolso,
+                    atual: atual,
+                    lucro: atual - investidoBolso,
                     peso: 0
                 };
             }).filter(d => d !== null);
@@ -377,26 +299,15 @@
         function updateDashboard() {
             const totalPatrimonio = fullData.reduce((acc, curr) => acc + curr.atual, 0);
             const totalDoBolso = fullData.reduce((acc, curr) => acc + curr.investidoBolso, 0);
-            
-            const dados2026 = dividendosHistorico["2026"] || NOMES_MESES.map(m => ({mes: m, valor: 0}));
+            const dados2026 = dividendosHistorico["2026"] || [];
             const totalProventosReal = dados2026.reduce((acc, curr) => acc + curr.valor, 0);
             const mesesAtivos = dados2026.filter(d => d.valor > 0).length || 1;
-            globalMediaMensal = totalProventosReal / mesesAtivos;
-
+            const globalMediaMensal = totalProventosReal / mesesAtivos;
             const yieldPercentual = totalDoBolso > 0 ? ( (totalProventosReal / totalDoBolso) * 100 ) : 0;
-
             const totalLucro = totalPatrimonio - totalDoBolso;
             const rentabilidadeGlobal = totalDoBolso > 0 ? (totalLucro / totalDoBolso) * 100 : 0;
 
-            const percMeta = Math.min((totalPatrimonio / META_FINAL) * 100, 100);
-            document.getElementById('meta-progress').style.width = `${percMeta}%`;
-            document.getElementById('meta-percent').innerText = `${percMeta.toFixed(2)}%`;
-            document.getElementById('meta-restante').innerText = `Falta R$ ${(META_FINAL - totalPatrimonio).toLocaleString('pt-BR')}`;
-
-            fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
-
             document.getElementById('total-ativos-count').innerText = `(${fullData.length})`;
-
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             
             document.getElementById('total-atual').innerText = fmt(totalPatrimonio);
@@ -409,53 +320,12 @@
             const percEl = document.getElementById('perc-total');
             percEl.className = `mt-2 text-[11px] font-black uppercase flex items-center gap-1 ${rentabilidadeGlobal >= 0 ? 'text-emerald-500' : 'text-rose-500'}`;
             percEl.innerHTML = `<span>${rentabilidadeGlobal >= 0 ? '▲' : '▼'} ${rentabilidadeGlobal.toFixed(2)}% de Performance</span>`;
-
             document.getElementById('kpi-resultado-border').style.borderColor = totalLucro >= 0 ? '#10b981' : '#ef4444';
+
+            fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
 
             renderAssetGroups();
             renderCharts();
-        }
-
-        function setupCalculatorListener() {
-            const input = document.getElementById('calc-asset-input');
-            const label = document.getElementById('calc-result-label');
-            const value = document.getElementById('calc-result-value');
-            const spinner = document.getElementById('calc-spinner');
-
-            input.addEventListener('input', (e) => {
-                clearTimeout(debounceTimer);
-                const ticker = e.target.value.toUpperCase().trim();
-                
-                if (!ticker) {
-                    label.innerText = "Aguardando ticker...";
-                    value.innerText = "-- Cotas";
-                    return;
-                }
-
-                debounceTimer = setTimeout(async () => {
-                    spinner.classList.remove('hidden');
-                    label.innerText = "Consultando mercado...";
-
-                    try {
-                        const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`);
-                        const data = await response.json();
-                        
-                        if (data.results && data.results[0]) {
-                            const precoAtual = data.results[0].regularMarketPrice;
-                            const cotas = precoAtual > 0 ? Math.floor(globalMediaMensal / precoAtual) : 0;
-                            label.innerText = `${ticker}: R$ ${precoAtual.toFixed(2)}`;
-                            value.innerText = `Compra ${cotas} cotas/mês`;
-                        } else {
-                            throw new Error();
-                        }
-                    } catch {
-                        label.innerText = "Ativo não identificado";
-                        value.innerText = "Verifique o ticker";
-                    } finally {
-                        spinner.classList.add('hidden');
-                    }
-                }, 600);
-            });
         }
 
         function renderAssetGroups() {
@@ -478,59 +348,29 @@
 
                 const section = document.createElement('div');
                 section.className = 'glass-card overflow-hidden border border-black/5 dark:border-white/5';
-                
-                let rows = assets.map(d => `
-                    <tr class="border-b border-black/5 dark:border-white/[0.02] hover:bg-black/5 dark:hover:bg-white/[0.05]">
-                        <td class="py-4 px-6">
-                            <div class="font-black text-sm text-indigo-500">${d.ativo}</div>
-                            <div class="text-[9px] text-slate-500 font-bold uppercase">${d.peso.toFixed(1)}% do total</div>
-                        </td>
-                        <td class="py-4 px-4 text-right text-[11px] text-slate-500 font-bold">R$ ${d.pMedio.toFixed(2)}</td>
-                        <td class="py-4 px-4 text-right text-sm font-black ${d.pAtual >= d.pMedio ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.pAtual.toFixed(2)}</td>
-                        <td class="py-4 px-4 text-right">
-                            <div class="text-[11px] font-black text-amber-500">R$ ${d.proventosRecebidos.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-                            <div class="text-[9px] text-slate-500 font-bold uppercase">YoC: ${d.yoc.toFixed(2)}%</div>
-                        </td>
-                        <td class="py-4 px-4 text-right">
-                            <div class="text-sm font-black">R$ ${d.atual.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-                            <div class="text-[9px] text-slate-500 font-bold uppercase">Investido: R$ ${d.investidoBolso.toFixed(0)}</div>
-                        </td>
-                        <td class="py-4 px-6 text-right">
-                            <div class="text-sm font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-                            <div class="text-[10px] font-bold ${d.valorizacao >= 0 ? 'text-emerald-500/80' : 'text-rose-500/80'} uppercase tracking-tighter">${d.valorizacao >= 0 ? '▲' : '▼'} ${d.valorizacao.toFixed(2)}%</div>
-                        </td>
-                    </tr>`).join('');
-
                 section.innerHTML = `
                     <div class="group-header p-5 flex justify-between items-center" onclick="toggleGroup(this)">
                         <div class="flex items-center gap-4">
-                            <div class="p-1.5 bg-indigo-600/10 rounded-lg text-indigo-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></div>
-                            <span class="text-[10px] font-black px-2.5 py-1 bg-indigo-600 text-white rounded uppercase tracking-wider">${tipo}</span>
+                            <span class="text-[10px] font-black px-2.5 py-1 bg-indigo-600 text-white rounded uppercase">${tipo}</span>
                             <span class="stat-badge ${subRent >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}">
                                 ${subRent >= 0 ? '+' : ''}${subRent.toFixed(1)}% ${subRent >= 0 ? 'DE LUCRO' : 'DE PREJUÍZO'}
                             </span>
                         </div>
-                        <div class="text-right flex items-center gap-4">
-                             <div class="text-[10px] text-slate-500 font-bold uppercase">${assets.length} ativos</div>
-                             <span class="text-sm font-black">${subAtual.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
-                        </div>
+                        <span class="text-sm font-black">${subAtual.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}</span>
                     </div>
                     <div class="collapsible-content">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-[10px] text-slate-500 uppercase font-black">
-                                    <tr>
-                                        <th class="py-4 px-6">Ativo / Peso</th>
-                                        <th class="py-4 px-4 text-right">Custo Médio</th>
-                                        <th class="py-4 px-4 text-right">Cotação</th>
-                                        <th class="py-4 px-4 text-right">Total Proventos</th>
-                                        <th class="py-4 px-4 text-right">Patrimônio</th>
-                                        <th class="py-4 px-6 text-right">Resultado</th>
+                        <table class="w-full text-left text-xs">
+                            <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                                ${assets.map(d => `
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                                        <td class="py-3 px-6 font-bold text-indigo-500">${d.ativo}</td>
+                                        <td class="py-3 px-4 text-right">R$ ${d.pAtual.toFixed(2)}</td>
+                                        <td class="py-3 px-4 text-right font-black">R$ ${d.atual.toLocaleString('pt-BR')}</td>
+                                        <td class="py-3 px-6 text-right font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR')}</td>
                                     </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                            </table>
-                        </div>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>`;
                 container.appendChild(section);
             });
@@ -543,8 +383,10 @@
             
             Object.values(charts).forEach(c => c.destroy());
 
+            // PALETA DE CORES ATUALIZADA - ALTO CONTRASTE
             const d2026 = (dividendosHistorico["2026"] || []).map(d => d.valor);
             const d2025 = (dividendosHistorico["2025"] || []).map(d => d.valor);
+            const d2024 = (dividendosHistorico["2024"] || []).map(d => d.valor);
 
             charts.divs = new Chart(document.getElementById('chartDividendosAnual'), {
                 type: 'bar',
@@ -554,16 +396,23 @@
                         {
                             label: '2026',
                             data: d2026,
-                            backgroundColor: '#6366f1',
+                            backgroundColor: '#6366f1', // Indigo
                             borderRadius: 4,
-                            barThickness: 12
+                            barThickness: 8
                         },
                         {
                             label: '2025',
                             data: d2025,
-                            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.15)' : 'rgba(100, 116, 139, 0.1)',
+                            backgroundColor: '#10b981', // Emerald/Verde
                             borderRadius: 4,
-                            barThickness: 12
+                            barThickness: 8
+                        },
+                        {
+                            label: '2024',
+                            data: d2024,
+                            backgroundColor: '#f59e0b', // Amber/Laranja
+                            borderRadius: 4,
+                            barThickness: 8
                         }
                     ]
                 },
@@ -583,7 +432,6 @@
 
             const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
             const tipoDataValues = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
-            const totalAlocacao = tipoDataValues.reduce((s, v) => s + v, 0);
 
             charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
                 type: 'doughnut',
@@ -602,27 +450,7 @@
                     plugins: { 
                         legend: { 
                             position: 'bottom', 
-                            labels: { 
-                                color: labelColor, 
-                                font: { size: 10, weight: '800' }, 
-                                padding: 25, 
-                                usePointStyle: true,
-                                boxWidth: 6
-                            } 
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleFont: { size: 11, weight: '800' },
-                            bodyFont: { size: 12, weight: 'bold' },
-                            padding: 12,
-                            displayColors: false,
-                            callbacks: {
-                                label: function(context) {
-                                    const val = context.raw;
-                                    const perc = ((val / totalAlocacao) * 100).toFixed(1);
-                                    return ` Alocação: ${perc}%`;
-                                }
-                            }
+                            labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } 
                         }
                     }
                 }
@@ -637,14 +465,6 @@
 
         function toggleGroup(header) {
             header.nextElementSibling.classList.toggle('expanded');
-        }
-
-        function expandAll() {
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.add('expanded'));
-        }
-
-        function collapseAll() {
-            document.querySelectorAll('.collapsible-content').forEach(c => c.classList.remove('expanded'));
         }
 
         function setupSearchListener() {
