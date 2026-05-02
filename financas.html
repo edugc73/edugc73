@@ -23,7 +23,6 @@
             --text-muted: #9ca3af;
             --glass: rgba(17, 24, 39, 0.7);
             --border: rgba(255, 255, 255, 0.08);
-            --accent-purple: #8b5cf6;
             --chart-grid: rgba(255, 255, 255, 0.05);
         }
 
@@ -39,7 +38,6 @@
             --text-muted: #4b5563;
             --glass: rgba(255, 255, 255, 0.8);
             --border: rgba(0, 0, 0, 0.08);
-            --accent-purple: #7c3aed;
             --chart-grid: rgba(0, 0, 0, 0.1);
         }
 
@@ -76,9 +74,10 @@
         }
 
         .actions-group { display: flex; align-items: center; gap: 10px; }
-        .theme-toggle {
+        .btn-icon {
             background: var(--surface-accent); border: 1px solid var(--border);
             color: var(--text-main); padding: 8px; border-radius: 10px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
 
         .year-selector {
@@ -108,27 +107,33 @@
         .card {
             background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 18px;
             position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
         .kpi-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .kpi-value { font-size: 1.4rem; font-weight: 700; display: block; }
         .trend { font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-        .trend.up { color: var(--primary); } /* Verde para cima */
-        .trend.down { color: var(--danger); } /* Vermelho para baixo */
-        .trend.neutral { color: var(--text-muted); } /* Cinza estável */
+        .trend.up { color: var(--primary); }
+        .trend.down { color: var(--danger); }
+        .trend.neutral { color: var(--text-muted); }
+
+        .health-badge {
+            position: absolute; top: 15px; right: 15px; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; text-transform: uppercase;
+        }
 
         .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
-        .chart-box { min-height: 380px; }
+        .chart-box { min-height: 380px; display: flex; flex-direction: column; }
         .chart-container { flex-grow: 1; position: relative; height: 300px; }
         
         .progress-list { display: flex; flex-direction: column; gap: 15px; }
         .progress-item { background: rgba(255,255,255,0.02); padding: 12px; border-radius: 12px; }
-        .progress-bar-bg { background: var(--surface-accent); height: 6px; border-radius: 3px; margin-top: 8px; }
-        .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease-in-out; }
+        .progress-bar-bg { background: var(--surface-accent); height: 6px; border-radius: 3px; margin-top: 8px; position: relative; }
+        .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
         .category-item {
-            display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border);
+            transition: background 0.2s; border-radius: 8px;
         }
-        .category-item:last-child { border: none; }
+        .category-item:hover { background: rgba(255,255,255,0.03); }
 
         #loader {
             position: fixed; inset: 0; background: var(--bg); z-index: 100;
@@ -141,27 +146,34 @@
             .stats-grid { grid-template-columns: repeat(2, 1fr); } 
             .main-grid { grid-template-columns: 1fr; }
         }
+
+        @media print {
+            .btn-icon, .year-selector, .month-chips-container { display: none; }
+            body { padding: 0; background: white; color: black; }
+            .card { border: 1px solid #ddd; break-inside: avoid; box-shadow: none; }
+        }
     </style>
 </head>
 <body data-theme="dark">
 
 <div id="loader">
     <div class="spinner"></div>
-    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-muted);">Processando inteligência financeira...</p>
+    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-muted);">Processando inteligência de dados...</p>
 </div>
 
 <div class="container" id="main-content" style="display: none;">
     <header>
         <div class="header-top">
             <div class="brand">
-                <div class="brand-icon"><i data-lucide="shield-check" size="20"></i></div>
+                <div class="brand-icon"><i data-lucide="activity" size="20"></i></div>
                 <div>
                     <h1 style="font-size: 1.1rem;">Patrimônio Inteligente</h1>
-                    <p style="font-size: 0.65rem; color: var(--primary);">Análise Proativa v2.6</p>
+                    <p style="font-size: 0.65rem; color: var(--primary);">Financial Intelligence Pro v4.0</p>
                 </div>
             </div>
             <div class="actions-group">
-                <button class="theme-toggle" id="themeSwitcher"><i data-lucide="sun" size="16"></i></button>
+                <button class="btn-icon" onclick="window.print()" title="Imprimir Relatório"><i data-lucide="printer" size="16"></i></button>
+                <button class="btn-icon" id="themeSwitcher"><i id="themeIcon" data-lucide="sun" size="16"></i></button>
                 <div class="year-selector">
                     <button class="year-btn active" onclick="changeYear('2025', this)">2025</button>
                     <button class="year-btn" onclick="changeYear('2026', this)">2026</button>
@@ -181,6 +193,7 @@
             <span class="kpi-label">Gastos Totais</span>
             <span class="kpi-value" id="kpi-gastos">R$ 0,00</span>
             <div id="trend-gastos" class="trend">--</div>
+            <div id="health-indicator" class="health-badge">Estável</div>
         </div>
         <div class="card">
             <span class="kpi-label">Investimentos</span>
@@ -188,7 +201,7 @@
             <div id="trend-invest" class="trend">--</div>
         </div>
         <div class="card">
-            <span class="kpi-label">Saldo Disponível</span>
+            <span class="kpi-label">Saldo Final</span>
             <span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
             <div id="trend-saldo" class="trend">--</div>
         </div>
@@ -198,58 +211,71 @@
         <div class="left-col">
             <div class="card chart-box">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="font-size: 0.9rem; font-weight: 600;"><i data-lucide="bar-chart-3" size="16" style="vertical-align: middle; margin-right: 8px;"></i>Desempenho Anual vs Média</h3>
+                    <h3 style="font-size: 0.9rem; font-weight: 600;"><i data-lucide="bar-chart-3" size="16" style="vertical-align: middle; margin-right: 8px;"></i>Fluxo de Caixa Mensal</h3>
                     <div id="avg-indicator" style="font-size: 0.7rem; background: var(--surface-accent); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);">
-                        Média Gastos: R$ 0,00
+                        Média...
                     </div>
                 </div>
                 <div class="chart-container"><canvas id="mainChart"></canvas></div>
             </div>
+            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
                 <div class="card">
-                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="pie-chart" size="16" style="margin-right: 8px;"></i>Alocação</h3>
-                    <div style="height: 180px;"><canvas id="compositionChart"></canvas></div>
+                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="pie-chart" size="16" style="margin-right: 8px;"></i>Alocação de Capital (3D Style)</h3>
+                    <div style="height: 220px; position: relative;">
+                        <canvas id="allocationChart"></canvas>
+                    </div>
                 </div>
                 <div class="card">
-                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="layers" size="16" style="margin-right: 8px;"></i>Top Despesas</h3>
-                    <div id="composition-list"></div>
+                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="list-checks" size="16" style="margin-right: 8px;"></i>Detalhamento de Saídas</h3>
+                    <div id="composition-list" style="margin-top: 10px;"></div>
                 </div>
             </div>
         </div>
 
         <div class="right-col">
-            <div class="card" style="height: 100%;">
-                <h3 style="font-size: 0.9rem; margin-bottom: 20px;"><i data-lucide="Zap" size="16" color="var(--warning)" style="margin-right: 8px;"></i>Insights e Saúde</h3>
+            <div class="card" style="height: 100%; border-left: 4px solid var(--primary);">
+                <h3 style="font-size: 0.9rem; margin-bottom: 20px;"><i data-lucide="shield-check" size="16" color="var(--primary)" style="margin-right: 8px;"></i>Saúde & Reserva</h3>
+                
                 <div class="progress-list">
                     <div class="progress-item">
                         <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600;">
-                            <span>Teto de Gastos (70% da Renda)</span>
+                            <span>Eficiência (Gasto < 70%)</span>
                             <span id="perc-gastos">0%</span>
                         </div>
                         <div class="progress-bar-bg"><div id="bar-gastos" class="progress-bar-fill"></div></div>
                     </div>
+                    
                     <div class="progress-item">
                         <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600;">
-                            <span>Meta Investimento (15%)</span>
+                            <span>Aporte (Meta > 15%)</span>
                             <span id="perc-invest">0%</span>
                         </div>
                         <div class="progress-bar-bg"><div id="bar-invest" class="progress-bar-fill"></div></div>
                     </div>
-                </div>
 
-                <div id="projection-card" style="margin-top: 24px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 16px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i data-lucide="trending-up" size="18" color="var(--primary)"></i>
-                        <span style="font-size: 0.8rem; font-weight: 700;">Projeção de Acúmulo</span>
+                    <div class="progress-item" style="border: 1px solid rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.05);">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; color: var(--secondary);">
+                            <span>RESERVA DE EMERGÊNCIA</span>
+                            <span id="perc-reserva">0%</span>
+                        </div>
+                        <div class="progress-bar-bg" style="height: 10px; background: rgba(0,0,0,0.2);"><div id="bar-reserva" class="progress-bar-fill" style="background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div></div>
+                        <p id="reserva-status" style="font-size: 0.6rem; color: var(--text-muted); margin-top: 10px; font-weight: 500;"></p>
                     </div>
-                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;" id="projection-text">
-                        Selecione o Resumo Anual para ver a projeção do ano.
-                    </p>
                 </div>
 
-                <div style="margin-top: 16px; padding: 15px; background: var(--surface-accent); border-radius: 16px;">
-                    <h4 style="font-size: 0.75rem; margin-bottom: 8px;">Análise Estratégica:</h4>
-                    <p id="analysis-text" style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.5;"></p>
+                <div style="margin-top: 24px; padding: 15px; background: var(--surface-accent); border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i data-lucide="lightbulb" size="18" color="var(--warning)"></i>
+                        <span style="font-size: 0.8rem; font-weight: 700;">Análise Estratégica</span>
+                    </div>
+                    <p id="analysis-text" style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;"></p>
+                </div>
+
+                <div id="projection-card" style="margin-top: 16px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--primary); border-radius: 16px;">
+                    <p style="font-size: 0.7rem; color: var(--text-main); font-weight: 600;" id="projection-text">
+                        Selecione um mês para ver a projeção.
+                    </p>
                 </div>
             </div>
         </div>
@@ -267,11 +293,6 @@
     let activeIdx = 0;
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const MESES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-
-    document.getElementById('themeSwitcher').onclick = () => {
-        document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
-        selectMonth(activeIdx, document.querySelector(`.chip[data-idx="${activeIdx}"]`));
-    };
 
     function normalize(s) { return s ? s.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : ""; }
     function parseVal(v) {
@@ -295,7 +316,7 @@
         const gastos = fixos + cartoes + outros;
         return { 
             mes: getVal(row, "Mes"), r: receita, g: gastos, i: parseVal(getVal(row, "Investimentos")), 
-            s: parseVal(getVal(row, "Saldo Final do Mes")), cartoes, fixos, outros 
+            s: parseVal(getVal(row, "Saldo Final do Mes")), fixos, cartoes, outros 
         };
     }
 
@@ -320,10 +341,9 @@
 
     function renderUI() {
         const container = document.getElementById('monthChips');
-        container.innerHTML = `<div class="chip special" data-idx="annual" onclick="selectMonth('annual', this)">Anual</div>`;
+        container.innerHTML = `<div class="chip special" data-idx="annual" onclick="selectMonth('annual', this)">Resumo Anual</div>`;
         currentData.forEach((r, i) => {
-            const m = getVal(r, "Mes");
-            container.innerHTML += `<div class="chip" data-idx="${i}" onclick="selectMonth(${i}, this)">${m}</div>`;
+            container.innerHTML += `<div class="chip" data-idx="${i}" onclick="selectMonth(${i}, this)">${getVal(r, "Mes")}</div>`;
         });
         selectMonth(0, document.querySelector('.chip[data-idx="0"]'));
     }
@@ -331,136 +351,105 @@
     function selectMonth(idx, el) {
         activeIdx = idx;
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
+        if (el) el.classList.add('active');
 
-        let current, prev;
         const allStats = currentData.map(r => getStats(r));
-        const avgGastos = allStats.reduce((a, b) => a + b.g, 0) / allStats.length;
+        if (allStats.length === 0) return;
 
+        const avgGastos = allStats.reduce((a, b) => a + b.g, 0) / allStats.length;
+        const acumuladoInvest = allStats.reduce((a, b) => a + b.i, 0);
+        
+        let current, prev;
         if(idx === 'annual') {
             current = allStats.reduce((a, b) => ({
                 r: a.r + b.r, g: a.g + b.g, i: a.i + b.i, s: a.s + b.s, 
-                cartoes: a.cartoes + b.cartoes, fixos: a.fixos + b.fixos, outros: a.outros + b.outros
-            }), { r:0, g:0, i:0, s:0, cartoes:0, fixos:0, outros:0 });
-            document.getElementById('projection-text').innerText = `Projeção Anual: Se mantiver a média de sobra mensal de ${fmt.format(current.s / allStats.length)}, você acumulará ${fmt.format(current.s)} ao final deste ciclo.`;
+                fixos: a.fixos + b.fixos, cartoes: a.cartoes + b.cartoes, outros: a.outros + b.outros
+            }), { r:0, g:0, i:0, s:0, fixos:0, cartoes:0, outros:0 });
+            document.getElementById('projection-text').innerText = `Projeção Anual: Baseado no seu saldo acumulado de ${fmt.format(current.s)}, você está construindo um patrimônio sólido.`;
         } else {
             current = allStats[idx];
             prev = idx > 0 ? allStats[idx-1] : null;
-            document.getElementById('projection-text').innerText = `Seus gastos neste mês estão ${(current.g > avgGastos ? 'acima' : 'abaixo')} da sua média histórica de ${fmt.format(avgGastos)}.`;
+            const diffAvg = ((current.g - avgGastos) / avgGastos * 100);
+            document.getElementById('projection-text').innerText = diffAvg > 0 
+                ? `Este mês está ${diffAvg.toFixed(0)}% ACIMA da sua média de gastos habitual.`
+                : `Este mês está ${Math.abs(diffAvg).toFixed(0)}% ABAIXO da sua média. Ótimo controle!`;
         }
 
-        // Update KPIs
+        // KPIs principais
         document.getElementById('kpi-receita').innerText = fmt.format(current.r);
         document.getElementById('kpi-gastos').innerText = fmt.format(current.g);
         document.getElementById('kpi-invest').innerText = fmt.format(current.i);
         document.getElementById('kpi-saldo').innerText = fmt.format(current.s);
-        document.getElementById('avg-indicator').innerText = `Média Gastos: ${fmt.format(avgGastos)}`;
+        document.getElementById('avg-indicator').innerText = `Média: ${fmt.format(avgGastos)}`;
 
-        // Trends Logic
+        // Reserva de Emergência
+        const metaReserva = Math.max(avgGastos, 1) * 6;
+        const progressoReserva = Math.min((acumuladoInvest / metaReserva) * 100, 100);
+        document.getElementById('perc-reserva').innerText = progressoReserva.toFixed(1) + '%';
+        document.getElementById('bar-reserva').style.width = progressoReserva + '%';
+        document.getElementById('reserva-status').innerText = `Guardado: ${fmt.format(acumuladoInvest)} / Meta: ${fmt.format(metaReserva)}`;
+
+        // Health Badge
+        const health = document.getElementById('health-indicator');
+        const ratio = current.r > 0 ? current.g / current.r : 0;
+        if(ratio < 0.6) { health.innerText = "Excelente"; health.style.background = "var(--primary)"; }
+        else if(ratio < 0.8) { health.innerText = "Estável"; health.style.background = "var(--secondary)"; }
+        else { health.innerText = "Alerta"; health.style.background = "var(--danger)"; }
+
+        // Trends
         const updateTrend = (id, cur, pr) => {
             const tid = document.getElementById('trend-' + id);
             if(!pr) { tid.innerHTML = '--'; tid.className = 'trend neutral'; return; }
-            
             const diff = cur - pr;
             const perc = (Math.abs(diff) / pr * 100);
-            
-            if (Math.abs(diff) < 0.01) {
-                tid.className = 'trend neutral';
-                tid.innerHTML = `<i data-lucide="minus" size="12"></i> 0,00% (estável)`;
-            } else if (diff > 0) {
-                tid.className = 'trend up'; // Verde
-                tid.innerHTML = `<i data-lucide="trending-up" size="12"></i> ${perc.toFixed(1)}% vs mês ant.`;
-            } else {
-                tid.className = 'trend down'; // Vermelho
-                tid.innerHTML = `<i data-lucide="trending-down" size="12"></i> ${perc.toFixed(1)}% vs mês ant.`;
-            }
+            tid.className = 'trend ' + (diff > 0 ? (id === 'gastos' ? 'down' : 'up') : (id === 'gastos' ? 'up' : 'down'));
+            tid.innerHTML = `<i data-lucide="${diff > 0 ? 'trending-up' : 'trending-down'}" size="12"></i> ${perc.toFixed(1)}% vs ant.`;
         };
         updateTrend('receita', current.r, prev?.r);
         updateTrend('gastos', current.g, prev?.g);
         updateTrend('invest', current.i, prev?.i);
         updateTrend('saldo', current.s, prev?.s);
 
-        // Bars
+        // Barras de Progresso
         const pG = current.r > 0 ? (current.g / current.r * 100) : 0;
         const pI = current.r > 0 ? (current.i / current.r * 100) : 0;
         document.getElementById('perc-gastos').innerText = pG.toFixed(1) + '%';
         document.getElementById('bar-gastos').style.width = Math.min(pG, 100) + '%';
-        document.getElementById('bar-gastos').style.backgroundColor = pG > 70 ? 'var(--danger)' : 'var(--secondary)';
+        document.getElementById('bar-gastos').style.background = pG > 70 ? 'var(--danger)' : 'var(--secondary)';
         document.getElementById('perc-invest').innerText = pI.toFixed(1) + '%';
         document.getElementById('bar-invest').style.width = Math.min(pI, 100) + '%';
-        document.getElementById('bar-invest').style.backgroundColor = pI < 15 ? 'var(--warning)' : 'var(--primary)';
+        document.getElementById('bar-invest').style.background = pI < 15 ? 'var(--warning)' : 'var(--primary)';
 
-        // Analysis
+        // Análise
         const analysis = document.getElementById('analysis-text');
-        if(pG > 85) analysis.innerText = "ALERTA: Seus gastos fixos e variáveis estão consumindo quase toda sua renda. Tente revisar faturas de cartões.";
-        else if(pI > 20) analysis.innerText = "EXCELENTE: Sua taxa de investimento está acima da média recomendada. Considere diversificar sua carteira.";
-        else analysis.innerText = "SAUDÁVEL: Seu fluxo de caixa está sob controle. Busque manter os gastos fixos abaixo de 50% da receita bruta.";
+        if(pI >= 15 && pG <= 70) analysis.innerText = "Saúde financeira exemplar. Seu nível de aporte está acima da meta de segurança, permitindo crescimento patrimonial acelerado.";
+        else if(pG > 75) analysis.innerText = "Atenção aos custos variáveis. Seus gastos consumiram mais de 75% da renda, o que reduz sua margem para imprevistos.";
+        else analysis.innerText = "Equilíbrio mantido. O fluxo de caixa está operando dentro dos parâmetros normais para sua média histórica.";
 
-        updateCharts(idx, current, allStats, avgGastos);
+        updateCharts(idx, current, allStats);
         lucide.createIcons();
     }
 
-    // Custom Plugin to Draw Average Line
-    const avgLinePlugin = {
-        id: 'avgLine',
-        beforeDraw: (chart) => {
-            const { ctx, chartArea: { left, right, top, bottom }, scales: { y } } = chart;
-            const avgValue = chart.options.plugins.avgLineValue;
-            if (!avgValue) return;
-
-            const yPos = y.getPixelForValue(avgValue);
-            if (yPos < top || yPos > bottom) return;
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.lineWidth = 2;
-            ctx.setLineDash([6, 6]);
-            ctx.strokeStyle = '#f59e0b'; // Cor da média (warning)
-            ctx.moveTo(left, yPos);
-            ctx.lineTo(right, yPos);
-            ctx.stroke();
-            
-            // Label
-            ctx.fillStyle = '#f59e0b';
-            ctx.font = 'bold 10px sans-serif';
-            ctx.fillText('MÉDIA', right - 40, yPos - 5);
-            ctx.restore();
-        }
-    };
-
-    function updateCharts(activeIdx, current, allStats, avg) {
+    function updateCharts(activeIdx, current, allStats) {
         const isDark = document.body.dataset.theme === 'dark';
         const colors = isDark ? { text: '#9ca3af', grid: 'rgba(255,255,255,0.05)' } : { text: '#4b5563', grid: 'rgba(0,0,0,0.1)' };
 
         if(charts.main) charts.main.destroy();
-        if(charts.comp) charts.comp.destroy();
+        if(charts.allocation) charts.allocation.destroy();
 
+        // Gráfico Principal (Barras)
         charts.main = new Chart(document.getElementById('mainChart'), {
             type: 'bar',
-            plugins: [avgLinePlugin],
             data: {
                 labels: allStats.map(s => s.mes),
                 datasets: [
-                    {
-                        label: 'Entrada',
-                        data: allStats.map(s => s.r),
-                        backgroundColor: allStats.map((_, i) => i === activeIdx ? '#10b981' : 'rgba(16, 185, 129, 0.2)'),
-                        borderRadius: 5, barPercentage: 0.6
-                    },
-                    {
-                        label: 'Saída',
-                        data: allStats.map(s => s.g),
-                        backgroundColor: allStats.map((_, i) => i === activeIdx ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)'),
-                        borderRadius: 5, barPercentage: 0.6
-                    }
+                    { label: 'Receita', data: allStats.map(s => s.r), backgroundColor: '#10b981', borderRadius: 5 },
+                    { label: 'Gastos', data: allStats.map(s => s.g), backgroundColor: '#3b82f6', borderRadius: 5 }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    avgLineValue: avg // Value passed to the custom plugin
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 10 } } },
                     x: { grid: { display: false }, ticks: { color: colors.text, font: { size: 10, weight: '600' } } }
@@ -468,37 +457,78 @@
             }
         });
 
-        charts.comp = new Chart(document.getElementById('compositionChart'), {
+        // Gráfico de Alocação com Estilo "3D"
+        const ctxAlloc = document.getElementById('allocationChart').getContext('2d');
+        
+        const g1 = ctxAlloc.createLinearGradient(0, 0, 0, 300); g1.addColorStop(0, '#3b82f6'); g1.addColorStop(1, '#1d4ed8');
+        const g2 = ctxAlloc.createLinearGradient(0, 0, 0, 300); g2.addColorStop(0, '#ef4444'); g2.addColorStop(1, '#991b1b');
+        const g3 = ctxAlloc.createLinearGradient(0, 0, 0, 300); g3.addColorStop(0, '#f59e0b'); g3.addColorStop(1, '#b45309');
+        const g4 = ctxAlloc.createLinearGradient(0, 0, 0, 300); g4.addColorStop(0, '#8b5cf6'); g4.addColorStop(1, '#5b21b6');
+
+        charts.allocation = new Chart(ctxAlloc, {
             type: 'doughnut',
             data: {
-                labels: ['Invest', 'Cartões', 'Fixos', 'Outros'],
+                labels: ['Investimentos', 'Fixos', 'Cartões', 'Outros'],
                 datasets: [{
-                    data: [current.i, current.cartoes, current.fixos, current.outros],
-                    backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
-                    borderWidth: 0, cutout: '75%'
+                    data: [current.i, current.fixos, current.cartoes, current.outros],
+                    backgroundColor: [g1, g2, g3, g4],
+                    borderColor: isDark ? '#111827' : '#ffffff',
+                    borderWidth: 4,
+                    hoverOffset: 15,
+                    spacing: 5
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: colors.text, boxWidth: 10, font: { size: 11, weight: '500' } } }
+                },
+                animation: { animateScale: true, animateRotate: true }
+            }
         });
 
+        // Detalhamento de Saídas
         const list = document.getElementById('composition-list');
+        const totalOut = current.r || 1;
         const items = [
-            { n: 'Investimentos', v: current.i, c: '#3b82f6' },
-            { n: 'Cartões', v: current.cartoes, c: '#f59e0b' },
-            { n: 'Contas Fixas', v: current.fixos, c: '#ef4444' },
-            { n: 'Outros', v: current.outros, c: '#8b5cf6' }
+            { n: 'Investimentos', v: current.i, c: '#3b82f6', p: (current.i / totalOut * 100) },
+            { n: 'Contas Fixas', v: current.fixos, c: '#ef4444', p: (current.fixos / totalOut * 100) },
+            { n: 'Cartões (C6+ML)', v: current.cartoes, c: '#f59e0b', p: (current.cartoes / totalOut * 100) },
+            { n: 'Outros Gastos', v: current.outros, c: '#8b5cf6', p: (current.outros / totalOut * 100) }
         ].sort((a,b) => b.v - a.v);
 
         list.innerHTML = items.map(it => `
             <div class="category-item">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div style="width:8px; height:8px; border-radius:50%; background:${it.c}"></div>
-                    <span style="font-size:0.75rem;">${it.n}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:10px; height:10px; border-radius:3px; background:${it.c}; box-shadow: 0 0 10px ${it.c}66"></div>
+                    <span style="font-size:0.75rem; font-weight:500;">${it.n}</span>
                 </div>
-                <span style="font-size:0.75rem; font-weight:700;">${fmt.format(it.v)}</span>
+                <div style="text-align:right;">
+                    <div style="font-size:0.75rem; font-weight:700;">${fmt.format(it.v)}</div>
+                    <div style="font-size:0.6rem; color:var(--text-muted);">${it.p.toFixed(1)}% da renda</div>
+                </div>
             </div>
         `).join('');
     }
+
+    document.getElementById('themeSwitcher').onclick = function() {
+        const body = document.body;
+        const icon = document.getElementById('themeIcon');
+        
+        if (body.dataset.theme === 'dark') {
+            body.dataset.theme = 'light';
+            if (icon) icon.setAttribute('data-lucide', 'moon');
+        } else {
+            body.dataset.theme = 'dark';
+            if (icon) icon.setAttribute('data-lucide', 'sun');
+        }
+        
+        // Atualiza ícones e gráficos
+        lucide.createIcons();
+        const activeEl = document.querySelector(`.chip[data-idx="${activeIdx}"]`);
+        selectMonth(activeIdx, activeEl);
+    };
 
     window.onload = () => loadYearData('2025');
 </script>
