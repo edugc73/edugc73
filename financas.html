@@ -174,9 +174,9 @@
             <div class="actions-group">
                 <button class="btn-icon" onclick="window.print()" title="Imprimir Relatório"><i data-lucide="printer" size="16"></i></button>
                 <button class="btn-icon" id="themeSwitcher"><i id="themeIcon" data-lucide="sun" size="16"></i></button>
-                <div class="year-selector">
-                    <button class="year-btn active" onclick="changeYear('2025', this)">2025</button>
-                    <button class="year-btn" onclick="changeYear('2026', this)">2026</button>
+                <div class="year-selector" id="yearSelector">
+                    <button class="year-btn" data-year="2025" onclick="changeYear('2025', this)">2025</button>
+                    <button class="year-btn" data-year="2026" onclick="changeYear('2026', this)">2026</button>
                 </div>
             </div>
         </div>
@@ -342,10 +342,22 @@
     function renderUI() {
         const container = document.getElementById('monthChips');
         container.innerHTML = `<div class="chip special" data-idx="annual" onclick="selectMonth('annual', this)">Resumo Anual</div>`;
+        
+        const now = new Date();
+        const currentMonthIdx = now.getMonth(); // 0-11
+        let autoSelectIdx = 0;
+
         currentData.forEach((r, i) => {
+            const mesNome = normalize(getVal(r, "Mes"));
+            const isCurrentMonth = mesNome === MESES[currentMonthIdx];
+            if (isCurrentMonth) autoSelectIdx = i;
+
             container.innerHTML += `<div class="chip" data-idx="${i}" onclick="selectMonth(${i}, this)">${getVal(r, "Mes")}</div>`;
         });
-        selectMonth(0, document.querySelector('.chip[data-idx="0"]'));
+
+        // Seleciona o mês atual automaticamente
+        const chipToSelect = document.querySelector(`.chip[data-idx="${autoSelectIdx}"]`);
+        selectMonth(autoSelectIdx, chipToSelect);
     }
 
     function selectMonth(idx, el) {
@@ -580,7 +592,17 @@
         selectMonth(activeIdx, activeEl);
     };
 
-    window.onload = () => loadYearData('2025');
+    window.onload = () => {
+        // Lógica para detectar ano atual
+        const currentYear = new Date().getFullYear().toString();
+        const yearToLoad = SOURCES[currentYear] ? currentYear : '2025';
+        
+        // Ativa o botão do ano correto no seletor
+        const yearBtn = document.querySelector(`.year-btn[data-year="${yearToLoad}"]`);
+        if(yearBtn) yearBtn.classList.add('active');
+        
+        loadYearData(yearToLoad);
+    };
 </script>
 </body>
 </html>
