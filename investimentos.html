@@ -10,7 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand-primary: #6366f1;
+            --brand-primary: #22d3ee; 
+            --brand-primary-dark: #0891b2;
             --brand-success: #10b981;
             --bg-light: #f8fafc;
             --card-light: #ffffff;
@@ -51,10 +52,11 @@
         .light-mode #loading-overlay { background: var(--bg-light); }
 
         .group-header {
-            background: rgba(99, 102, 241, 0.05);
+            background: rgba(34, 211, 238, 0.05);
             border-left: 4px solid var(--brand-primary);
             cursor: pointer;
         }
+        .dark-mode .group-header:hover { background: rgba(34, 211, 238, 0.1); }
 
         .collapsible-content {
             max-height: 0; overflow: hidden;
@@ -62,7 +64,6 @@
         }
         .collapsible-content.expanded { max-height: 5000px; }
 
-        /* Estilo para a seta de expansão */
         .chevron-icon {
             transition: transform 0.3s ease;
         }
@@ -77,27 +78,27 @@
         
         .action-btn {
             padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: 800;
-            text-transform: uppercase; cursor: pointer; border: 1px solid rgba(99, 102, 241, 0.2);
+            text-transform: uppercase; cursor: pointer; border: 1px solid rgba(34, 211, 238, 0.3);
         }
     </style>
 </head>
 <body class="dark-mode">
 
     <div id="loading-overlay">
-        <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Configurando Meus Ativos 4.1...</p>
+        <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Atualizando Cálculos v4.4...</p>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="w-12 h-12 bg-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
             </div>
             <div>
-                <h1 class="text-2xl font-black tracking-tighter">Gonça<span class="text-indigo-500">Invest</span></h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">Data Analysis System</p>
+                <h1 class="text-2xl font-black tracking-tighter">Gonça<span class="text-cyan-400">Invest</span></h1>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">High Visibility Edition</p>
             </div>
         </div>
         
@@ -111,8 +112,9 @@
 
     <main class="max-w-7xl mx-auto px-6 pb-20">
         
+        <!-- KPIs Principais -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="glass-card p-6 border-b-4 border-indigo-500">
+            <div class="glass-card p-6 border-b-4 border-cyan-500">
                 <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Patrimônio Líquido</p>
                 <h2 id="total-atual" class="text-3xl font-black">R$ 0,00</h2>
                 <div id="perc-total" class="mt-2 text-[10px] font-bold">--</div>
@@ -139,17 +141,13 @@
             </div>
         </div>
 
+        <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
             <div class="glass-card p-6">
                 <div class="flex justify-between items-start mb-6">
                     <div>
                         <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Dividendos Recebidos</h3>
                         <p class="text-xs font-bold text-slate-400">Análise Comparativa</p>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 bg-indigo-500 rounded-full"></span><span class="text-[9px] font-bold">2026</span></div>
-                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span><span class="text-[9px] font-bold text-emerald-500">2025</span></div>
-                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 bg-amber-500 rounded-full"></span><span class="text-[9px] font-bold text-amber-500">2024</span></div>
                     </div>
                 </div>
                 <div class="h-80"><canvas id="chartDividendosAnual"></canvas></div>
@@ -166,17 +164,19 @@
             </div>
         </div>
 
+        <!-- Filtros e Ações -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <div class="flex items-center gap-4">
-                <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">MEUS ATIVOS <span id="asset-count" class="text-indigo-500">(0)</span></h3>
+                <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest">MEUS ATIVOS <span id="asset-count" class="text-cyan-400">(0)</span></h3>
                 <div class="flex gap-2">
-                    <button onclick="expandAll()" class="action-btn hover:bg-indigo-500 hover:text-white">Expandir Tudo</button>
-                    <button onclick="collapseAll()" class="action-btn hover:bg-indigo-500 hover:text-white">Recolher Tudo</button>
+                    <button onclick="expandAll()" class="action-btn hover:bg-cyan-500 hover:text-slate-900">Expandir Tudo</button>
+                    <button onclick="collapseAll()" class="action-btn hover:bg-cyan-500 hover:text-slate-900">Recolher Tudo</button>
                 </div>
             </div>
-            <input type="text" id="searchInput" placeholder="Filtrar por Ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/30 w-full md:w-64">
+            <input type="text" id="searchInput" placeholder="Filtrar por Ticker..." class="bg-slate-100 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-cyan-500/30 w-full md:w-64">
         </div>
 
+        <!-- Lista de Ativos -->
         <div id="assetsContainer" class="space-y-4"></div>
     </main>
 
@@ -236,19 +236,23 @@
             fullData = rows.slice(1).map(row => {
                 const ticker = row[1] ? row[1].trim() : '';
                 if (!ticker || ticker.toLowerCase().includes('total')) return null;
-                const atual = parseNum(row[10]);
+                
+                const quantidade = parseNum(row[3]);
                 const investido = parseNum(row[9]);
+                const atual = parseNum(row[10]);
+                
                 return {
                     tipo: row[0] ? row[0].trim() : 'Outros',
                     ativo: ticker.toUpperCase(),
+                    quantidade: quantidade,
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
-                    valorizacao: parseNum(row[7]), 
+                    valorizacaoPerc: parseNum(row[7]), // Coluna H (Índice 7) - Valorização %
                     proventos: parseNum(row[8]),
                     yoc: parseNum(row[11]),
                     investido: investido,
                     atual: atual,
-                    lucro: atual - investido,
+                    lucroPrejuizo: atual - investido,
                     peso: 0
                 };
             }).filter(d => d !== null);
@@ -298,8 +302,9 @@
                 if (groups[tipo].length === 0) return;
                 const assets = groups[tipo].sort((a, b) => b.atual - a.atual);
                 const subAtual = assets.reduce((s, a) => s + a.atual, 0);
-                const subBolso = assets.reduce((s, a) => s + a.investido, 0);
-                const subLucroPerc = subBolso > 0 ? ((subAtual - subBolso) / subBolso) * 100 : 0;
+                const subInvestido = assets.reduce((s, a) => s + a.investido, 0);
+                const subLucroPrejuizoTotal = subAtual - subInvestido;
+                const subPerc = subInvestido > 0 ? (subLucroPrejuizoTotal / subInvestido) * 100 : 0;
 
                 const section = document.createElement('div');
                 section.className = 'glass-card overflow-hidden border border-black/5 dark:border-white/5';
@@ -311,17 +316,18 @@
                 section.innerHTML = `
                     <div class="group-header p-5 flex justify-between items-center ${headerClass}" onclick="toggleGroup(this)">
                         <div class="flex items-center gap-3">
-                            <span class="text-[10px] font-black px-2 py-0.5 bg-indigo-600 text-white rounded uppercase flex items-center gap-2">
+                            <span class="text-[10px] font-black px-2 py-0.5 bg-cyan-500 text-slate-900 rounded uppercase flex items-center gap-2">
                                 ${tipo}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </span>
-                            <span class="text-[10px] font-bold ${subLucroPerc >= 0 ? 'text-emerald-500' : 'text-rose-500'}">
-                                ${subLucroPerc >= 0 ? '▲' : '▼'} ${subLucroPerc.toFixed(2)}%
+                            <span class="text-[10px] font-bold ${subPerc >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                                ${subPerc >= 0 ? '▲' : '▼'} ${subPerc.toFixed(2)}%
                             </span>
                         </div>
                         <div class="text-right">
+                            <span class="text-sm font-black text-slate-400 mr-4">Investido: ${fmtBRL(subInvestido)}</span>
                             <span class="text-sm font-black">${fmtBRL(subAtual)}</span>
                         </div>
                     </div>
@@ -331,30 +337,40 @@
                                 <thead class="bg-slate-50 dark:bg-slate-900/50 text-[9px] text-slate-500 uppercase font-black">
                                     <tr>
                                         <th class="py-3 px-6">Ativo</th>
-                                        <th class="py-3 px-4 text-right">Preço Médio</th>
-                                        <th class="py-3 px-4 text-right">Cotação</th>
+                                        <th class="py-3 px-4 text-right">Qtd | Investido</th>
+                                        <th class="py-3 px-4 text-right">P. Médio | Cotação</th>
                                         <th class="py-3 px-4 text-right">Proventos | YoC</th>
-                                        <th class="py-3 px-4 text-right">Total Atual | %</th>
-                                        <th class="py-3 px-6 text-right">Resultado</th>
+                                        <th class="py-3 px-4 text-right">Valor Atual | Peso</th>
+                                        <th class="py-3 px-6 text-right">Lucro/Prejuízo</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-black/5 dark:divide-white/5">
                                     ${assets.map(d => `
-                                        <tr class="hover:bg-indigo-500/[0.02]">
-                                            <td class="py-3 px-6 font-black text-indigo-500">${d.ativo}</td>
-                                            <td class="py-3 px-4 text-right font-bold">${fmtBRL(d.pMedio)}</td>
-                                            <td class="py-3 px-4 text-right font-black ${d.pAtual >= d.pMedio ? 'text-emerald-500' : 'text-rose-500'}">${fmtBRL(d.pAtual)}</td>
-                                            <td class="py-3 px-4 text-right">
+                                        <tr class="hover:bg-cyan-500/[0.03]">
+                                            <td class="py-4 px-6">
+                                                <div class="font-black text-cyan-400 text-sm tracking-tight">${d.ativo}</div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
+                                                <div class="font-bold">${d.quantidade.toLocaleString('pt-BR')} un.</div>
+                                                <div class="text-[9px] opacity-60 font-medium">Invest: ${fmtBRL(d.investido)}</div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
+                                                <div class="font-medium opacity-60">Médio: ${fmtBRL(d.pMedio)}</div>
+                                                <div class="font-black ${d.pAtual >= d.pMedio ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.pAtual)}</div>
+                                            </td>
+                                            <td class="py-4 px-4 text-right">
                                                 <div class="font-black text-amber-500">${fmtBRL(d.proventos)}</div>
                                                 <div class="text-[9px] font-bold opacity-60">${d.yoc.toFixed(2)}% YoC</div>
                                             </td>
-                                            <td class="py-3 px-4 text-right">
+                                            <td class="py-4 px-4 text-right">
                                                 <div class="font-black">${fmtBRL(d.atual)}</div>
-                                                <div class="text-[9px] font-bold text-slate-500">${d.peso.toFixed(2)}% do Total</div>
+                                                <div class="text-[9px] font-bold text-slate-500">${d.peso.toFixed(2)}% da Carteira</div>
                                             </td>
-                                            <td class="py-3 px-6 text-right">
-                                                <div class="font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">${fmtBRL(d.lucro)}</div>
-                                                <div class="text-[9px] font-bold opacity-60">${d.valorizacao.toFixed(2)}%</div>
+                                            <td class="py-4 px-6 text-right">
+                                                <div class="font-black ${d.lucroPrejuizo >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmtBRL(d.lucroPrejuizo)}</div>
+                                                <div class="text-[10px] font-bold ${d.valorizacaoPerc >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'}">
+                                                    ${d.valorizacaoPerc >= 0 ? '▲' : '▼'} ${Math.abs(d.valorizacaoPerc).toFixed(2)}%
+                                                </div>
                                             </td>
                                         </tr>`).join('')}
                                 </tbody>
@@ -377,14 +393,14 @@
                 data: {
                     labels: NOMES_MESES,
                     datasets: [
-                        { label: '2026', data: (dividendosHistorico["2026"]||[]).map(d=>d.valor), backgroundColor: '#6366f1', borderRadius: 4, barThickness: 8 },
+                        { label: '2026', data: (dividendosHistorico["2026"]||[]).map(d=>d.valor), backgroundColor: '#22d3ee', borderRadius: 4, barThickness: 8 },
                         { label: '2025', data: (dividendosHistorico["2025"]||[]).map(d=>d.valor), backgroundColor: '#10b981', borderRadius: 4, barThickness: 8 },
                         { label: '2024', data: (dividendosHistorico["2024"]||[]).map(d=>d.valor), backgroundColor: '#f59e0b', borderRadius: 4, barThickness: 8 }
                     ]
                 },
                 options: {
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { legend: { display: true, labels: { color: labelColor, font: { size: 9, weight: '700' } } } },
                     scales: {
                         y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 9, weight: '700' } } },
                         x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 9, weight: '800' } } }
@@ -401,7 +417,7 @@
                     labels: tipoLabels, 
                     datasets: [{ 
                         data: tipoDataValues, 
-                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
+                        backgroundColor: ['#22d3ee', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#3b82f6'],
                         borderWidth: isDark ? 4 : 3, borderColor: isDark ? '#161e31' : '#ffffff',
                     }] 
                 },
