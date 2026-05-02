@@ -112,8 +112,9 @@
         .kpi-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .kpi-value { font-size: 1.4rem; font-weight: 700; display: block; }
         .trend { font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-        .trend.up { color: var(--danger); }
-        .trend.down { color: var(--primary); }
+        .trend.up { color: var(--primary); } /* Verde para cima */
+        .trend.down { color: var(--danger); } /* Vermelho para baixo */
+        .trend.neutral { color: var(--text-muted); } /* Cinza estável */
 
         .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
         .chart-box { min-height: 380px; }
@@ -156,7 +157,7 @@
                 <div class="brand-icon"><i data-lucide="shield-check" size="20"></i></div>
                 <div>
                     <h1 style="font-size: 1.1rem;">Patrimônio Inteligente</h1>
-                    <p style="font-size: 0.65rem; color: var(--primary);">Análise Proativa v2.5</p>
+                    <p style="font-size: 0.65rem; color: var(--primary);">Análise Proativa v2.6</p>
                 </div>
             </div>
             <div class="actions-group">
@@ -199,7 +200,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 style="font-size: 0.9rem; font-weight: 600;"><i data-lucide="bar-chart-3" size="16" style="vertical-align: middle; margin-right: 8px;"></i>Desempenho Anual vs Média</h3>
                     <div id="avg-indicator" style="font-size: 0.7rem; background: var(--surface-accent); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);">
-                        Média Mensal: R$ 0,00
+                        Média Gastos: R$ 0,00
                     </div>
                 </div>
                 <div class="chart-container"><canvas id="mainChart"></canvas></div>
@@ -247,7 +248,7 @@
                 </div>
 
                 <div style="margin-top: 16px; padding: 15px; background: var(--surface-accent); border-radius: 16px;">
-                    <h4 style="font-size: 0.75rem; margin-bottom: 8px;">Dica do Especialista:</h4>
+                    <h4 style="font-size: 0.75rem; margin-bottom: 8px;">Análise Estratégica:</h4>
                     <p id="analysis-text" style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.5;"></p>
                 </div>
             </div>
@@ -325,7 +326,6 @@
             container.innerHTML += `<div class="chip" data-idx="${i}" onclick="selectMonth(${i}, this)">${m}</div>`;
         });
         selectMonth(0, document.querySelector('.chip[data-idx="0"]'));
-        lucide.createIcons();
     }
 
     function selectMonth(idx, el) {
@@ -342,11 +342,11 @@
                 r: a.r + b.r, g: a.g + b.g, i: a.i + b.i, s: a.s + b.s, 
                 cartoes: a.cartoes + b.cartoes, fixos: a.fixos + b.fixos, outros: a.outros + b.outros
             }), { r:0, g:0, i:0, s:0, cartoes:0, fixos:0, outros:0 });
-            document.getElementById('projection-text').innerText = `Mantendo a média de sobra mensal de ${fmt.format(current.s / allStats.length)}, você acumulará ${fmt.format(current.s)} até o final deste exercício.`;
+            document.getElementById('projection-text').innerText = `Projeção Anual: Se mantiver a média de sobra mensal de ${fmt.format(current.s / allStats.length)}, você acumulará ${fmt.format(current.s)} ao final deste ciclo.`;
         } else {
             current = allStats[idx];
             prev = idx > 0 ? allStats[idx-1] : null;
-            document.getElementById('projection-text').innerText = `Neste mês, seus gastos estão ${(current.g > avgGastos ? 'acima' : 'abaixo')} da sua média anual de ${fmt.format(avgGastos)}.`;
+            document.getElementById('projection-text').innerText = `Seus gastos neste mês estão ${(current.g > avgGastos ? 'acima' : 'abaixo')} da sua média histórica de ${fmt.format(avgGastos)}.`;
         }
 
         // Update KPIs
@@ -356,14 +356,24 @@
         document.getElementById('kpi-saldo').innerText = fmt.format(current.s);
         document.getElementById('avg-indicator').innerText = `Média Gastos: ${fmt.format(avgGastos)}`;
 
-        // Trends
+        // Trends Logic
         const updateTrend = (id, cur, pr) => {
             const tid = document.getElementById('trend-' + id);
-            if(!pr) { tid.innerHTML = '--'; return; }
-            const diff = ((cur - pr) / pr * 100);
-            const isUp = diff > 0;
-            tid.className = `trend ${isUp ? 'up' : 'down'}`;
-            tid.innerHTML = `<i data-lucide="trending-${isUp?'up':'down'}" size="12"></i> ${Math.abs(diff).toFixed(1)}% vs mês ant.`;
+            if(!pr) { tid.innerHTML = '--'; tid.className = 'trend neutral'; return; }
+            
+            const diff = cur - pr;
+            const perc = (Math.abs(diff) / pr * 100);
+            
+            if (Math.abs(diff) < 0.01) {
+                tid.className = 'trend neutral';
+                tid.innerHTML = `<i data-lucide="minus" size="12"></i> 0,00% (estável)`;
+            } else if (diff > 0) {
+                tid.className = 'trend up'; // Verde
+                tid.innerHTML = `<i data-lucide="trending-up" size="12"></i> ${perc.toFixed(1)}% vs mês ant.`;
+            } else {
+                tid.className = 'trend down'; // Vermelho
+                tid.innerHTML = `<i data-lucide="trending-down" size="12"></i> ${perc.toFixed(1)}% vs mês ant.`;
+            }
         };
         updateTrend('receita', current.r, prev?.r);
         updateTrend('gastos', current.g, prev?.g);
@@ -382,23 +392,52 @@
 
         // Analysis
         const analysis = document.getElementById('analysis-text');
-        if(pG > 85) analysis.innerText = "Cuidado! Seus gastos fixos e variáveis estão consumindo quase toda sua renda. Tente revisar os cartões.";
-        else if(pI > 20) analysis.innerText = "Parabéns! Sua taxa de poupança está acima da média de mercado. Continue diversificando.";
-        else analysis.innerText = "Seu fluxo de caixa está saudável. Considere automatizar uma parte do saldo para investimentos.";
+        if(pG > 85) analysis.innerText = "ALERTA: Seus gastos fixos e variáveis estão consumindo quase toda sua renda. Tente revisar faturas de cartões.";
+        else if(pI > 20) analysis.innerText = "EXCELENTE: Sua taxa de investimento está acima da média recomendada. Considere diversificar sua carteira.";
+        else analysis.innerText = "SAUDÁVEL: Seu fluxo de caixa está sob controle. Busque manter os gastos fixos abaixo de 50% da receita bruta.";
 
         updateCharts(idx, current, allStats, avgGastos);
         lucide.createIcons();
     }
 
+    // Custom Plugin to Draw Average Line
+    const avgLinePlugin = {
+        id: 'avgLine',
+        beforeDraw: (chart) => {
+            const { ctx, chartArea: { left, right, top, bottom }, scales: { y } } = chart;
+            const avgValue = chart.options.plugins.avgLineValue;
+            if (!avgValue) return;
+
+            const yPos = y.getPixelForValue(avgValue);
+            if (yPos < top || yPos > bottom) return;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.strokeStyle = '#f59e0b'; // Cor da média (warning)
+            ctx.moveTo(left, yPos);
+            ctx.lineTo(right, yPos);
+            ctx.stroke();
+            
+            // Label
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('MÉDIA', right - 40, yPos - 5);
+            ctx.restore();
+        }
+    };
+
     function updateCharts(activeIdx, current, allStats, avg) {
         const isDark = document.body.dataset.theme === 'dark';
-        const colors = isDark ? { text: '#9ca3af', grid: 'rgba(255,255,255,0.05)' } : { text: '#4b5563', grid: 'rgba(0,0,0,0.05)' };
+        const colors = isDark ? { text: '#9ca3af', grid: 'rgba(255,255,255,0.05)' } : { text: '#4b5563', grid: 'rgba(0,0,0,0.1)' };
 
         if(charts.main) charts.main.destroy();
         if(charts.comp) charts.comp.destroy();
 
         charts.main = new Chart(document.getElementById('mainChart'), {
             type: 'bar',
+            plugins: [avgLinePlugin],
             data: {
                 labels: allStats.map(s => s.mes),
                 datasets: [
@@ -420,11 +459,7 @@
                 responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    annotation: { // Polyfill manual simples via draw
-                        annotations: {
-                            line1: { type: 'line', yMin: avg, yMax: avg, borderColor: 'rgba(245, 158, 11, 0.5)', borderWidth: 2, borderDash: [5, 5] }
-                        }
-                    }
+                    avgLineValue: avg // Value passed to the custom plugin
                 },
                 scales: {
                     y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 10 } } },
