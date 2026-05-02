@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Variáveis de Tema */
         :root {
             --bg: #030712;
             --surface: #111827;
@@ -28,7 +27,6 @@
             --accent-purple: #8b5cf6;
             --chart-grid: rgba(255, 255, 255, 0.05);
             --focus-ring: #3b82f6;
-            --chart-bar-inactive: rgba(59, 130, 246, 0.2);
         }
 
         [data-theme="light"] {
@@ -46,7 +44,6 @@
             --accent-purple: #7c3aed;
             --chart-grid: rgba(0, 0, 0, 0.1);
             --focus-ring: #2563eb;
-            --chart-bar-inactive: rgba(37, 99, 235, 0.15);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -62,12 +59,6 @@
             min-height: 100vh;
             padding: 20px;
             transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* Estilo de Foco Acessível */
-        *:focus-visible {
-            outline: 2px solid var(--focus-ring);
-            outline-offset: 2px;
         }
 
         .container { max-width: 1400px; margin: 0 auto; animation: fadeIn 0.6s ease-out; }
@@ -126,11 +117,6 @@
             transition: all 0.2s;
         }
 
-        .theme-toggle:hover {
-            transform: scale(1.05);
-            background: var(--border);
-        }
-
         .year-selector {
             display: flex;
             background: var(--surface-accent);
@@ -176,7 +162,6 @@
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            user-select: none;
         }
 
         .chip.active {
@@ -210,7 +195,6 @@
             border: 1px solid var(--border);
             border-radius: 24px;
             padding: 20px;
-            transition: background 0.3s ease, border 0.3s ease;
         }
 
         .kpi-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
@@ -242,7 +226,7 @@
         .progress-bar-bg { background: var(--surface-accent); height: 8px; border-radius: 4px; margin-top: 6px; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
 
-        /* Loader & Error States */
+        /* Loader & Error */
         #loader {
             position: fixed; inset: 0; background: var(--bg); z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -256,12 +240,8 @@
             align-items: center;
             gap: 16px;
             max-width: 400px;
-            animation: fadeIn 0.4s ease-out;
         }
-        .error-icon { color: var(--danger); margin-bottom: 8px; }
-        .error-title { font-size: 1.25rem; font-weight: 700; }
-        .error-msg { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
-        
+        .error-icon { color: var(--danger); }
         .retry-btn {
             background: var(--primary);
             color: white;
@@ -270,9 +250,7 @@
             border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
         }
-        .retry-btn:hover { transform: translateY(-2px); }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -288,11 +266,11 @@
     <div id="loading-spinner" class="spinner"></div>
     <div id="error-content" class="error-container">
         <div class="error-icon"><i data-lucide="alert-circle" size="48"></i></div>
-        <h2 class="error-title">Falha na Sincronização</h2>
-        <p id="error-text" class="error-msg">Não foi possível carregar os dados financeiros. Verifique sua conexão com a internet.</p>
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin: 12px 0;">Falha na Conexão</h2>
+        <p id="error-text" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Não foi possível carregar os dados financeiros.</p>
         <button class="retry-btn" onclick="retryLoad()">Tentar Novamente</button>
     </div>
-    <p style="margin-top: 16px; font-size: 0.9rem; color: var(--text-muted);" id="loader-text">Carregando Dashboard...</p>
+    <p style="margin-top: 16px; font-size: 0.9rem; color: var(--text-muted);" id="loader-text">Carregando Finanças...</p>
 </div>
 
 <div class="container" id="main-content" style="display: none;">
@@ -302,98 +280,68 @@
                 <div class="brand-icon"><i data-lucide="layout-dashboard" size="20"></i></div>
                 <div>
                     <h1>Gestão de Patrimônio</h1>
-                    <p id="sync-status" style="font-size: 0.7rem; color: var(--primary);">Dados sincronizados</p>
+                    <p style="font-size: 0.7rem; color: var(--primary);">Atualizado em tempo real</p>
                 </div>
             </div>
             <div class="actions-group">
-                <button class="theme-toggle" id="themeSwitcher" title="Alternar Tema" aria-label="Alternar tema claro e escuro">
+                <button class="theme-toggle" id="themeSwitcher">
                     <i data-lucide="sun" id="sunIcon" style="display:none"></i>
                     <i data-lucide="moon" id="moonIcon"></i>
                 </button>
-                <div class="year-selector" role="group" aria-label="Seleção de Ano">
+                <div class="year-selector">
                     <button class="year-btn active" id="btn-2025" onclick="changeYear('2025', this)">2025</button>
                     <button class="year-btn" id="btn-2026" onclick="changeYear('2026', this)">2026</button>
                 </div>
             </div>
         </div>
-        
-        <div class="month-chips-container" id="monthChips" role="tablist" aria-label="Meses do ano"></div>
+        <div class="month-chips-container" id="monthChips"></div>
     </header>
 
     <div class="stats-grid">
-        <div class="card">
-            <span class="kpi-label">Entrada</span>
-            <span class="kpi-value" id="kpi-receita">R$ 0,00</span>
-        </div>
-        <div class="card">
-            <span class="kpi-label">Saída Total</span>
-            <span class="kpi-value" id="kpi-gastos">R$ 0,00</span>
-        </div>
-        <div class="card">
-            <span class="kpi-label">Investido</span>
-            <span class="kpi-value" id="kpi-invest">R$ 0,00</span>
-        </div>
-        <div class="card">
-            <span class="kpi-label">Saldo</span>
-            <span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
-        </div>
+        <div class="card"><span class="kpi-label">Entrada</span><span class="kpi-value" id="kpi-receita">R$ 0,00</span></div>
+        <div class="card"><span class="kpi-label">Saída Total</span><span class="kpi-value" id="kpi-gastos">R$ 0,00</span></div>
+        <div class="card"><span class="kpi-label">Investido</span><span class="kpi-value" id="kpi-invest">R$ 0,00</span></div>
+        <div class="card"><span class="kpi-label">Saldo</span><span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span></div>
     </div>
 
     <div class="main-grid">
-        <div class="left-col" style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="left-col">
             <div class="card chart-box">
                 <div class="chart-header">
-                    <div class="chart-title"><i data-lucide="bar-chart-3" size="18" color="var(--primary)"></i> Comparativo Mensal</div>
+                    <div class="chart-title"><i data-lucide="bar-chart-3" size="18" color="var(--primary)"></i> Comparativo Renda vs Gastos</div>
                 </div>
                 <div class="chart-container"><canvas id="mainChart"></canvas></div>
             </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="pie-chart" size="18" color="var(--secondary)"></i> Composição Relativa (%)</div>
+                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="pie-chart" size="18" color="var(--secondary)"></i> Composição do Mês</div>
                     <div class="chart-container" style="height: 180px;"><canvas id="compositionChart"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="home" size="18"></i> Distribuição dos Recursos</div>
+                    <div class="chart-title" style="margin-bottom: 16px;"><i data-lucide="home" size="18"></i> Distribuição</div>
                     <div id="composition-list"></div>
                 </div>
             </div>
         </div>
-
         <div class="right-col">
             <div class="card" style="height: 100%;">
-                <div class="chart-title" style="margin-bottom: 24px;"><i data-lucide="target" size="18" color="var(--accent-purple)"></i> Performance Financeira</div>
-                
+                <div class="chart-title" style="margin-bottom: 24px;"><i data-lucide="target" size="18" color="var(--accent-purple)"></i> Saúde Financeira</div>
                 <div class="progress-list">
                     <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                            <span>Comprometimento Renda</span>
-                            <span id="perc-gastos">0%</span>
-                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span>Comprometimento Renda</span><span id="perc-gastos">0%</span></div>
                         <div class="progress-bar-bg"><div id="bar-gastos" class="progress-bar-fill" style="background: var(--danger)"></div></div>
                     </div>
                     <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                            <span>Taxa de Investimento</span>
-                            <span id="perc-invest">0%</span>
-                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span>Taxa de Investimento</span><span id="perc-invest">0%</span></div>
                         <div class="progress-bar-bg"><div id="bar-invest" class="progress-bar-fill" style="background: var(--secondary)"></div></div>
                     </div>
                     <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                            <span>Margem Líquida</span>
-                            <span id="perc-saldo">0%</span>
-                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span>Margem Líquida</span><span id="perc-saldo">0%</span></div>
                         <div class="progress-bar-bg"><div id="bar-saldo" class="progress-bar-fill" style="background: var(--primary)"></div></div>
                     </div>
                 </div>
-
                 <div style="margin-top: 32px; padding: 20px; background: rgba(139, 92, 246, 0.05); border-radius: 16px; border: 1px solid rgba(139, 92, 246, 0.1);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <i data-lucide="info" size="16" color="var(--accent-purple)"></i>
-                        <span style="font-weight: 600; font-size: 0.85rem;">Status Financeiro</span>
-                    </div>
-                    <p id="analysis-text" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">Carregando análise...</p>
+                    <p id="analysis-text" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">Analisando dados...</p>
                 </div>
             </div>
         </div>
@@ -415,69 +363,38 @@
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const MESES_NOMES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
-    const themeSwitcher = document.getElementById('themeSwitcher');
-    themeSwitcher.onclick = () => {
+    document.getElementById('themeSwitcher').onclick = () => {
         const body = document.body;
-        const currentTheme = body.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
+        const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         body.setAttribute('data-theme', newTheme);
         document.getElementById('sunIcon').style.display = newTheme === 'light' ? 'none' : 'block';
         document.getElementById('moonIcon').style.display = newTheme === 'light' ? 'block' : 'none';
-        
-        if (currentData.length > 0) {
-            updateCharts(lastActiveIdx, getActiveStats());
-        }
+        updateCharts(lastActiveIdx, getActiveStats());
     };
 
-    function normalize(str) {
-        if (!str) return "";
-        return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    }
-
+    function normalize(str) { return str ? str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : ""; }
     function parseVal(v) {
         if (!v) return 0;
         if (typeof v === 'number') return v;
-        let clean = v.toString().replace(/\s/g, '').replace('R$', '').replace(/\./g, '').replace(',', '.');
-        let num = parseFloat(clean);
-        return isNaN(num) ? 0 : num;
+        let n = parseFloat(v.toString().replace(/\s/g, '').replace('R$', '').replace(/\./g, '').replace(',', '.'));
+        return isNaN(n) ? 0 : n;
     }
-
     function getVal(row, key) {
-        const target = normalize(key);
-        for (let k in row) {
-            if (normalize(k) === target) return row[k];
-        }
+        const t = normalize(key);
+        for (let k in row) if (normalize(k) === t) return row[k];
         return undefined;
     }
 
     function getMonthStats(row) {
         if (!row) return null;
-        const c6 = parseVal(getVal(row, "Cartao C6"));
-        const ml = parseVal(getVal(row, "Cartao ML"));
-        const luz = parseVal(getVal(row, "Luz"));
-        const agua = parseVal(getVal(row, "Agua"));
-        const desktop = parseVal(getVal(row, "DESKTOP"));
-        const iMae = parseVal(getVal(row, "Internet Mae"));
-        const iptu = parseVal(getVal(row, "IPTU"));
-        const celular = parseVal(getVal(row, "Celular"));
-        const outros = parseVal(getVal(row, "Outros Gastos"));
-        const ipva = parseVal(getVal(row, "IPVA"));
-        const cancao = parseVal(getVal(row, "Cancao Nova"));
-
-        const custosFixos = luz + agua + desktop + iMae + iptu + celular;
-        const totalCartoes = c6 + ml;
-        const totalOutros = outros + ipva + cancao;
-        
-        const gTotal = custosFixos + totalCartoes + totalOutros;
+        const c6 = parseVal(getVal(row, "Cartao C6")), ml = parseVal(getVal(row, "Cartao ML"));
+        const fixos = parseVal(getVal(row, "Luz")) + parseVal(getVal(row, "Agua")) + parseVal(getVal(row, "DESKTOP")) + parseVal(getVal(row, "Internet Mae")) + parseVal(getVal(row, "IPTU")) + parseVal(getVal(row, "Celular"));
+        const gTotal = fixos + c6 + ml + parseVal(getVal(row, "Outros Gastos")) + parseVal(getVal(row, "IPVA")) + parseVal(getVal(row, "Cancao Nova"));
         const rTotal = parseVal(getVal(row, "Salario Aposentadoria")) + parseVal(getVal(row, "Salario PTTC"));
-        const invest = parseVal(getVal(row, "Investimentos"));
-        const saldo = parseVal(getVal(row, "Saldo Final do Mes"));
-        
         return { 
-            mes: getVal(row, "Mes") || "---", 
-            c6, ml, gTotal, rTotal, invest, saldo,
-            custosFixos, totalCartoes, totalOutros
+            mes: getVal(row, "Mes") || "---", rTotal, gTotal, invest: parseVal(getVal(row, "Investimentos")), 
+            saldo: parseVal(getVal(row, "Saldo Final do Mes")), totalCartoes: c6 + ml, custosFixos: fixos,
+            totalOutros: parseVal(getVal(row, "Outros Gastos")) + parseVal(getVal(row, "IPVA")) + parseVal(getVal(row, "Cancao Nova"))
         };
     }
 
@@ -499,108 +416,62 @@
         await loadYearData(year);
     }
 
-    function showLoader() {
+    async function loadYearData(year) {
         document.getElementById('loader').style.display = 'flex';
-        document.getElementById('loading-spinner').style.display = 'block';
-        document.getElementById('error-content').style.display = 'none';
-        document.getElementById('loader-text').style.display = 'block';
         document.getElementById('main-content').style.display = 'none';
+        timeoutHandle = setTimeout(() => showError("Tempo limite excedido."), 15000);
+
+        Papa.parse(SOURCES[year], {
+            download: true, header: true, skipEmptyLines: true,
+            complete: (r) => {
+                clearTimeout(timeoutHandle);
+                currentData = r.data.filter(row => MESES_NOMES.includes(normalize(getVal(row, "Mes"))));
+                if (currentData.length > 0) {
+                    renderUI();
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                } else showError("Nenhum dado encontrado.");
+            },
+            error: () => showError("Erro ao carregar planilha.")
+        });
     }
 
-    function showError(msg) {
-        clearTimeout(timeoutHandle);
+    function showError(m) {
         document.getElementById('loading-spinner').style.display = 'none';
         document.getElementById('error-content').style.display = 'flex';
-        document.getElementById('loader-text').style.display = 'none';
-        if (msg) document.getElementById('error-text').innerText = msg;
+        document.getElementById('error-text').innerText = m;
         lucide.createIcons();
     }
 
     function retryLoad() { loadYearData(currentYear); }
 
-    async function loadYearData(year) {
-        showLoader();
-        timeoutHandle = setTimeout(() => {
-            showError("O servidor do Google Sheets demorou muito para responder.");
-        }, 12000);
-
-        Papa.parse(SOURCES[year], {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                clearTimeout(timeoutHandle);
-                currentData = results.data.filter(row => {
-                    const m = normalize(getVal(row, "Mes"));
-                    return MESES_NOMES.includes(m);
-                });
-
-                if (currentData.length > 0) {
-                    renderUI();
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('main-content').style.display = 'block';
-                } else {
-                    showError(`Não foram encontrados dados válidos para ${year}.`);
-                }
-            },
-            error: () => {
-                clearTimeout(timeoutHandle);
-                showError("Erro na conexão com a base de dados.");
-            }
-        });
-    }
-
-    function handleChipInteraction(idx, el, event) {
-        if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-        if (event.type === 'keydown') event.preventDefault();
-        selectMonth(idx, el);
-    }
-
     function renderUI() {
-        const container = document.getElementById('monthChips');
-        container.innerHTML = '';
-
-        const annualBtn = document.createElement('div');
-        annualBtn.className = 'chip special';
-        annualBtn.innerText = 'Resumo Anual';
-        annualBtn.tabIndex = 0;
-        annualBtn.role = "button";
-        annualBtn.onclick = (e) => handleChipInteraction('annual', annualBtn, e);
-        annualBtn.onkeydown = (e) => handleChipInteraction('annual', annualBtn, e);
-        container.appendChild(annualBtn);
-
-        currentData.forEach((row, i) => {
-            const btn = document.createElement('div');
-            btn.className = 'chip';
-            btn.innerText = getVal(row, "Mes");
-            btn.tabIndex = 0;
-            btn.role = "button";
-            btn.onclick = (e) => handleChipInteraction(i, btn, e);
-            btn.onkeydown = (e) => handleChipInteraction(i, btn, e);
-            container.appendChild(btn);
-        });
-
-        selectMonth(0, container.children[1]);
+        const c = document.getElementById('monthChips'); c.innerHTML = '';
+        const addBtn = (idx, label, cls) => {
+            const b = document.createElement('div'); b.className = 'chip ' + cls;
+            b.innerText = label; b.onclick = () => selectMonth(idx, b);
+            c.appendChild(b); return b;
+        };
+        const ann = addBtn('annual', 'Resumo Anual', 'special');
+        currentData.forEach((row, i) => addBtn(i, getVal(row, "Mes"), ''));
+        selectMonth(0, c.children[1]);
         lucide.createIcons();
     }
 
     function selectMonth(idx, el) {
-        if (!el) return;
         lastActiveIdx = idx;
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        updateDashboard(getActiveStats(), idx);
-    }
-
-    function updateDashboard(stats, idx) {
+        const stats = getActiveStats();
+        
         document.getElementById('kpi-receita').innerText = fmt.format(stats.rTotal);
         document.getElementById('kpi-gastos').innerText = fmt.format(stats.gTotal);
         document.getElementById('kpi-invest').innerText = fmt.format(stats.invest);
         document.getElementById('kpi-saldo').innerText = fmt.format(stats.saldo);
 
-        const pG = stats.rTotal > 0 ? (stats.gTotal / stats.rTotal) * 100 : 0;
-        const pI = stats.rTotal > 0 ? (stats.invest / stats.rTotal) * 100 : 0;
-        const pS = stats.rTotal > 0 ? (stats.saldo / stats.rTotal) * 100 : 0;
+        const pG = stats.rTotal > 0 ? (stats.gTotal / stats.rTotal * 100) : 0;
+        const pI = stats.rTotal > 0 ? (stats.invest / stats.rTotal * 100) : 0;
+        const pS = stats.rTotal > 0 ? (stats.saldo / stats.rTotal * 100) : 0;
 
         document.getElementById('perc-gastos').innerText = pG.toFixed(1) + '%';
         document.getElementById('bar-gastos').style.width = Math.min(pG, 100) + '%';
@@ -609,17 +480,72 @@
         document.getElementById('perc-saldo').innerText = pS.toFixed(1) + '%';
         document.getElementById('bar-saldo').style.width = Math.min(pS, 100) + '%';
 
-        const analysis = document.getElementById('analysis-text');
-        if (pI >= 20) analysis.innerText = "Excelente taxa de investimento! Você está construindo patrimônio de forma sólida.";
-        else if (pI > 0) analysis.innerText = "Bom trabalho mantendo investimentos. Tente reduzir custos fixos para aumentar essa margem.";
-        else analysis.innerText = "Mês desafiador. Foco em controlar os gastos para recuperar o fôlego financeiro.";
+        updateCharts(idx, stats);
+    }
 
-        const calcPerc = (val) => stats.rTotal > 0 ? (val / stats.rTotal * 100).toFixed(1) + '%' : '0%';
+    function updateCharts(activeIdx, stats) {
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        const colorIncome = isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(5, 150, 105, 0.15)';
+        const colorIncomeActive = isDark ? '#10b981' : '#059669';
+        const colorExpActive = isDark ? '#3b82f6' : '#1d4ed8';
+        const colorExpInactive = isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.12)';
+        const textColor = isDark ? '#9ca3af' : '#1f2937';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
+
+        if(charts.main) charts.main.destroy();
+        if(charts.comp) charts.comp.destroy();
+
+        charts.main = new Chart(document.getElementById('mainChart'), {
+            type: 'bar',
+            data: {
+                labels: currentData.map(d => getVal(d, "Mes")),
+                datasets: [
+                    {
+                        label: 'Renda (Entrada)',
+                        data: currentData.map(d => getMonthStats(d).rTotal),
+                        backgroundColor: currentData.map((_, i) => i === activeIdx ? colorIncomeActive : colorIncome),
+                        borderColor: currentData.map((_, i) => i === activeIdx ? colorIncomeActive : 'transparent'),
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Despesa (Saída)',
+                        data: currentData.map(d => getMonthStats(d).gTotal),
+                        backgroundColor: currentData.map((_, i) => i === activeIdx ? colorExpActive : colorExpInactive),
+                        borderColor: currentData.map((_, i) => i === activeIdx ? colorExpActive : 'transparent'),
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: '600' } } } },
+                scales: { 
+                    y: { grid: { color: gridColor }, ticks: { color: textColor } },
+                    x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600' } } }
+                }
+            }
+        });
+
+        charts.comp = new Chart(document.getElementById('compositionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Investimentos', 'Cartões', 'Custos Fixos', 'Outros', 'Saldo'],
+                datasets: [{
+                    data: [stats.invest, stats.totalCartoes, stats.custosFixos, stats.totalOutros, Math.max(0, stats.saldo)],
+                    backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
+                    borderWidth: isDark ? 0 : 2, borderColor: '#fff'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+        });
+
         const items = [
-            {n: 'Investimentos', v: stats.invest, p: calcPerc(stats.invest), c: 'var(--secondary)'},
-            {n: 'Cartões', v: stats.totalCartoes, p: calcPerc(stats.totalCartoes), c: 'var(--warning)'},
-            {n: 'Custos Fixos', v: stats.custosFixos, p: calcPerc(stats.custosFixos), c: 'var(--danger)'},
-            {n: 'Saldo Livre', v: stats.saldo, p: calcPerc(stats.saldo), c: 'var(--primary)'}
+            {n: 'Investimentos', v: stats.invest, c: '#3b82f6'},
+            {n: 'Cartões', v: stats.totalCartoes, c: '#f59e0b'},
+            {n: 'Custos Fixos', v: stats.custosFixos, c: '#ef4444'},
+            {n: 'Saldo Livre', v: stats.saldo, c: '#10b981'}
         ].sort((a,b) => b.v - a.v);
         
         document.getElementById('composition-list').innerHTML = items.map(f => `
@@ -629,97 +555,10 @@
                     <span style="font-size: 0.8rem;">${f.n}</span>
                 </div>
                 <div style="text-align: right;">
-                    <div style="font-size: 0.8rem; font-weight: 700;">${f.p}</div>
-                    <div style="font-size: 0.65rem; color: var(--text-muted);">${fmt.format(f.v)}</div>
+                    <div style="font-size: 0.8rem; font-weight: 700;">${fmt.format(f.v)}</div>
                 </div>
             </div>
         `).join('');
-
-        updateCharts(idx, stats);
-    }
-
-    function updateCharts(activeIdx, stats) {
-        const theme = document.body.getAttribute('data-theme');
-        const isDark = theme === 'dark';
-        
-        // Configuração de cores para alto contraste
-        const colorMainActive = isDark ? '#3b82f6' : '#1d4ed8'; // Azul mais escuro no modo claro
-        const colorMainInactive = isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(37, 99, 235, 0.12)';
-        const colorIncome = isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(5, 150, 105, 0.08)';
-        const borderColorIncome = isDark ? '#10b981' : '#059669';
-        
-        const textColor = isDark ? '#9ca3af' : '#1f2937';
-        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
-
-        if(charts.main) charts.main.destroy();
-        if(charts.comp) charts.comp.destroy();
-
-        const ctxMain = document.getElementById('mainChart').getContext('2d');
-        charts.main = new Chart(ctxMain, {
-            type: 'bar',
-            data: {
-                labels: currentData.map(d => getVal(d, "Mes")),
-                datasets: [
-                    {
-                        label: 'Renda',
-                        data: currentData.map(d => getMonthStats(d).rTotal),
-                        backgroundColor: colorIncome,
-                        borderColor: borderColorIncome,
-                        borderWidth: 1.5,
-                        borderRadius: 4,
-                        hidden: activeIdx !== 'annual'
-                    },
-                    {
-                        label: 'Total Gasto',
-                        data: currentData.map(d => getMonthStats(d).gTotal),
-                        backgroundColor: currentData.map((_, i) => i === activeIdx ? colorMainActive : colorMainInactive),
-                        borderColor: currentData.map((_, i) => i === activeIdx ? colorMainActive : 'transparent'),
-                        borderWidth: 1,
-                        borderRadius: 6
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: activeIdx === 'annual', labels: { color: textColor, font: { weight: '600' } } },
-                    tooltip: { backgroundColor: isDark ? '#1f2937' : '#ffffff', titleColor: textColor, bodyColor: textColor, borderColor: gridColor, borderWidth: 1 }
-                },
-                scales: { 
-                    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { weight: '500' } } },
-                    x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '600' } } }
-                }
-            }
-        });
-
-        const ctxComp = document.getElementById('compositionChart').getContext('2d');
-        const totalBase = stats.rTotal || 1;
-        charts.comp = new Chart(ctxComp, {
-            type: 'doughnut',
-            data: {
-                labels: ['Investimentos', 'Cartões', 'Custos Fixos', 'Outros', 'Margem'],
-                datasets: [{
-                    data: [
-                        (stats.invest / totalBase * 100),
-                        (stats.totalCartoes / totalBase * 100),
-                        (stats.custosFixos / totalBase * 100),
-                        (stats.totalOutros / totalBase * 100),
-                        (stats.saldo / totalBase * 100)
-                    ],
-                    backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
-                    borderWidth: isDark ? 0 : 2,
-                    borderColor: '#ffffff',
-                    hoverOffset: 12
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '72%',
-                plugins: { legend: { display: false } }
-            }
-        });
     }
 
     window.onload = () => loadYearData('2025');
