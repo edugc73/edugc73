@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* Variáveis de Tema */
         :root {
             --bg: #030712;
             --surface: #111827;
@@ -25,6 +26,23 @@
             --glass: rgba(17, 24, 39, 0.7);
             --border: rgba(255, 255, 255, 0.08);
             --accent-purple: #8b5cf6;
+            --chart-grid: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="light"] {
+            --bg: #f3f4f6;
+            --surface: #ffffff;
+            --surface-accent: #e5e7eb;
+            --primary: #059669;
+            --secondary: #2563eb;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --text-main: #111827;
+            --text-muted: #4b5563;
+            --glass: rgba(255, 255, 255, 0.8);
+            --border: rgba(0, 0, 0, 0.08);
+            --accent-purple: #7c3aed;
+            --chart-grid: rgba(0, 0, 0, 0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,6 +57,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
             padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container { max-width: 1400px; margin: 0 auto; animation: fadeIn 0.6s ease-out; }
@@ -78,6 +97,30 @@
         }
         .brand h1 { font-size: 1.25rem; font-weight: 700; }
 
+        .actions-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .theme-toggle {
+            background: var(--surface-accent);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            background: var(--border);
+        }
+
         .year-selector {
             display: flex;
             background: var(--surface-accent);
@@ -99,7 +142,7 @@
 
         .year-btn.active {
             background: var(--primary);
-            color: #030712;
+            color: white;
         }
 
         .month-chips-container {
@@ -127,8 +170,8 @@
         .chip.active {
             background: var(--primary);
             border-color: var(--primary);
-            color: #030712;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
         }
 
         .chip.special {
@@ -155,6 +198,7 @@
             border: 1px solid var(--border);
             border-radius: 24px;
             padding: 20px;
+            transition: background 0.3s ease, border 0.3s ease;
         }
 
         .kpi-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
@@ -177,13 +221,13 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px;
-            background: rgba(255,255,255,0.03);
+            background: var(--surface-accent);
             border-radius: 12px;
             margin-bottom: 8px;
         }
 
         .progress-list { display: flex; flex-direction: column; gap: 16px; }
-        .progress-bar-bg { background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; margin-top: 6px; }
+        .progress-bar-bg { background: var(--surface-accent); height: 8px; border-radius: 4px; margin-top: 6px; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
 
         #loader {
@@ -199,7 +243,7 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
 <div id="loader">
     <div class="spinner"></div>
@@ -216,9 +260,15 @@
                     <p id="sync-status" style="font-size: 0.7rem; color: var(--primary);">Dados sincronizados</p>
                 </div>
             </div>
-            <div class="year-selector">
-                <button class="year-btn active" onclick="changeYear('2025', this)">2025</button>
-                <button class="year-btn" onclick="changeYear('2026', this)">2026</button>
+            <div class="actions-group">
+                <button class="theme-toggle" id="themeSwitcher" title="Alternar Tema">
+                    <i data-lucide="sun" id="sunIcon" style="display:none"></i>
+                    <i data-lucide="moon" id="moonIcon"></i>
+                </button>
+                <div class="year-selector">
+                    <button class="year-btn active" onclick="changeYear('2025', this)">2025</button>
+                    <button class="year-btn" onclick="changeYear('2026', this)">2026</button>
+                </div>
             </div>
         </div>
         
@@ -306,6 +356,7 @@
 </div>
 
 <script>
+    // Configurações Globais
     const SOURCES = {
         '2025': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=256105834&single=true&output=csv',
         '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv'
@@ -313,9 +364,28 @@
 
     let currentData = [];
     let charts = {};
+    let lastActiveIdx = 1;
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const MESES_NOMES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
+    // Gerenciador de Tema
+    const themeSwitcher = document.getElementById('themeSwitcher');
+    themeSwitcher.onclick = () => {
+        const body = document.body;
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        body.setAttribute('data-theme', newTheme);
+        document.getElementById('sunIcon').style.display = newTheme === 'light' ? 'none' : 'block';
+        document.getElementById('moonIcon').style.display = newTheme === 'light' ? 'block' : 'none';
+        
+        // Atualiza cores dos gráficos sem recarregar dados
+        if (currentData.length > 0) {
+            selectMonth(lastActiveIdx, document.querySelector(`.chip:nth-child(${lastActiveIdx + 2})`));
+        }
+    };
+
+    // Utilitários de Dados
     function normalize(str) {
         if (!str) return "";
         return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -361,14 +431,14 @@
         const invest = parseVal(getVal(row, "Investimentos"));
         const saldo = parseVal(getVal(row, "Saldo Final do Mes"));
         
-        let mes = getVal(row, "Mes") || "---";
-        
         return { 
-            mes, c6, ml, luz, agua, desktop, iMae, gTotal, rTotal, invest, saldo,
+            mes: getVal(row, "Mes") || "---", 
+            c6, ml, gTotal, rTotal, invest, saldo,
             custosFixos, totalCartoes, totalOutros
         };
     }
 
+    // Fluxo de UI
     async function changeYear(year, btn) {
         document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -393,8 +463,6 @@
                     renderUI();
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
-                } else {
-                    document.getElementById('loader-text').innerText = "Nenhum dado encontrado.";
                 }
             }
         });
@@ -423,6 +491,7 @@
     }
 
     function selectMonth(idx, el) {
+        lastActiveIdx = idx === 'annual' ? 'annual' : idx;
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
 
@@ -437,11 +506,13 @@
             stats = getMonthStats(currentData[idx]);
         }
 
+        // KPIs
         document.getElementById('kpi-receita').innerText = fmt.format(stats.rTotal);
         document.getElementById('kpi-gastos').innerText = fmt.format(stats.gTotal);
         document.getElementById('kpi-invest').innerText = fmt.format(stats.invest);
         document.getElementById('kpi-saldo').innerText = fmt.format(stats.saldo);
 
+        // Barras de Progresso
         const pG = stats.rTotal > 0 ? (stats.gTotal / stats.rTotal) * 100 : 0;
         const pI = stats.rTotal > 0 ? (stats.invest / stats.rTotal) * 100 : 0;
         const pS = stats.rTotal > 0 ? (stats.saldo / stats.rTotal) * 100 : 0;
@@ -453,15 +524,13 @@
         document.getElementById('perc-saldo').innerText = pS.toFixed(1) + '%';
         document.getElementById('bar-saldo').style.width = Math.min(pS, 100) + '%';
 
-        // Detalhamento de Categorias em % em relação à RECEITA TOTAL
+        // Lista de Composição
         const calcPerc = (val) => stats.rTotal > 0 ? (val / stats.rTotal * 100).toFixed(1) + '%' : '0%';
-
         const items = [
             {n: 'Investimentos', v: stats.invest, p: calcPerc(stats.invest), c: 'var(--secondary)'},
             {n: 'Cartões', v: stats.totalCartoes, p: calcPerc(stats.totalCartoes), c: 'var(--warning)'},
             {n: 'Custos Fixos', v: stats.custosFixos, p: calcPerc(stats.custosFixos), c: 'var(--danger)'},
-            {n: 'Outros/IPVA', v: stats.totalOutros, p: calcPerc(stats.totalOutros), c: 'var(--accent-purple)'},
-            {n: 'Margem Livre', v: stats.saldo, p: calcPerc(stats.saldo), c: 'var(--primary)'}
+            {n: 'Saldo Livre', v: stats.saldo, p: calcPerc(stats.saldo), c: 'var(--primary)'}
         ].sort((a,b) => b.v - a.v);
         
         document.getElementById('composition-list').innerHTML = items.map(f => `
@@ -477,17 +546,18 @@
             </div>
         `).join('');
 
-        document.getElementById('analysis-text').innerText = pI > 20 
-            ? "Fabuloso! Você está investindo mais de 20% da sua receita total."
-            : "Tente equilibrar as despesas de cartões para que o percentual de investimento cresça.";
-
         updateCharts(idx, stats);
     }
 
     function updateCharts(activeIdx, stats) {
+        const theme = document.body.getAttribute('data-theme');
+        const textColor = theme === 'dark' ? '#9ca3af' : '#4b5563';
+        const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+
         if(charts.main) charts.main.destroy();
         if(charts.comp) charts.comp.destroy();
 
+        // Gráfico de Barras
         const ctxMain = document.getElementById('mainChart').getContext('2d');
         charts.main = new Chart(ctxMain, {
             type: 'bar',
@@ -497,7 +567,7 @@
                     {
                         label: 'Renda',
                         data: currentData.map(d => getMonthStats(d).rTotal),
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        backgroundColor: theme === 'dark' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)',
                         borderColor: '#10b981',
                         borderWidth: 1,
                         borderRadius: 4,
@@ -506,7 +576,7 @@
                     {
                         label: 'Total Gasto',
                         data: currentData.map(d => getMonthStats(d).gTotal),
-                        backgroundColor: currentData.map((_, i) => i === activeIdx ? '#3b82f6' : 'rgba(59, 130, 246, 0.2)'),
+                        backgroundColor: currentData.map((_, i) => i === activeIdx ? '#3b82f6' : (theme === 'dark' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)')),
                         borderRadius: 6
                     }
                 ]
@@ -514,14 +584,17 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: activeIdx === 'annual' } },
-                scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } } }
+                plugins: { legend: { display: activeIdx === 'annual', labels: { color: textColor } } },
+                scales: { 
+                    y: { grid: { color: gridColor }, ticks: { color: textColor } },
+                    x: { ticks: { color: textColor } }
+                }
             }
         });
 
-        // Gráfico de Composição em Porcentagem
+        // Gráfico de Rosca
         const ctxComp = document.getElementById('compositionChart').getContext('2d');
-        const totalBase = stats.rTotal || 1; // Evita divisão por zero
+        const totalBase = stats.rTotal || 1;
         
         charts.comp = new Chart(ctxComp, {
             type: 'doughnut',
@@ -548,12 +621,7 @@
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed !== null) label += context.parsed.toFixed(1) + '%';
-                                return label;
-                            }
+                            label: (context) => (context.label + ': ' + context.parsed.toFixed(1) + '%')
                         }
                     }
                 }
