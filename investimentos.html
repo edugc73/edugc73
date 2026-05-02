@@ -123,7 +123,7 @@
 
     <div id="loading-overlay">
         <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Carregando Dashboard 3.1...</p>
+        <p class="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Carregando Dashboard 3.2...</p>
     </div>
 
     <nav class="max-w-7xl mx-auto p-6 flex justify-between items-center">
@@ -337,6 +337,7 @@
                     ativo: ticker.toUpperCase(),
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
+                    valorizacao: parseNum(row[7]), // Coluna H
                     proventosRecebidos: parseNum(row[8]), // Coluna I
                     yoc: parseNum(row[11]), // Coluna L
                     investidoBolso: parseNum(row[9]),
@@ -476,6 +477,7 @@
                         </td>
                         <td class="py-4 px-6 text-right">
                             <div class="text-sm font-black ${d.lucro >= 0 ? 'text-emerald-500' : 'text-rose-500'}">R$ ${d.lucro.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
+                            <div class="text-[10px] font-bold ${d.valorizacao >= 0 ? 'text-emerald-500/80' : 'text-rose-500/80'} uppercase tracking-tighter">${d.valorizacao >= 0 ? '▲' : '▼'} ${d.valorizacao.toFixed(2)}%</div>
                         </td>
                     </tr>`).join('');
 
@@ -501,7 +503,7 @@
                                         <th class="py-4 px-4 text-right">Cotação</th>
                                         <th class="py-4 px-4 text-right">Proventos / YoC</th>
                                         <th class="py-4 px-4 text-right">Total Atual</th>
-                                        <th class="py-4 px-6 text-right">Lucro/Prejuízo</th>
+                                        <th class="py-4 px-6 text-right">Lucro & Valorização</th>
                                     </tr>
                                 </thead>
                                 <tbody>${rows}</tbody>
