@@ -242,7 +242,7 @@
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Alocação de Ativos</h3>
-                        <p class="text-xs font-bold text-slate-400">Distribuição Estratégica</p>
+                        <p class="text-xs font-bold text-slate-400">Concentração por Classe (%)</p>
                     </div>
                 </div>
                 <div class="h-80 chart-container-3d"><canvas id="chartAlocacaoTipo"></canvas></div>
@@ -337,9 +337,9 @@
                     ativo: ticker.toUpperCase(),
                     pMedio: parseNum(row[4]),
                     pAtual: parseNum(row[5]),
-                    valorizacao: parseNum(row[7]), // Coluna H
-                    proventosRecebidos: parseNum(row[8]), // Coluna I
-                    yoc: parseNum(row[11]), // Coluna L
+                    valorizacao: parseNum(row[7]), 
+                    proventosRecebidos: parseNum(row[8]),
+                    yoc: parseNum(row[11]),
                     investidoBolso: parseNum(row[9]),
                     atual: parseNum(row[10]),
                     lucro: parseNum(row[10]) - parseNum(row[9]),
@@ -370,7 +370,6 @@
 
             fullData.forEach(d => d.peso = totalPatrimonio > 0 ? (d.atual / totalPatrimonio) * 100 : 0);
 
-            // Atualiza contador de ativos total
             document.getElementById('total-ativos-count').innerText = `(${fullData.length})`;
 
             const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -558,14 +557,15 @@
             });
 
             const tipoLabels = [...new Set(fullData.map(d => d.tipo))];
-            const tipoData = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
-            
+            const tipoDataValues = tipoLabels.map(l => fullData.filter(d => d.tipo === l).reduce((s, a) => s + a.atual, 0));
+            const totalAlocacao = tipoDataValues.reduce((s, v) => s + v, 0);
+
             charts.aloc = new Chart(document.getElementById('chartAlocacaoTipo'), {
                 type: 'doughnut',
                 data: { 
                     labels: tipoLabels, 
                     datasets: [{ 
-                        data: tipoData, 
+                        data: tipoDataValues, 
                         backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'],
                         borderWidth: isDark ? 4 : 3,
                         borderColor: isDark ? '#161e31' : '#ffffff',
@@ -577,8 +577,24 @@
                     plugins: { 
                         legend: { 
                             position: 'bottom', 
-                            labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 20, usePointStyle: true } 
-                        } 
+                            labels: { 
+                                color: labelColor, 
+                                font: { size: 10, weight: '800' }, 
+                                padding: 20, 
+                                usePointStyle: true,
+                                boxWidth: 8
+                            } 
+                        },
+                        tooltip: {
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = totalAlocacao > 0 ? (value / totalAlocacao * 100).toFixed(1) : 0;
+                                    return ` ${percentage}%`;
+                                }
+                            }
+                        }
                     }
                 }
             });
