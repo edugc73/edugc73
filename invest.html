@@ -703,7 +703,9 @@
 
             // Proteção contra dados de histórico vazios
             const anosDisponiveis = Object.keys(dividendosHistorico).sort((a,b) => b-a);
-            const cores = ['#10b981', '#059669', '#f59e0b', '#d97706'];
+            
+            // CORES ALTERADAS AQUI (Azul, Verde, Amarelo e Rosa)
+            const cores = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
             
             const datasets = anosDisponiveis.length > 0 ? anosDisponiveis.map((ano, idx) => ({
                 label: ano,
@@ -750,18 +752,7 @@
                     options: { 
                         maintainAspectRatio: false, cutout: '72%', 
                         plugins: { 
-                            legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } },
-                            // MODIFICAÇÃO: Callback adicionado para renderizar em porcentagem no hover
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const value = context.parsed;
-                                        const percent = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
-                                        return `${context.label}: ${percent}%`;
-                                    }
-                                }
-                            }
+                            legend: { position: 'bottom', labels: { color: labelColor, font: { size: 10, weight: '800' }, padding: 15, usePointStyle: true } }
                         }
                     }
                 });
