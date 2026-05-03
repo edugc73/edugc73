@@ -45,21 +45,6 @@
             --card-hover-shadow: 0 15px 30px -5px rgba(0,0,0,0.15);
         }
 
-        [data-theme="light"] {
-            --bg: #f3f4f6;
-            --surface: #ffffff;
-            --surface-accent: #e5e7eb;
-            --primary: #059669;
-            --secondary: #2563eb;
-            --warning: #d97706;
-            --danger: #dc2626;
-            --text-main: #111827;
-            --text-muted: #4b5563;
-            --glass: rgba(255, 255, 255, 0.8);
-            --border: rgba(0, 0, 0, 0.08);
-            --chart-grid: rgba(0, 0, 0, 0.1);
-        }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
@@ -424,9 +409,13 @@
         let current, prev;
         if(idx === 'annual') {
             current = allStats.reduce((a, b) => ({
-                r: a.r + b.r, g: a.g + b.g, i: a.i + b.i, s: a.s + b.s, 
+                r: a.r + b.r, g: a.g + b.g, i: a.i + b.i, 
                 fixos: a.fixos + b.fixos, cartoes: a.cartoes + b.cartoes, outros: a.outros + b.outros
-            }), { r:0, g:0, i:0, s:0, fixos:0, cartoes:0, outros:0 });
+            }), { r:0, g:0, i:0, fixos:0, cartoes:0, outros:0 });
+            
+            // Lógica alterada: Para o "Resumo Anual", o saldo final será o do último mês disponível registrado.
+            current.s = allStats[allStats.length - 1].s;
+
             document.getElementById('projection-text').innerText = `Projeção Anual: Com base no seu saldo acumulado de ${fmt.format(current.s)}, está a construir um património sólido.`;
         } else {
             current = allStats[idx];
