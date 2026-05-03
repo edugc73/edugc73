@@ -161,7 +161,7 @@
                 </div>
                 <div class="w-full md:w-64">
                     <select id="select-ativo" onchange="renderRaioXAtivo()" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
-                        <option value="">AFHI11</option>
+                        <option value="">Carregando ativos...</option>
                     </select>
                 </div>
             </div>
@@ -180,7 +180,7 @@
                     </div>
                     <div id="tabela-raiox-body" class="overflow-y-auto custom-scrollbar flex-1 p-2 space-y-1">
                         <div class="flex items-center justify-center h-full text-xs font-bold text-slate-500">
-                           afhi11
+                            Selecione um ativo para visualizar.
                         </div>
                     </div>
                 </div>
@@ -471,7 +471,7 @@
             const select = document.getElementById('select-ativo');
             if (!select) return;
             const currentVal = select.value;
-            select.innerHTML = '<option value="">Selecione um ativo...</option>';
+            select.innerHTML = '';
             const ativosDisponiveis = Object.keys(proventosAtivos).sort();
             ativosDisponiveis.forEach(ativo => {
                 const opt = document.createElement('option');
@@ -479,7 +479,12 @@
                 opt.textContent = ativo;
                 select.appendChild(opt);
             });
-            if (currentVal && proventosAtivos[currentVal]) select.value = currentVal;
+            
+            if (currentVal && proventosAtivos[currentVal]) {
+                select.value = currentVal;
+            } else if (ativosDisponiveis.length > 0) {
+                select.value = ativosDisponiveis[0]; // Auto-seleciona o primeiro ativo (ex: AHFI11)
+            }
         }
 
         function renderRaioXAtivo() {
