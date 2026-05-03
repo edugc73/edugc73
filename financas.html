@@ -24,6 +24,25 @@
             --glass: rgba(17, 24, 39, 0.7);
             --border: rgba(255, 255, 255, 0.08);
             --chart-grid: rgba(255, 255, 255, 0.05);
+            --card-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            --card-hover-shadow: 0 20px 40px -10px rgba(0,0,0,0.7);
+        }
+
+        [data-theme="light"] {
+            --bg: #f3f4f6;
+            --surface: #ffffff;
+            --surface-accent: #e5e7eb;
+            --primary: #059669;
+            --secondary: #2563eb;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --text-main: #111827;
+            --text-muted: #4b5563;
+            --glass: rgba(255, 255, 255, 0.8);
+            --border: rgba(0, 0, 0, 0.08);
+            --chart-grid: rgba(0, 0, 0, 0.1);
+            --card-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            --card-hover-shadow: 0 15px 30px -5px rgba(0,0,0,0.15);
         }
 
         [data-theme="light"] {
@@ -107,7 +126,14 @@
         .card {
             background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 18px;
             position: relative; overflow: hidden;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-hover-shadow);
+            z-index: 10;
         }
         .kpi-label { color: var(--text-muted); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .kpi-value { font-size: 1.4rem; font-weight: 700; display: block; }
@@ -292,8 +318,31 @@
     let currentData = [];
     let charts = {};
     let activeIdx = 0;
+    // Variável para armazenar os valores anteriores e criar a animação suave
+    let prevKpiValues = { r: 0, g: 0, i: 0, s: 0 };
+    
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const MESES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+    // Função sofisticada para animar os números gradualmente
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easeProgress = progress * (2 - progress); // easeOutQuad
+            const currentVal = (easeProgress * (end - start) + start);
+            obj.innerText = fmt.format(currentVal);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerText = fmt.format(end); // Garante precisão no final
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
 
     function normalize(s) { return s ? s.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : ""; }
     function parseVal(v) {
@@ -388,11 +437,15 @@
                 : `Este mês está ${Math.abs(diffAvg).toFixed(0)}% ABAIXO da sua média. Ótimo controlo!`;
         }
 
-        // KPIs principais
-        document.getElementById('kpi-receita').innerText = fmt.format(current.r);
-        document.getElementById('kpi-gastos').innerText = fmt.format(current.g);
-        document.getElementById('kpi-invest').innerText = fmt.format(current.i);
-        document.getElementById('kpi-saldo').innerText = fmt.format(current.s);
+        // Animação dos KPIs principais (Conta a partir do valor do mês anterior)
+        animateValue('kpi-receita', prevKpiValues.r, current.r, 800);
+        animateValue('kpi-gastos', prevKpiValues.g, current.g, 800);
+        animateValue('kpi-invest', prevKpiValues.i, current.i, 800);
+        animateValue('kpi-saldo', prevKpiValues.s, current.s, 800);
+        
+        // Atualiza os valores anteriores para a próxima animação
+        prevKpiValues = { r: current.r, g: current.g, i: current.i, s: current.s };
+
         document.getElementById('avg-indicator').innerText = `Média: ${fmt.format(avgGastos)}`;
 
         // Reserva de Emergência
@@ -467,9 +520,21 @@
 
         // Linha de Média para o Gráfico
         const averageData = new Array(allStats.length).fill(avgGastosValue);
+        
+        // Contexto para criar os gradientes visuais
+        const ctxMain = document.getElementById('mainChart').getContext('2d');
+        
+        // Criando gradientes modernos que desaparecem no final da barra
+        const gradientReceita = ctxMain.createLinearGradient(0, 0, 0, 350);
+        gradientReceita.addColorStop(0, '#10b981'); 
+        gradientReceita.addColorStop(1, isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.4)');
+
+        const gradientGastos = ctxMain.createLinearGradient(0, 0, 0, 350);
+        gradientGastos.addColorStop(0, '#3b82f6');
+        gradientGastos.addColorStop(1, isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.4)');
 
         // Gráfico Principal (Barras + Linha de Média)
-        charts.main = new Chart(document.getElementById('mainChart'), {
+        charts.main = new Chart(ctxMain, {
             data: {
                 labels: allStats.map(s => s.mes),
                 datasets: [
@@ -482,6 +547,7 @@
                         borderDash: [5, 5],
                         pointRadius: 0,
                         fill: false,
+                        tension: 0.4, // Curva mais orgânica e suave na linha
                         zIndex: 10,
                         order: 1
                     },
@@ -489,16 +555,18 @@
                         type: 'bar',
                         label: 'Receita', 
                         data: allStats.map(s => s.r), 
-                        backgroundColor: '#10b981', 
-                        borderRadius: 5,
+                        backgroundColor: gradientReceita, // Uso de gradiente
+                        borderRadius: {topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0}, // Apenas o topo arredondado
+                        borderSkipped: false,
                         order: 2
                     },
                     { 
                         type: 'bar',
                         label: 'Gastos', 
                         data: allStats.map(s => s.g), 
-                        backgroundColor: '#3b82f6', 
-                        borderRadius: 5,
+                        backgroundColor: gradientGastos, // Uso de gradiente
+                        borderRadius: {topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0},
+                        borderSkipped: false,
                         order: 3
                     }
                 ]
@@ -540,14 +608,25 @@
                     data: [current.i, current.fixos, current.cartoes, current.outros],
                     backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6'],
                     borderColor: isDark ? '#111827' : '#ffffff',
-                    borderWidth: 2
+                    borderWidth: 3,
+                    hoverOffset: 6 // Efeito de expansão ao passar o rato na fatia
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                cutout: '70%',
+                cutout: '78%', // Anel mais fino e elegante
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: colors.text, font: { size: 11 } } }
+                    legend: { position: 'bottom', labels: { color: colors.text, font: { size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed !== null) label += fmt.format(context.parsed);
+                                return label;
+                            }
+                        }
+                    }
                 }
             }
         });
