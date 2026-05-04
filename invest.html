@@ -95,7 +95,7 @@
         .delay-200 { animation-delay: 200ms; }
         .delay-300 { animation-delay: 300ms; }
 
-        /* Theme Switcher */
+         /* Theme e Privacy Switcher */
         .theme-switch {
             background: rgba(0,0,0,0.05); padding: 4px; border-radius: 50px;
             display: flex; gap: 4px; cursor: pointer; border: 1px solid rgba(0,0,0,0.05);
@@ -104,8 +104,28 @@
         .theme-btn {
             padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
         }
+        
+        /* Tema Switch Cores */
         .light-mode .sun-icon { background: white; color: #f59e0b; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .dark-mode .moon-icon { background: #1e293b; color: #818cf8; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+
+        /* Privacidade Switch Cores */
+        .light-mode body:not(.privacy-mode) .eye-icon { background: white; color: #10b981; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .dark-mode body:not(.privacy-mode) .eye-icon { background: #1e293b; color: #10b981; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        
+        .light-mode .privacy-mode .eye-slash-icon { background: white; color: #ef4444; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .dark-mode .privacy-mode .eye-slash-icon { background: #1e293b; color: #ef4444; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+
+        /* Classe de Borrão (Privacy Mode) */
+        .privacy-mode .sensitive-value {
+            filter: blur(8px);
+            opacity: 0.6;
+            user-select: none;
+            pointer-events: none;
+        }
+        .sensitive-value {
+            transition: filter 0.4s ease, opacity 0.4s ease;
+        }
 
         /* Loading */
         #loading-overlay {
