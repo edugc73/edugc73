@@ -42,7 +42,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #030712;
             color: #f9fafb;
-            overflow: hidden; /* Previne rolagem dupla com o iframe */
+            overflow: hidden; 
         }
         
         /* Efeito Glassmorphism */
@@ -78,9 +78,16 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Ocultar iframe quando inativo */
         #app-frame {
             transition: opacity 0.3s ease;
+        }
+
+        /* Classe para o efeito de Blur (Privacidade) */
+        .blur-value {
+            filter: blur(6px);
+            opacity: 0.6;
+            user-select: none;
+            transition: filter 0.3s ease, opacity 0.3s ease;
         }
     </style>
 </head>
@@ -164,6 +171,13 @@
             </div>
             
             <div class="flex items-center gap-4">
+                <!-- Botão de Privacidade Global -->
+                <button id="privacy-btn" onclick="togglePrivacyMode()" class="p-2 text-brand-indigo hover:text-indigo-400 hover:bg-brand-indigo/10 rounded-lg transition-all" title="Modo Privacidade">
+                    <i id="privacy-icon" data-lucide="eye" class="w-5 h-5"></i>
+                </button>
+
+                <div class="h-5 w-px bg-dark-700 mx-1"></div>
+
                 <button class="p-2 text-gray-400 hover:text-white transition-colors relative">
                     <i data-lucide="bell" class="w-5 h-5"></i>
                     <span class="absolute top-1 right-1 w-2 h-2 bg-brand-emerald rounded-full"></span>
@@ -180,7 +194,6 @@
             <!-- VIEW: HOME (Dashboard Resumo) -->
             <div id="view-home" class="h-full overflow-y-auto p-6 md:p-8 space-y-8 fade-in">
                 
-                <!-- Boas vindas -->
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h2 class="text-3xl font-bold text-white mb-1">Olá, de volta! 👋</h2>
@@ -191,7 +204,6 @@
                     </div>
                 </div>
 
-                <!-- Cards de Acesso Rápido -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Card Finanças -->
                     <div onclick="navigate('financas')" class="glass rounded-2xl p-6 border border-dark-700 hover:border-brand-emerald/50 cursor-pointer group transition-all duration-300 relative overflow-hidden">
@@ -224,7 +236,6 @@
                     </div>
                 </div>
 
-                <!-- Gráficos CRM Placeholder -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 glass rounded-2xl p-6 border border-dark-700">
                         <div class="flex justify-between items-center mb-6">
@@ -245,7 +256,7 @@
                                 <div>
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-gray-300">Economia</span>
-                                        <span class="text-brand-emerald font-medium">85%</span>
+                                        <span class="text-brand-emerald font-medium sensitive-value">85%</span>
                                     </div>
                                     <div class="w-full bg-dark-900 rounded-full h-2">
                                         <div class="bg-brand-emerald h-2 rounded-full" style="width: 85%"></div>
@@ -254,7 +265,7 @@
                                 <div>
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-gray-300">Aportes</span>
-                                        <span class="text-brand-cyan font-medium">60%</span>
+                                        <span class="text-brand-cyan font-medium sensitive-value">60%</span>
                                     </div>
                                     <div class="w-full bg-dark-900 rounded-full h-2">
                                         <div class="bg-brand-cyan h-2 rounded-full" style="width: 60%"></div>
@@ -263,7 +274,7 @@
                                 <div>
                                     <div class="flex justify-between text-sm mb-1">
                                         <span class="text-gray-300">Novos Clientes</span>
-                                        <span class="text-brand-indigo font-medium">40%</span>
+                                        <span class="text-brand-indigo font-medium sensitive-value">40%</span>
                                     </div>
                                     <div class="w-full bg-dark-900 rounded-full h-2">
                                         <div class="bg-brand-indigo h-2 rounded-full" style="width: 40%"></div>
@@ -275,7 +286,7 @@
                 </div>
             </div>
 
-            <!-- VIEW: IFRAME (Carrega financas.html ou invest.html) -->
+            <!-- VIEW: IFRAME -->
             <div id="view-app" class="h-full w-full hidden">
                 <iframe id="app-frame" src="about:blank" class="w-full h-full border-none"></iframe>
             </div>
@@ -284,16 +295,48 @@
     </main>
 
     <script>
-        // Inicializar Ícones
         lucide.createIcons();
 
-        // Data atual no header
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
 
         let currentAppUrl = '';
+        let isPrivacyMode = false; // Estado Global de Privacidade
 
-        // Sistema de Navegação
+        // Função para alternar o Modo Privacidade
+        function togglePrivacyMode() {
+            isPrivacyMode = !isPrivacyMode;
+            
+            // Atualiza o ícone do botão
+            const icon = document.getElementById('privacy-icon');
+            const btn = document.getElementById('privacy-btn');
+            
+            if (isPrivacyMode) {
+                icon.setAttribute('data-lucide', 'eye-off');
+                btn.classList.add('bg-brand-indigo/20', 'text-indigo-300');
+            } else {
+                icon.setAttribute('data-lucide', 'eye');
+                btn.classList.remove('bg-brand-indigo/20', 'text-indigo-300');
+            }
+            lucide.createIcons();
+
+            // Aplica o blur aos elementos na própria página Home (marcados com .sensitive-value)
+            document.querySelectorAll('.sensitive-value').forEach(el => {
+                if(isPrivacyMode) el.classList.add('blur-value');
+                else el.classList.remove('blur-value');
+            });
+
+            // Comunica a alteração de estado para o iframe (se estiver aberto)
+            const frame = document.getElementById('app-frame');
+            if(frame.contentWindow) {
+                frame.contentWindow.postMessage({ 
+                    action: 'togglePrivacy', 
+                    state: isPrivacyMode 
+                }, '*');
+            }
+        }
+
+        // Sistema de Navegação atualizado
         function navigate(module) {
             const homeView = document.getElementById('view-home');
             const appView = document.getElementById('view-app');
@@ -301,7 +344,6 @@
             const title = document.getElementById('page-title');
             const popoutBtn = document.getElementById('popout-btn');
 
-            // Resetar estilos dos botões da sidebar
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('bg-brand-indigo/10', 'text-brand-indigo', 'bg-dark-700', 'text-white');
                 btn.classList.add('text-gray-400');
@@ -322,13 +364,12 @@
                 homeView.classList.add('hidden');
                 appView.classList.remove('hidden');
                 
-                // Configurações baseadas no módulo escolhido
                 if (module === 'financas') {
-                    frame.src = 'financas.html'; // Arquivo local financas.html
+                    frame.src = 'financas.html'; 
                     title.innerText = 'Controle Financeiro';
                     currentAppUrl = 'financas.html';
                 } else if (module === 'invest') {
-                    frame.src = 'invest.html';   // Arquivo local invest.html
+                    frame.src = 'invest.html';   
                     title.innerText = 'Gestão de Portfólio';
                     currentAppUrl = 'invest.html';
                 }
@@ -336,11 +377,14 @@
                 activeBtn.classList.remove('text-gray-400');
                 activeBtn.classList.add('bg-dark-700', 'text-white');
                 popoutBtn.classList.remove('hidden');
-                
-                // Mensagem no console caso esteja usando file://
-                if (window.location.protocol === 'file:') {
-                    console.warn("Dica: Se o conteúdo não carregar por causa das políticas de segurança do navegador (CORS) em arquivos locais (file://), utilize o botão 'Abrir em nova guia' no canto superior direito ou rode um servidor local.");
-                }
+
+                // Quando o iframe terminar de carregar, aplica o estado atual de privacidade automaticamente
+                frame.onload = () => {
+                    frame.contentWindow.postMessage({ 
+                        action: 'togglePrivacy', 
+                        state: isPrivacyMode 
+                    }, '*');
+                };
             }
         }
 
@@ -350,12 +394,10 @@
             }
         }
 
-        // Gráfico Dummy da Home
+        // Gráfico Dummy
         const ctx = document.getElementById('crmChart').getContext('2d');
-        
-        // Criar gradiente
         let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // brand-indigo
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); 
         gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
 
         new Chart(ctx, {
@@ -363,7 +405,7 @@
             data: {
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'],
                 datasets: [{
-                    label: 'Interações no CRM',
+                    label: 'Interações',
                     data: [65, 78, 60, 92, 115, 105, 130],
                     borderColor: '#6366f1',
                     backgroundColor: gradient,
@@ -380,27 +422,10 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#1f2937',
-                        titleColor: '#fff',
-                        bodyColor: '#9ca3af',
-                        borderColor: '#374151',
-                        borderWidth: 1,
-                        padding: 10
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
-                        ticks: { color: '#6b7280' }
-                    },
-                    x: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: { color: '#6b7280' }
-                    }
+                    y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#6b7280' } },
+                    x: { grid: { display: false, drawBorder: false }, ticks: { color: '#6b7280' } }
                 }
             }
         });
