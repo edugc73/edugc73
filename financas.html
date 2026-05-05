@@ -199,22 +199,26 @@
         <div class="card">
             <span class="kpi-label">Renda Mensal</span>
             <span class="kpi-value" id="kpi-receita">R$ 0,00</span>
+            <div class="value-to-blur">R$ 0,00</div>
             <div id="trend-receita" class="trend">--</div>
         </div>
         <div class="card">
             <span class="kpi-label">Gastos Totais</span>
             <span class="kpi-value" id="kpi-gastos">R$ 0,00</span>
+            <div class="value-to-blur">R$ 0,00</div>
             <div id="trend-gastos" class="trend">--</div>
             <div id="health-indicator" class="health-badge">Estável</div>
         </div>
         <div class="card">
             <span class="kpi-label">Investimentos</span>
             <span class="kpi-value" id="kpi-invest">R$ 0,00</span>
+            <div class="value-to-blur">R$ 0,00</div>
             <div id="trend-invest" class="trend">--</div>
         </div>
         <div class="card">
             <span class="kpi-label">Saldo Final</span>
             <span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
+            <div class="value-to-blur">R$ 0,00</div>
             <div id="trend-saldo" class="trend">--</div>
         </div>
     </div>
@@ -673,5 +677,36 @@
         loadYearData(yearToLoad);
     };
 </script>
+<style>
+    /* Garante que o efeito de blur está disponível no ficheiro */
+    .blur-value {
+        filter: blur(8px);
+        opacity: 0.8;
+        user-select: none;
+        transition: filter 0.3s ease, opacity 0.3s ease;
+        pointer-events: none; /* Impede a cópia do texto quando desfocado */
+    }
+</style>
+
+<script>
+    // Escuta a mensagem vinda do Hub Principal (index.html)
+    window.addEventListener('message', (event) => {
+        if (event.data.action === 'togglePrivacy') {
+            // event.data.state é true quando o olho está cortado (privado)
+            const isPrivate = event.data.state;
+            
+            // Substitui '.value-to-blur' pela classe que tem nos elementos que queres esconder
+            // Se no financas.html não tens esta classe, basta ires ao HTML e adicionares class="value-to-blur" nos elementos com o símbolo de € ou R$
+            document.querySelectorAll('.value-to-blur').forEach(el => {
+                if(isPrivate) {
+                    el.classList.add('blur-value');
+                } else {
+                    el.classList.remove('blur-value');
+                }
+            });
+        }
+    });
+</script>
+                               
 </body>
 </html>
