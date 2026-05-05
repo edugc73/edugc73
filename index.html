@@ -679,11 +679,14 @@
             const dadosRecentes = (anoMaisRecente && dividendosHistorico[anoMaisRecente]) ? dividendosHistorico[anoMaisRecente] : [];
             const somaProv = dadosRecentes.reduce((acc, curr) => acc + curr.valor, 0);
 
-            const totalResEl = document.getElementById('total-resultado');
+          const totalResEl = document.getElementById('total-resultado');
             if (totalResEl) {
-                totalResEl.className = `text-3xl xl:text-4xl font-black mt-2 ${totalLucro >= 0 ? 'text-gradient-emerald' : 'text-gradient-rose'}`;
+                // Em vez de sobrescrever tudo, apenas remove as cores padrão e adiciona as novas
+                totalResEl.classList.remove('text-slate-800', 'dark:text-white', 'text-gradient-emerald', 'text-gradient-rose');
+                totalResEl.classList.add(totalLucro >= 0 ? 'text-gradient-emerald' : 'text-gradient-rose');
             }
             
+                        
             const borderResEl = document.getElementById('kpi-resultado-border');
             const iconResEl = document.getElementById('kpi-resultado-icon');
             if (borderResEl && iconResEl) {
