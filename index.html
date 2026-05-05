@@ -79,7 +79,13 @@
         }
 
         #app-frame {
-            transition: opacity 0.4s ease;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(0.97);
+            opacity: 0;
+        }
+        #app-frame.loaded {
+            opacity: 1;
+            transform: scale(1);
         }
 
         /* Classe para o efeito de Blur (Privacidade) */
@@ -345,35 +351,32 @@
             <!-- VIEW: IFRAME APP -->
             <div id="view-app" class="h-full w-full hidden relative">
                 
-                <!-- Skeleton Loader Premium -->
-                <div id="skeleton-loader" class="absolute inset-0 z-20 bg-dark-900/90 backdrop-blur-md flex flex-col p-6 md:p-8 space-y-8 transition-opacity duration-300">
-                    
-                    <!-- Cabeçalho Skeleton -->
-                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 animate-pulse">
-                        <div class="space-y-3">
-                            <div class="h-8 w-48 md:w-64 bg-dark-700/50 rounded-lg"></div>
-                            <div class="h-4 w-64 md:w-96 bg-dark-700/30 rounded-lg"></div>
+                <!-- Loading Screen Premium (Fator Uau) -->
+                <div id="skeleton-loader" class="absolute inset-0 z-20 bg-dark-900/80 backdrop-blur-xl flex items-center justify-center transition-opacity duration-500">
+                    <div class="relative flex flex-col items-center">
+                        <!-- Glow background dinâmico -->
+                        <div id="module-glow" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-[80px] animate-pulse"></div>
+                        
+                        <!-- Logo Box -->
+                        <div id="module-icon-box" class="relative w-24 h-24 rounded-3xl bg-dark-800/80 border border-dark-700 flex items-center justify-center shadow-2xl mb-8 z-10 overflow-hidden backdrop-blur-sm transition-all duration-300">
+                            <!-- Preenchido via JS -->
                         </div>
-                        <div class="h-4 w-32 bg-dark-700/30 rounded-lg hidden md:block"></div>
-                    </div>
 
-                    <!-- Cartões Skeleton -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-                        <div class="h-32 bg-dark-800/80 rounded-2xl border border-dark-700/50"></div>
-                        <div class="h-32 bg-dark-800/80 rounded-2xl border border-dark-700/50"></div>
-                        <div class="h-32 bg-dark-800/80 rounded-2xl border border-dark-700/50 hidden md:block"></div>
-                        <div class="h-32 bg-dark-800/80 rounded-2xl border border-dark-700/50 hidden lg:block"></div>
-                    </div>
-
-                    <!-- Área Principal Skeleton -->
-                    <div class="flex-1 flex gap-6 animate-pulse mt-4 pb-4">
-                        <div class="flex-[2] bg-dark-800/80 rounded-2xl border border-dark-700/50 h-full w-full"></div>
-                        <div class="flex-1 bg-dark-800/80 rounded-2xl border border-dark-700/50 h-full hidden lg:block"></div>
+                        <!-- Textos -->
+                        <h3 id="module-loading-title" class="text-2xl font-bold text-white mb-4 z-10 relative tracking-tight">Carregando Módulo</h3>
+                        <div class="px-5 py-2.5 rounded-full bg-dark-800/50 border border-dark-700/50 backdrop-blur-md z-10 relative flex items-center gap-3">
+                            <span class="text-sm text-gray-400 font-medium">Sincronizando dados seguros</span>
+                            <span class="flex gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-brand-indigo animate-bounce" style="animation-delay: 0s"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce" style="animation-delay: 0.15s"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-bounce" style="animation-delay: 0.3s"></span>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Iframe do Módulo -->
-                <iframe id="app-frame" src="about:blank" class="w-full h-full border-none relative z-10 opacity-0"></iframe>
+                <iframe id="app-frame" src="about:blank" class="w-full h-full border-none relative z-10"></iframe>
             </div>
 
         </div>
@@ -468,20 +471,31 @@
                 homeView.classList.add('hidden');
                 appView.classList.remove('hidden');
                 
-                // Exibe o Skeleton Loader
+                // Exibe o Splash Screen Dinâmico
                 skeleton.classList.remove('hidden');
                 skeleton.style.opacity = '1';
-                frame.style.opacity = '0';
+                frame.classList.remove('loaded');
+                
+                const glow = document.getElementById('module-glow');
+                const iconBox = document.getElementById('module-icon-box');
+                const loadingTitle = document.getElementById('module-loading-title');
                 
                 if (module === 'financas') {
                     frame.src = 'financas.html'; 
                     title.innerText = 'Controle Financeiro';
                     currentAppUrl = 'financas.html';
+                    glow.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-brand-emerald/20 rounded-full blur-[80px] animate-pulse';
+                    iconBox.innerHTML = '<div class="absolute inset-0 bg-gradient-to-br from-brand-emerald/10 to-transparent opacity-50"></div><i data-lucide="wallet" class="w-12 h-12 text-brand-emerald animate-pulse"></i>';
+                    loadingTitle.innerText = 'GonçaFinances';
                 } else if (module === 'invest') {
                     frame.src = 'invest.html';   
                     title.innerText = 'Gestão de Portfólio';
                     currentAppUrl = 'invest.html';
+                    glow.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-brand-cyan/20 rounded-full blur-[80px] animate-pulse';
+                    iconBox.innerHTML = '<div class="absolute inset-0 bg-gradient-to-br from-brand-cyan/10 to-transparent opacity-50"></div><i data-lucide="trending-up" class="w-12 h-12 text-brand-cyan animate-pulse"></i>';
+                    loadingTitle.innerText = 'GonçaInvest';
                 }
+                lucide.createIcons();
                 
                 if (activeBtn) {
                     activeBtn.classList.remove('text-gray-400');
@@ -491,23 +505,22 @@
 
                 // Quando o Iframe concluir o carregamento
                 frame.onload = () => {
-                    // Adicionamos um delay artificial (800ms) para garantir 
-                    // que a animação elegante do skeleton seja percebida
+                    // Delay artificial (1000ms) para dar tempo à animação deslumbrar o utilizador
                     setTimeout(() => {
-                        skeleton.style.opacity = '0'; // Faz o fade out
+                        skeleton.style.opacity = '0'; // Fade out do Loader
                         
-                        // Aguarda a transição de opacidade terminar para remover do DOM
-                        setTimeout(() => skeleton.classList.add('hidden'), 300);
+                        // Aguarda a transição terminar para ocultar do DOM
+                        setTimeout(() => skeleton.classList.add('hidden'), 500);
                         
-                        // Revela o Iframe gradualmente
-                        frame.style.opacity = '1';
+                        // Ativa o Scale-in e Fade-in do Iframe simultaneamente
+                        frame.classList.add('loaded');
                         
-                        // Aplica o estado de privacidade ao iframe carregado
+                        // Aplica o estado de privacidade ao iframe
                         frame.contentWindow.postMessage({ 
                             action: 'togglePrivacy', 
                             state: isPrivacyMode 
                         }, '*');
-                    }, 800); 
+                    }, 1000); 
                 };
             }
         }
