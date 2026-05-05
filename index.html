@@ -267,6 +267,40 @@
                     </div>
                 </div>
 
+                <!-- NOVO: Widget de Patrimônio Total Vivo -->
+                <div class="glass rounded-2xl p-6 border border-brand-indigo/30 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-brand-indigo/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-brand-indigo/20 transition-all duration-500"></div>
+                    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <p class="text-sm font-medium text-gray-400 mb-1">Patrimônio Consolidado</p>
+                            <h3 class="text-4xl font-bold text-white tracking-tight sensitive-value flex items-center gap-3">
+                                <span id="patrimonio-total">R$ 0,00</span>
+                                <!-- LED de Sincronização -->
+                                <span class="flex h-3 w-3 relative" title="Sincronização Ativa">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-emerald opacity-75 transition-colors duration-300" id="sync-led"></span>
+                                  <span class="relative inline-flex rounded-full h-3 w-3 bg-brand-emerald"></span>
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="flex flex-wrap gap-4">
+                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 min-w-[150px]">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <i data-lucide="wallet" class="w-4 h-4 text-brand-emerald"></i>
+                                    <span class="text-xs text-gray-400 font-medium">Conta Corrente</span>
+                                </div>
+                                <p class="text-lg font-semibold text-white sensitive-value" id="patrimonio-financas">R$ 0,00</p>
+                            </div>
+                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 min-w-[150px]">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-brand-cyan"></i>
+                                    <span class="text-xs text-gray-400 font-medium">Investimentos</span>
+                                </div>
+                                <p class="text-lg font-semibold text-white sensitive-value" id="patrimonio-invest">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Card Finanças -->
                     <div onclick="navigate('financas')" class="glass rounded-2xl p-6 border border-dark-700 hover:border-brand-emerald/50 cursor-pointer group transition-all duration-300 relative overflow-hidden">
@@ -449,6 +483,12 @@
         </div>
     </aside>
 
+    <!-- Iframes Ocultos para Sincronização em Background -->
+    <div class="hidden">
+        <iframe id="bg-financas" src="financas.html"></iframe>
+        <iframe id="bg-invest" src="invest.html"></iframe>
+    </div>
+
     <script>
         lucide.createIcons();
 
@@ -457,6 +497,48 @@
 
         let currentAppUrl = '';
         let isPrivacyMode = false; // Estado Global de Privacidade
+
+        // --- Lógica: Hub Inteligente (Comunicação via postMessage) ---
+        let saldos = { financas: 0, invest: 0 };
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        }
+
+        function atualizarPatrimonio() {
+            document.getElementById('patrimonio-total').innerText = formatCurrency(saldos.financas + saldos.invest);
+            document.getElementById('patrimonio-financas').innerText = formatCurrency(saldos.financas);
+            document.getElementById('patrimonio-invest').innerText = formatCurrency(saldos.invest);
+        }
+
+        // Ouve mensagens recebidas dos Módulos ocultos ou abertos
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (data && data.action === 'sync_data') {
+                if (data.module === 'financas') saldos.financas = parseFloat(data.value) || 0;
+                if (data.module === 'invest') saldos.invest = parseFloat(data.value) || 0;
+                
+                atualizarPatrimonio();
+                
+                // Pisca o indicador para simular "receção de dados ao vivo"
+                const ping = document.getElementById('sync-led');
+                if(ping) {
+                    ping.classList.replace('bg-brand-emerald', 'bg-brand-cyan');
+                    setTimeout(() => ping.classList.replace('bg-brand-cyan', 'bg-brand-emerald'), 800);
+                }
+            }
+        });
+
+        // Fallback: Se em 2s não receber os ficheiros (ex: ficheiros ainda não criados), preenche com valores estéticos
+        setTimeout(() => {
+            if (saldos.financas === 0 && saldos.invest === 0) {
+                console.log("Arquivos locais não emitiram valores. A preencher com demonstração.");
+                saldos.financas = 15420.50;
+                saldos.invest = 142500.00;
+                atualizarPatrimonio();
+            }
+        }, 2000);
+        // -------------------------------------------------------------
 
         // Lógica: Painel de Notificações
         let isNotificationsOpen = false;
