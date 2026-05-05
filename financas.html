@@ -153,6 +153,15 @@
         .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Classe do Modo Privacidade Global */
+        .blur-value {
+            filter: blur(8px);
+            opacity: 0.8;
+            user-select: none;
+            transition: filter 0.3s ease, opacity 0.3s ease;
+            pointer-events: none; /* Impede a cópia do texto quando desfocado */
+        }
+
         @media (max-width: 1024px) { 
             .stats-grid { grid-template-columns: repeat(2, 1fr); } 
             .main-grid { grid-template-columns: 1fr; }
@@ -178,7 +187,6 @@
             <div class="brand">
                 <div class="brand-icon"><i data-lucide="activity" size="20"></i></div>
                 <div>
-                    <!-- Os nomes foram alterados aqui conforme solicitado -->
                     <h1 style="font-size: 1.1rem;">GonçaFinances</h1>
                     <p style="font-size: 0.65rem; color: var(--primary);">Controle Financeiro</p>
                 </div>
@@ -198,27 +206,27 @@
     <div class="stats-grid">
         <div class="card">
             <span class="kpi-label">Renda Mensal</span>
-            
-            <span class="kpi-value" id="kpi-receita">R$ 0,00</span>
+            <!-- Adicionada classe value-to-blur diretamente aqui -->
+            <span class="kpi-value value-to-blur" id="kpi-receita">R$ 0,00</span>
             <div id="trend-receita" class="trend">--</div>
         </div>
         <div class="card">
             <span class="kpi-label">Gastos Totais</span>
-          
-            <span class="kpi-value" id="kpi-gastos">R$ 0,00</span>
+            <!-- Adicionada classe value-to-blur diretamente aqui -->
+            <span class="kpi-value value-to-blur" id="kpi-gastos">R$ 0,00</span>
             <div id="trend-gastos" class="trend">--</div>
             <div id="health-indicator" class="health-badge">Estável</div>
         </div>
         <div class="card">
             <span class="kpi-label">Investimentos</span>
-          
-            <span class="kpi-value" id="kpi-invest">R$ 0,00</span>
+            <!-- Adicionada classe value-to-blur diretamente aqui -->
+            <span class="kpi-value value-to-blur" id="kpi-invest">R$ 0,00</span>
             <div id="trend-invest" class="trend">--</div>
         </div>
         <div class="card">
             <span class="kpi-label">Saldo Final</span>
-          
-            <span class="kpi-value" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
+            <!-- Adicionada classe value-to-blur diretamente aqui -->
+            <span class="kpi-value value-to-blur" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
            <div id="trend-saldo" class="trend">--</div>
         </div>
     </div>
@@ -228,7 +236,8 @@
             <div class="card chart-box">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 style="font-size: 0.9rem; font-weight: 600;"><i data-lucide="bar-chart-3" size="16" style="vertical-align: middle; margin-right: 8px;"></i>Fluxo de Caixa Mensal</h3>
-                    <div id="avg-indicator" style="font-size: 0.7rem; background: var(--surface-accent); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);">
+                    <!-- Adicionada classe value-to-blur para esconder a média do gráfico -->
+                    <div id="avg-indicator" class="value-to-blur" style="font-size: 0.7rem; background: var(--surface-accent); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);">
                         Média...
                     </div>
                 </div>
@@ -276,7 +285,8 @@
                             <span id="perc-reserva">0%</span>
                         </div>
                         <div class="progress-bar-bg" style="height: 10px; background: rgba(0,0,0,0.2);"><div id="bar-reserva" class="progress-bar-fill" style="background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div></div>
-                        <p id="reserva-status" style="font-size: 0.6rem; color: var(--text-muted); margin-top: 10px; font-weight: 500;"></p>
+                        <!-- Adicionada classe value-to-blur no status da reserva -->
+                        <p id="reserva-status" class="value-to-blur" style="font-size: 0.6rem; color: var(--text-muted); margin-top: 10px; font-weight: 500;"></p>
                     </div>
                 </div>
 
@@ -289,7 +299,8 @@
                 </div>
 
                 <div id="projection-card" style="margin-top: 16px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--primary); border-radius: 16px;">
-                    <p style="font-size: 0.7rem; color: var(--text-main); font-weight: 600;" id="projection-text">
+                    <!-- Adicionada classe value-to-blur no texto de projeção -->
+                    <p style="font-size: 0.7rem; color: var(--text-main); font-weight: 600;" id="projection-text" class="value-to-blur">
                         Selecione um mês para ver a projeção.
                     </p>
                 </div>
@@ -307,13 +318,11 @@
     let currentData = [];
     let charts = {};
     let activeIdx = 0;
-    // Variável para armazenar os valores anteriores e criar a animação suave
     let prevKpiValues = { r: 0, g: 0, i: 0, s: 0 };
     
     const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
     const MESES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
-    // Função sofisticada para animar os números gradualmente
     function animateValue(id, start, end, duration) {
         const obj = document.getElementById(id);
         if (!obj) return;
@@ -321,13 +330,13 @@
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const easeProgress = progress * (2 - progress); // easeOutQuad
+            const easeProgress = progress * (2 - progress); 
             const currentVal = (easeProgress * (end - start) + start);
             obj.innerText = fmt.format(currentVal);
             if (progress < 1) {
                 window.requestAnimationFrame(step);
             } else {
-                obj.innerText = fmt.format(end); // Garante precisão no final
+                obj.innerText = fmt.format(end); 
             }
         };
         window.requestAnimationFrame(step);
@@ -383,7 +392,7 @@
         container.innerHTML = `<div class="chip special" data-idx="annual" onclick="selectMonth('annual', this)">Resumo Anual</div>`;
         
         const now = new Date();
-        const currentMonthIdx = now.getMonth(); // 0-11
+        const currentMonthIdx = now.getMonth(); 
         let autoSelectIdx = 0;
 
         currentData.forEach((r, i) => {
@@ -394,7 +403,6 @@
             container.innerHTML += `<div class="chip" data-idx="${i}" onclick="selectMonth(${i}, this)">${getVal(r, "Mes")}</div>`;
         });
 
-        // Seleciona o mês atual automaticamente
         const chipToSelect = document.querySelector(`.chip[data-idx="${autoSelectIdx}"]`);
         selectMonth(autoSelectIdx, chipToSelect);
     }
@@ -417,7 +425,6 @@
                 fixos: a.fixos + b.fixos, cartoes: a.cartoes + b.cartoes, outros: a.outros + b.outros
             }), { r:0, g:0, i:0, fixos:0, cartoes:0, outros:0 });
             
-            // Lógica alterada: Para o "Resumo Anual", o saldo final será o do último mês disponível registrado.
             current.s = allStats[allStats.length - 1].s;
 
             document.getElementById('projection-text').innerText = `Projeção Anual: Com base no seu saldo acumulado de ${fmt.format(current.s)}, está a construir um património sólido.`;
@@ -430,32 +437,27 @@
                 : `Este mês está ${Math.abs(diffAvg).toFixed(0)}% ABAIXO da sua média. Ótimo controlo!`;
         }
 
-        // Animação dos KPIs principais (Conta a partir do valor do mês anterior)
         animateValue('kpi-receita', prevKpiValues.r, current.r, 800);
         animateValue('kpi-gastos', prevKpiValues.g, current.g, 800);
         animateValue('kpi-invest', prevKpiValues.i, current.i, 800);
         animateValue('kpi-saldo', prevKpiValues.s, current.s, 800);
         
-        // Atualiza os valores anteriores para a próxima animação
         prevKpiValues = { r: current.r, g: current.g, i: current.i, s: current.s };
 
         document.getElementById('avg-indicator').innerText = `Média: ${fmt.format(avgGastos)}`;
 
-        // Reserva de Emergência
         const metaReserva = Math.max(avgGastos, 1) * 6;
         const progressoReserva = Math.min((acumuladoInvest / metaReserva) * 100, 100);
         document.getElementById('perc-reserva').innerText = progressoReserva.toFixed(1) + '%';
         document.getElementById('bar-reserva').style.width = progressoReserva + '%';
         document.getElementById('reserva-status').innerText = `Guardado: ${fmt.format(acumuladoInvest)} / Meta: ${fmt.format(metaReserva)}`;
 
-        // Health Badge
         const health = document.getElementById('health-indicator');
         const ratio = current.r > 0 ? current.g / current.r : 0;
         if(ratio < 0.6) { health.innerText = "Excelente"; health.style.background = "var(--primary)"; }
         else if(ratio < 0.8) { health.innerText = "Estável"; health.style.background = "var(--secondary)"; }
         else { health.innerText = "Alerta"; health.style.background = "var(--danger)"; }
 
-        // Trends Logic
         const updateTrend = (id, cur, pr) => {
             const tid = document.getElementById('trend-' + id);
             if(!pr) { 
@@ -484,7 +486,6 @@
         updateTrend('invest', current.i, prev?.i);
         updateTrend('saldo', current.s, prev?.s);
 
-        // Barras de Progresso
         const pG = current.r > 0 ? (current.g / current.r * 100) : 0;
         const pI = current.r > 0 ? (current.i / current.r * 100) : 0;
         document.getElementById('perc-gastos').innerText = pG.toFixed(1) + '%';
@@ -494,7 +495,6 @@
         document.getElementById('bar-invest').style.width = Math.min(pI, 100) + '%';
         document.getElementById('bar-invest').style.background = pI < 15 ? 'var(--warning)' : 'var(--primary)';
 
-        // Análise
         const analysis = document.getElementById('analysis-text');
         if(pI >= 15 && pG <= 70) analysis.innerText = "Saúde financeira exemplar. O seu nível de aporte está acima da meta de segurança, permitindo crescimento patrimonial acelerado.";
         else if(pG > 75) analysis.innerText = "Atenção aos custos variáveis. Os seus gastos consumiram mais de 75% da renda, o que reduz a sua margem para imprevistos.";
@@ -511,13 +511,9 @@
         if(charts.main) charts.main.destroy();
         if(charts.allocation) charts.allocation.destroy();
 
-        // Linha de Média para o Gráfico
         const averageData = new Array(allStats.length).fill(avgGastosValue);
-        
-        // Contexto para criar os gradientes visuais
         const ctxMain = document.getElementById('mainChart').getContext('2d');
         
-        // Criando gradientes modernos que desaparecem no final da barra
         const gradientReceita = ctxMain.createLinearGradient(0, 0, 0, 350);
         gradientReceita.addColorStop(0, '#10b981'); 
         gradientReceita.addColorStop(1, isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.4)');
@@ -526,7 +522,6 @@
         gradientGastos.addColorStop(0, '#3b82f6');
         gradientGastos.addColorStop(1, isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.4)');
 
-        // Gráfico Principal (Barras + Linha de Média)
         charts.main = new Chart(ctxMain, {
             data: {
                 labels: allStats.map(s => s.mes),
@@ -540,7 +535,7 @@
                         borderDash: [5, 5],
                         pointRadius: 0,
                         fill: false,
-                        tension: 0.4, // Curva mais orgânica e suave na linha
+                        tension: 0.4,
                         zIndex: 10,
                         order: 1
                     },
@@ -548,8 +543,8 @@
                         type: 'bar',
                         label: 'Receita', 
                         data: allStats.map(s => s.r), 
-                        backgroundColor: gradientReceita, // Uso de gradiente
-                        borderRadius: {topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0}, // Apenas o topo arredondado
+                        backgroundColor: gradientReceita,
+                        borderRadius: {topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0},
                         borderSkipped: false,
                         order: 2
                     },
@@ -557,7 +552,7 @@
                         type: 'bar',
                         label: 'Gastos', 
                         data: allStats.map(s => s.g), 
-                        backgroundColor: gradientGastos, // Uso de gradiente
+                        backgroundColor: gradientGastos,
                         borderRadius: {topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0},
                         borderSkipped: false,
                         order: 3
@@ -591,7 +586,6 @@
             }
         });
 
-        // Gráfico de Alocação
         const ctxAlloc = document.getElementById('allocationChart').getContext('2d');
         charts.allocation = new Chart(ctxAlloc, {
             type: 'doughnut',
@@ -602,12 +596,12 @@
                     backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6'],
                     borderColor: isDark ? '#111827' : '#ffffff',
                     borderWidth: 3,
-                    hoverOffset: 6 // Efeito de expansão ao passar o rato na fatia
+                    hoverOffset: 6
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                cutout: '78%', // Anel mais fino e elegante
+                cutout: '78%',
                 plugins: {
                     legend: { position: 'bottom', labels: { color: colors.text, font: { size: 11 } } },
                     tooltip: {
@@ -624,7 +618,6 @@
             }
         });
 
-        // Detalhamento de Saídas
         const list = document.getElementById('composition-list');
         const totalOut = current.r || 1;
         const items = [
@@ -641,11 +634,15 @@
                     <span style="font-size:0.75rem; font-weight:500;">${it.n}</span>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:0.75rem; font-weight:700;">${fmt.format(it.v)}</div>
+                    <!-- Adicionada classe value-to-blur nos valores dinâmicos da lista -->
+                    <div style="font-size:0.75rem; font-weight:700;" class="value-to-blur">${fmt.format(it.v)}</div>
                     <div style="font-size:0.6rem; color:var(--text-muted);">${it.p.toFixed(1)}%</div>
                 </div>
             </div>
         `).join('');
+        
+        // Se o modo privado já estiver ativado via index.html, reaplica no HTML dinâmico!
+        reapplyPrivacyState();
     }
 
     document.getElementById('themeSwitcher').onclick = function() {
@@ -666,47 +663,36 @@
     };
 
     window.onload = () => {
-        // Lógica para detectar ano atual
         const currentYear = new Date().getFullYear().toString();
         const yearToLoad = SOURCES[currentYear] ? currentYear : '2025';
         
-        // Ativa o botão do ano correto no seletor
         const yearBtn = document.querySelector(`.year-btn[data-year="${yearToLoad}"]`);
         if(yearBtn) yearBtn.classList.add('active');
         
         loadYearData(yearToLoad);
     };
-</script>
-<style>
-    /* Garante que o efeito de blur está disponível no ficheiro */
-    .blur-value {
-        filter: blur(8px);
-        opacity: 0.8;
-        user-select: none;
-        transition: filter 0.3s ease, opacity 0.3s ease;
-        pointer-events: none; /* Impede a cópia do texto quando desfocado */
-    }
-</style>
 
-<script>
-    // Escuta a mensagem vinda do Hub Principal (index.html)
+    // --- LÓGICA DE PRIVACIDADE ---
+    let isPrivacyModeActive = false; // Guarda o estado para reaplicar em conteúdos dinâmicos
+
     window.addEventListener('message', (event) => {
         if (event.data.action === 'togglePrivacy') {
-            // event.data.state é true quando o olho está cortado (privado)
-            const isPrivate = event.data.state;
-            
-            // Substitui '.value-to-blur' pela classe que tem nos elementos que queres esconder
-            // Se no financas.html não tens esta classe, basta ires ao HTML e adicionares class="value-to-blur" nos elementos com o símbolo de € ou R$
-            document.querySelectorAll('.value-to-blur').forEach(el => {
-                if(isPrivate) {
-                    el.classList.add('blur-value');
-                } else {
-                    el.classList.remove('blur-value');
-                }
-            });
+            isPrivacyModeActive = event.data.state;
+            reapplyPrivacyState();
         }
     });
+
+    // Função para reaplicar o Blur sempre que renderizamos algo novo na tela (como trocar de mês)
+    function reapplyPrivacyState() {
+        document.querySelectorAll('.value-to-blur').forEach(el => {
+            if(isPrivacyModeActive) {
+                el.classList.add('blur-value');
+            } else {
+                el.classList.remove('blur-value');
+            }
+        });
+    }
+
 </script>
-                               
 </body>
 </html>
