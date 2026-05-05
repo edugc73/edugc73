@@ -240,9 +240,10 @@
 
                 <div class="h-5 w-px bg-dark-700 mx-1"></div>
 
-                <button class="p-2 text-gray-400 hover:text-white transition-colors relative">
+                <button onclick="toggleNotifications()" class="p-2 text-gray-400 hover:text-white transition-colors relative">
                     <i data-lucide="bell" class="w-5 h-5"></i>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-brand-emerald rounded-full"></span>
+                    <!-- Indicador pulsante -->
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-emerald rounded-full border-[2px] border-dark-900 animate-pulse"></span>
                 </button>
                 <button id="popout-btn" onclick="openExternal()" class="hidden p-2 text-gray-400 hover:text-white transition-colors" title="Abrir em nova guia">
                     <i data-lucide="external-link" class="w-5 h-5"></i>
@@ -382,6 +383,72 @@
         </div>
     </main>
 
+    <!-- Overlay de Fundo para Notificações -->
+    <div id="notification-overlay" class="fixed inset-0 bg-dark-900/40 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="toggleNotifications()"></div>
+    
+    <!-- Painel Lateral de Notificações -->
+    <aside id="notification-panel" class="fixed top-0 right-0 h-full w-80 sm:w-96 glass border-l border-dark-700 z-50 transform translate-x-full transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col">
+        <!-- Header do Painel -->
+        <div class="h-20 border-b border-dark-700 flex items-center justify-between px-6 shrink-0 bg-dark-800/30">
+            <div class="flex items-center gap-3">
+                <h2 class="text-lg font-semibold text-white">Notificações</h2>
+                <span class="px-2 py-0.5 rounded-full bg-brand-emerald/20 text-brand-emerald text-xs font-bold">2 Novas</span>
+            </div>
+            <button onclick="toggleNotifications()" class="p-2 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <!-- Lista de Notificações -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            
+            <!-- Notificação 1: Finanças (Emerald) -->
+            <div class="bg-dark-800/80 border border-brand-emerald/30 rounded-xl p-4 flex gap-4 hover:bg-dark-700 transition-colors cursor-pointer relative overflow-hidden group">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-brand-emerald"></div>
+                <div class="w-10 h-10 rounded-full bg-brand-emerald/10 flex items-center justify-center shrink-0 text-brand-emerald group-hover:scale-110 transition-transform">
+                    <i data-lucide="target" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-1">Meta de Economia Atingida! 🎯</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">Você alcançou 85% de retenção da sua receita mensal. Continue assim até ao fim do mês.</p>
+                    <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-wider">Há 2 horas</span>
+                </div>
+            </div>
+
+            <!-- Notificação 2: Investimentos (Cyan) -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4 flex gap-4 hover:border-brand-cyan/50 hover:bg-dark-700 transition-colors cursor-pointer group">
+                <div class="w-10 h-10 rounded-full bg-brand-cyan/10 flex items-center justify-center shrink-0 text-brand-cyan group-hover:scale-110 transition-transform">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-1">Atualização Pendente</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">Lembrete: Atualize o CSV com o fecho do mercado dos seus ativos da corretora.</p>
+                    <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-wider">Ontem</span>
+                </div>
+            </div>
+
+            <!-- Notificação 3: CRM (Indigo) -->
+            <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4 flex gap-4 hover:border-brand-indigo/50 hover:bg-dark-700 transition-colors cursor-pointer group opacity-70">
+                <div class="w-10 h-10 rounded-full bg-brand-indigo/10 flex items-center justify-center shrink-0 text-brand-indigo group-hover:scale-110 transition-transform">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-1">Reunião de Consultoria</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">Revisão trimestral do plano de investimentos marcada com João Silva amanhã.</p>
+                    <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-wider">12 de Maio</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer do Painel -->
+        <div class="p-4 border-t border-dark-700 shrink-0 bg-dark-800/30">
+            <button onclick="toggleNotifications()" class="w-full py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-sm font-medium text-white transition-all border border-dark-600 hover:border-gray-400">
+                Marcar todas como lidas
+            </button>
+        </div>
+    </aside>
+
     <script>
         lucide.createIcons();
 
@@ -390,6 +457,35 @@
 
         let currentAppUrl = '';
         let isPrivacyMode = false; // Estado Global de Privacidade
+
+        // Lógica: Painel de Notificações
+        let isNotificationsOpen = false;
+        function toggleNotifications() {
+            isNotificationsOpen = !isNotificationsOpen;
+            const overlay = document.getElementById('notification-overlay');
+            const panel = document.getElementById('notification-panel');
+            
+            if (isNotificationsOpen) {
+                // Abrir: Mostrar o overlay primeiro (display block) e animar opacidade e slide
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                    overlay.classList.add('opacity-100');
+                    panel.classList.remove('translate-x-full');
+                    panel.classList.add('translate-x-0');
+                }, 10);
+            } else {
+                // Fechar: Animar opacidade e slide, e depois ocultar (display none)
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0');
+                panel.classList.remove('translate-x-0');
+                panel.classList.add('translate-x-full');
+                
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 300); // Aguarda o fim da transição CSS (300ms)
+            }
+        }
 
         // Lógica: Barra Lateral Retrátil
         let isSidebarCollapsed = false;
