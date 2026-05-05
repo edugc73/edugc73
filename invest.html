@@ -224,6 +224,7 @@
                     <div class="p-2 bg-cyan-500/10 rounded-lg text-cyan-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                     <p class="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest">Patrimônio Atual</p>
                 </div>
+
                 <h2 id="total-atual" class="text-3xl xl:text-4xl font-black text-gradient-cyan mt-2 value-to-blur blur-value">R$ 0,00</h2>
                 <div id="perc-total" class="mt-3 text-[11px] font-bold px-3 py-1 rounded-full inline-block bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">--</div>
             </div>
@@ -1129,6 +1130,36 @@
         document.getElementById('eye-open').classList.toggle('hidden');
     }
 </script>
+<style>
+    /* Garante que o efeito de blur está disponível no ficheiro */
+    .blur-value {
+        filter: blur(8px);
+        opacity: 0.8;
+        user-select: none;
+        transition: filter 0.3s ease, opacity 0.3s ease;
+        pointer-events: none; /* Impede a cópia do texto quando desfocado */
+    }
+</style>
 
+<script>
+    // Escuta a mensagem vinda do Hub Principal (index.html)
+    window.addEventListener('message', (event) => {
+        if (event.data.action === 'togglePrivacy') {
+            // event.data.state é true quando o olho está cortado (privado)
+            const isPrivate = event.data.state;
+            
+            // Substitui '.value-to-blur' pela classe que tem nos elementos que queres esconder
+            // Se no financas.html não tens esta classe, basta ires ao HTML e adicionares class="value-to-blur" nos elementos com o símbolo de € ou R$
+            document.querySelectorAll('.value-to-blur').forEach(el => {
+                if(isPrivate) {
+                    el.classList.add('blur-value');
+                } else {
+                    el.classList.remove('blur-value');
+                }
+            });
+        }
+    });
+</script>
+   
 </body>
 </html>
