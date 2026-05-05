@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GonçaCRM | Workspace Unificado</title>
+    
+    <!-- Dependências -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Configuração Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#030712', // Fundo principal
+                            800: '#111827', // Cards
+                            700: '#1f2937', // Bordas
+                        },
+                        brand: {
+                            emerald: '#10b981', // Finanças
+                            cyan: '#22d3ee',    // Investimentos
+                            indigo: '#6366f1',  // CRM
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            color: #f9fafb;
+            overflow: hidden; /* Previne rolagem dupla com o iframe */
+        }
+        
+        /* Efeito Glassmorphism */
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        /* Animações suaves */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ocultar iframe quando inativo */
+        #app-frame {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="flex h-screen antialiased selection:bg-brand-indigo selection:text-white">
+
+    <!-- Sidebar Lateral -->
+    <aside class="w-64 glass flex flex-col h-full border-r border-dark-700 z-20 hidden md:flex shrink-0">
+        <!-- Logo -->
+        <div class="h-20 flex items-center px-6 border-b border-dark-700">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-indigo to-purple-600 flex items-center justify-center shadow-lg shadow-brand-indigo/20">
+                    <i data-lucide="layout-dashboard" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                    GonçaCRM
+                </span>
+            </div>
+        </div>
+
+        <!-- Navegação -->
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <p class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Principal</p>
+            
+            <button onclick="navigate('home')" id="nav-home" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all bg-brand-indigo/10 text-brand-indigo">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                Visão Geral
+            </button>
+
+            <div class="pt-4 pb-2">
+                <p class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Módulos</p>
+            </div>
+
+            <button onclick="navigate('financas')" id="nav-financas" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
+                <i data-lucide="wallet" class="w-5 h-5 text-brand-emerald"></i>
+                Finanças
+            </button>
+
+            <button onclick="navigate('invest')" id="nav-invest" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
+                <i data-lucide="trending-up" class="w-5 h-5 text-brand-cyan"></i>
+                Investimentos
+            </button>
+
+            <div class="pt-4 pb-2">
+                <p class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sistema</p>
+            </div>
+
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                Clientes
+            </button>
+            <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+                Configurações
+            </button>
+        </nav>
+
+        <!-- User Profile -->
+        <div class="p-4 border-t border-dark-700">
+            <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-dark-700 transition-colors cursor-pointer">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=1f2937&color=fff" alt="User" class="w-10 h-10 rounded-full border border-gray-600">
+                <div class="overflow-hidden">
+                    <p class="text-sm font-medium text-white truncate">Administrador</p>
+                    <p class="text-xs text-gray-400 truncate">admin@goncacrm.com</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="flex-1 flex flex-col h-screen relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed">
+        <!-- Overlay escuro para a textura -->
+        <div class="absolute inset-0 bg-dark-900/95 z-0"></div>
+
+        <!-- Topbar -->
+        <header class="h-20 glass border-b border-dark-700 flex items-center justify-between px-6 z-10">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-gray-400 hover:text-white">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h1 id="page-title" class="text-xl font-semibold text-white tracking-tight">Visão Geral</h1>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button class="p-2 text-gray-400 hover:text-white transition-colors relative">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-brand-emerald rounded-full"></span>
+                </button>
+                <button id="popout-btn" onclick="openExternal()" class="hidden p-2 text-gray-400 hover:text-white transition-colors" title="Abrir em nova guia">
+                    <i data-lucide="external-link" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Conteúdo Dinâmico -->
+        <div class="flex-1 overflow-hidden relative z-10">
+            
+            <!-- VIEW: HOME (Dashboard Resumo) -->
+            <div id="view-home" class="h-full overflow-y-auto p-6 md:p-8 space-y-8 fade-in">
+                
+                <!-- Boas vindas -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white mb-1">Olá, de volta! 👋</h2>
+                        <p class="text-gray-400">Aqui está o resumo do seu ecossistema financeiro hoje.</p>
+                    </div>
+                    <div class="text-right text-sm text-gray-400">
+                        <p id="current-date"></p>
+                    </div>
+                </div>
+
+                <!-- Cards de Acesso Rápido -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Card Finanças -->
+                    <div onclick="navigate('financas')" class="glass rounded-2xl p-6 border border-dark-700 hover:border-brand-emerald/50 cursor-pointer group transition-all duration-300 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-emerald/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-brand-emerald/20 transition-all"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10">
+                            <div class="w-12 h-12 rounded-xl bg-brand-emerald/10 flex items-center justify-center border border-brand-emerald/20 text-brand-emerald">
+                                <i data-lucide="wallet" class="w-6 h-6"></i>
+                            </div>
+                            <button class="text-gray-500 group-hover:text-brand-emerald transition-colors">
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2 relative z-10">GonçaFinances</h3>
+                        <p class="text-sm text-gray-400 relative z-10">Controle seu orçamento, receitas e despesas com gestão detalhada de categorias.</p>
+                    </div>
+
+                    <!-- Card Investimentos -->
+                    <div onclick="navigate('invest')" class="glass rounded-2xl p-6 border border-dark-700 hover:border-brand-cyan/50 cursor-pointer group transition-all duration-300 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-brand-cyan/20 transition-all"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10">
+                            <div class="w-12 h-12 rounded-xl bg-brand-cyan/10 flex items-center justify-center border border-brand-cyan/20 text-brand-cyan">
+                                <i data-lucide="trending-up" class="w-6 h-6"></i>
+                            </div>
+                            <button class="text-gray-500 group-hover:text-brand-cyan transition-colors">
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2 relative z-10">GonçaInvest</h3>
+                        <p class="text-sm text-gray-400 relative z-10">Gerencie seu portfólio de ativos, acompanhe dividendos e rentabilidade global.</p>
+                    </div>
+                </div>
+
+                <!-- Gráficos CRM Placeholder -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass rounded-2xl p-6 border border-dark-700">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-white">Atividade do Sistema</h3>
+                            <button class="text-sm text-brand-indigo hover:text-indigo-400">Ver Relatório</button>
+                        </div>
+                        <div class="h-64 relative w-full">
+                            <canvas id="crmChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="glass rounded-2xl p-6 border border-dark-700 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white mb-2">Metas do Mês</h3>
+                            <p class="text-sm text-gray-400 mb-6">Acompanhamento de progresso geral</p>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-300">Economia</span>
+                                        <span class="text-brand-emerald font-medium">85%</span>
+                                    </div>
+                                    <div class="w-full bg-dark-900 rounded-full h-2">
+                                        <div class="bg-brand-emerald h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-300">Aportes</span>
+                                        <span class="text-brand-cyan font-medium">60%</span>
+                                    </div>
+                                    <div class="w-full bg-dark-900 rounded-full h-2">
+                                        <div class="bg-brand-cyan h-2 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-300">Novos Clientes</span>
+                                        <span class="text-brand-indigo font-medium">40%</span>
+                                    </div>
+                                    <div class="w-full bg-dark-900 rounded-full h-2">
+                                        <div class="bg-brand-indigo h-2 rounded-full" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: IFRAME (Carrega financas.html ou invest.html) -->
+            <div id="view-app" class="h-full w-full hidden">
+                <iframe id="app-frame" src="about:blank" class="w-full h-full border-none"></iframe>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Inicializar Ícones
+        lucide.createIcons();
+
+        // Data atual no header
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
+
+        let currentAppUrl = '';
+
+        // Sistema de Navegação
+        function navigate(module) {
+            const homeView = document.getElementById('view-home');
+            const appView = document.getElementById('view-app');
+            const frame = document.getElementById('app-frame');
+            const title = document.getElementById('page-title');
+            const popoutBtn = document.getElementById('popout-btn');
+
+            // Resetar estilos dos botões da sidebar
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-indigo/10', 'text-brand-indigo', 'bg-dark-700', 'text-white');
+                btn.classList.add('text-gray-400');
+            });
+
+            const activeBtn = document.getElementById(`nav-${module}`);
+            
+            if (module === 'home') {
+                homeView.classList.remove('hidden');
+                appView.classList.add('hidden');
+                frame.src = 'about:blank';
+                title.innerText = 'Visão Geral';
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('bg-brand-indigo/10', 'text-brand-indigo');
+                popoutBtn.classList.add('hidden');
+                currentAppUrl = '';
+            } else {
+                homeView.classList.add('hidden');
+                appView.classList.remove('hidden');
+                
+                // Configurações baseadas no módulo escolhido
+                if (module === 'financas') {
+                    frame.src = 'financas.html'; // Arquivo local financas.html
+                    title.innerText = 'Controle Financeiro';
+                    currentAppUrl = 'financas.html';
+                } else if (module === 'invest') {
+                    frame.src = 'invest.html';   // Arquivo local invest.html
+                    title.innerText = 'Gestão de Portfólio';
+                    currentAppUrl = 'invest.html';
+                }
+                
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('bg-dark-700', 'text-white');
+                popoutBtn.classList.remove('hidden');
+                
+                // Mensagem no console caso esteja usando file://
+                if (window.location.protocol === 'file:') {
+                    console.warn("Dica: Se o conteúdo não carregar por causa das políticas de segurança do navegador (CORS) em arquivos locais (file://), utilize o botão 'Abrir em nova guia' no canto superior direito ou rode um servidor local.");
+                }
+            }
+        }
+
+        function openExternal() {
+            if(currentAppUrl) {
+                window.open(currentAppUrl, '_blank');
+            }
+        }
+
+        // Gráfico Dummy da Home
+        const ctx = document.getElementById('crmChart').getContext('2d');
+        
+        // Criar gradiente
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // brand-indigo
+        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'],
+                datasets: [{
+                    label: 'Interações no CRM',
+                    data: [65, 78, 60, 92, 115, 105, 130],
+                    borderColor: '#6366f1',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#111827',
+                    pointBorderColor: '#6366f1',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1f2937',
+                        titleColor: '#fff',
+                        bodyColor: '#9ca3af',
+                        borderColor: '#374151',
+                        borderWidth: 1,
+                        padding: 10
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                        ticks: { color: '#6b7280' }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { color: '#6b7280' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
