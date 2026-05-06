@@ -1172,7 +1172,7 @@
             let valorNumerico = parseFloat(valorTexto);
 
             // Se for um número válido e estiver dentro do Hub, envia!
-            if (!isNaN(valorNumerico) && window.parent !== window) {
+            if (!isNaN(valorNumerico) && valorNumerico > 0 ...) && window.parent !== window) {
                 window.parent.postMessage({
                     action: 'sync_data',
                     module: 'invest', // Módulo de investimentos
