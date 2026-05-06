@@ -720,6 +720,30 @@
     // Verifica o valor na tela a cada 1 segundo (garante que o CSV já foi carregado)
     setInterval(enviarSaldoFinancasParaHub, 1000);
 </script>
+ 
+ <script>
+    // Sincronização Inteligente com o Hub
+    function syncToHub() {
+        // Pega o ID real do seu Dashboard original
+        const el = document.getElementById('kpi-saldo'); 
+        if (el && el.innerText !== "" && el.innerText !== "R$ 0,00") {
+            let val = parseFloat(el.innerText.replace(/[R$\s.]/g, '').replace(',', '.'));
+            if (!isNaN(val) && val > 0 && window.parent !== window) {
+                window.parent.postMessage({ action: 'sync_data', module: 'financas', value: val }, '*');
+            }
+        }
+    }
+    setInterval(syncToHub, 1000); // Tenta sincronizar a cada 1 segundo
+
+    // Controle de Privacidade vindo do Hub
+    window.addEventListener('message', (e) => {
+        if (e.data.action === 'togglePrivacy') {
+            document.querySelectorAll('.value-to-blur, .kpi-value').forEach(el => {
+                e.data.state ? el.classList.add('blur-value') : el.classList.remove('blur-value');
+            });
+        }
+    });
+</script>
                                 
 </body>
 </html>
