@@ -153,13 +153,12 @@
         .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Classe do Modo Privacidade Global */
         .blur-value {
             filter: blur(8px);
             opacity: 0.8;
             user-select: none;
             transition: filter 0.3s ease, opacity 0.3s ease;
-            pointer-events: none; /* Impede a cópia do texto quando desfocado */
+            pointer-events: none;
         }
 
         @media (max-width: 1024px) { 
@@ -188,7 +187,7 @@
                 <div class="brand-icon"><i data-lucide="activity" size="20"></i></div>
                 <div>
                     <h1 style="font-size: 1.1rem;">GonçaFinances</h1>
-                    <p style="font-size: 0.65rem; color: var(--primary);">Controle Financeiro</p>
+                    <p style="font-size: 0.65rem; color: var(--primary);">Controle Financeiro Integrado</p>
                 </div>
             </div>
             <div class="actions-group">
@@ -206,26 +205,22 @@
     <div class="stats-grid">
         <div class="card">
             <span class="kpi-label">Renda Mensal</span>
-            <!-- Adicionada classe value-to-blur diretamente aqui -->
             <span class="kpi-value value-to-blur" id="kpi-receita">R$ 0,00</span>
             <div id="trend-receita" class="trend">--</div>
         </div>
         <div class="card">
             <span class="kpi-label">Gastos Totais</span>
-            <!-- Adicionada classe value-to-blur diretamente aqui -->
             <span class="kpi-value value-to-blur" id="kpi-gastos">R$ 0,00</span>
             <div id="trend-gastos" class="trend">--</div>
             <div id="health-indicator" class="health-badge">Estável</div>
         </div>
         <div class="card">
             <span class="kpi-label">Investimentos</span>
-            <!-- Adicionada classe value-to-blur diretamente aqui -->
             <span class="kpi-value value-to-blur" id="kpi-invest">R$ 0,00</span>
             <div id="trend-invest" class="trend">--</div>
         </div>
         <div class="card">
             <span class="kpi-label">Saldo Final</span>
-            <!-- Adicionada classe value-to-blur diretamente aqui -->
             <span class="kpi-value value-to-blur" id="kpi-saldo" style="color: var(--primary);">R$ 0,00</span>
            <div id="trend-saldo" class="trend">--</div>
         </div>
@@ -236,7 +231,6 @@
             <div class="card chart-box">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 style="font-size: 0.9rem; font-weight: 600;"><i data-lucide="bar-chart-3" size="16" style="vertical-align: middle; margin-right: 8px;"></i>Fluxo de Caixa Mensal</h3>
-                    <!-- Adicionada classe value-to-blur para esconder a média do gráfico -->
                     <div id="avg-indicator" class="value-to-blur" style="font-size: 0.7rem; background: var(--surface-accent); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);">
                         Média...
                     </div>
@@ -259,7 +253,7 @@
         </div>
 
         <div class="right-col">
-            <div class="card" style="height: 100%; border-left: 4px solid var(--primary);">
+            <div class="card" style="border-left: 4px solid var(--primary);">
                 <h3 style="font-size: 0.9rem; margin-bottom: 20px;"><i data-lucide="shield-check" size="16" color="var(--primary)" style="margin-right: 8px;"></i>Saúde & Reserva</h3>
                 
                 <div class="progress-list">
@@ -285,7 +279,6 @@
                             <span id="perc-reserva">0%</span>
                         </div>
                         <div class="progress-bar-bg" style="height: 10px; background: rgba(0,0,0,0.2);"><div id="bar-reserva" class="progress-bar-fill" style="background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div></div>
-                        <!-- Adicionada classe value-to-blur no status da reserva -->
                         <p id="reserva-status" class="value-to-blur" style="font-size: 0.6rem; color: var(--text-muted); margin-top: 10px; font-weight: 500;"></p>
                     </div>
                 </div>
@@ -299,10 +292,24 @@
                 </div>
 
                 <div id="projection-card" style="margin-top: 16px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--primary); border-radius: 16px;">
-                    <!-- Adicionada classe value-to-blur no texto de projeção -->
                     <p style="font-size: 0.7rem; color: var(--text-main); font-weight: 600;" id="projection-text" class="value-to-blur">
                         Selecione um mês para ver a projeção.
                     </p>
+                </div>
+            </div>
+
+            <!-- NOVA SEÇÃO: Fatura do Cartão -->
+            <div class="card" style="margin-top: 16px; border-left: 4px solid var(--warning);">
+                <h3 style="font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center;">
+                    <i data-lucide="credit-card" size="16" color="var(--warning)" style="margin-right: 8px;"></i>
+                    Raio-X do Cartão (Top 5)
+                </h3>
+                <div id="card-details-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Preenchido via JS -->
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; font-weight: 700; font-size: 0.8rem;">
+                    <span style="color: var(--text-muted);">Total Fatura</span>
+                    <span id="card-total" class="value-to-blur" style="color: var(--warning);">R$ 0,00</span>
                 </div>
             </div>
         </div>
@@ -315,7 +322,11 @@
         '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv'
     };
 
+    // Nova fonte de dados dos cartões
+    const CARD_SOURCE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=1333505159&single=true&output=csv';
+
     let currentData = [];
+    let currentCardData = [];
     let charts = {};
     let activeIdx = 0;
     let prevKpiValues = { r: 0, g: 0, i: 0, s: 0 };
@@ -368,17 +379,36 @@
         };
     }
 
+    // Função auxiliar para buscar CSV via Promise
+    function fetchCSV(url) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(url, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: (res) => resolve(res.data),
+                error: (err) => reject(err)
+            });
+        });
+    }
+
     async function loadYearData(year) {
         document.getElementById('loader').style.display = 'flex';
-        Papa.parse(SOURCES[year], {
-            download: true, header: true, skipEmptyLines: true,
-            complete: (res) => {
-                currentData = res.data.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
-                renderUI();
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-            }
-        });
+        try {
+            // Busca dados gerais e dados do cartão em paralelo
+            const [mainData, cardData] = await Promise.all([
+                fetchCSV(SOURCES[year]),
+                fetchCSV(CARD_SOURCE)
+            ]);
+
+            currentData = mainData.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
+            currentCardData = cardData.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
+
+            renderUI();
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        } catch (error) {
+            console.error("Erro ao carregar planilhas:", error);
+            alert("Erro ao sincronizar dados do Google Sheets.");
+        }
     }
 
     function changeYear(year, btn) {
@@ -407,6 +437,72 @@
         selectMonth(autoSelectIdx, chipToSelect);
     }
 
+    // --- NOVA LÓGICA: Processar Dados Dinâmicos do Cartão ---
+    function getCardDetails(mesNome) {
+        let details = [];
+        let rowToProcess = null;
+
+        if (mesNome === 'annual') {
+            // Soma anual de todos os gastos do cartão
+            let aggregated = {};
+            currentCardData.forEach(row => {
+                for (let key in row) {
+                    if (normalize(key) !== 'mes') {
+                        let val = parseVal(row[key]);
+                        if (val > 0) aggregated[key] = (aggregated[key] || 0) + val;
+                    }
+                }
+            });
+            Object.keys(aggregated).forEach(key => details.push({ name: key, value: aggregated[key] }));
+        } else {
+            // Gastos do cartão de um mês específico
+            rowToProcess = currentCardData.find(r => normalize(getVal(r, "Mes")) === normalize(mesNome));
+            if (rowToProcess) {
+                for (let key in rowToProcess) {
+                    if (normalize(key) !== 'mes') { // Ignora a coluna de Mês
+                        let val = parseVal(rowToProcess[key]);
+                        if (val > 0) details.push({ name: key, value: val });
+                    }
+                }
+            }
+        }
+
+        // Ordena do maior para o menor gasto
+        return details.sort((a, b) => b.value - a.value);
+    }
+
+    function renderCardUI(details) {
+        const listContainer = document.getElementById('card-details-list');
+        const totalEl = document.getElementById('card-total');
+
+        if (!details || details.length === 0) {
+            listContainer.innerHTML = '<p style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 10px 0;">Sem dados do cartão processados.</p>';
+            totalEl.innerText = 'R$ 0,00';
+            return;
+        }
+
+        const totalCard = details.reduce((acc, curr) => acc + curr.value, 0);
+        totalEl.innerText = fmt.format(totalCard);
+
+        // Pegar apenas o Top 5
+        const top5 = details.slice(0, 5);
+
+        listContainer.innerHTML = top5.map(item => {
+            const percentage = (item.value / totalCard) * 100;
+            return `
+                <div style="position: relative;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 600; margin-bottom: 6px;">
+                        <span style="color: var(--text-main);">${item.name}</span>
+                        <span class="value-to-blur">${fmt.format(item.value)}</span>
+                    </div>
+                    <div class="progress-bar-bg" style="height: 5px;">
+                        <div class="progress-bar-fill" style="width: ${percentage}%; background: var(--warning);"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     function selectMonth(idx, el) {
         activeIdx = idx;
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -418,8 +514,9 @@
         const avgGastos = allStats.reduce((a, b) => a + b.g, 0) / allStats.length;
         const acumuladoInvest = allStats.reduce((a, b) => a + b.i, 0);
         
-        let current, prev;
+        let current, prev, mesNome;
         if(idx === 'annual') {
+            mesNome = 'annual';
             current = allStats.reduce((a, b) => ({
                 r: a.r + b.r, g: a.g + b.g, i: a.i + b.i, 
                 fixos: a.fixos + b.fixos, cartoes: a.cartoes + b.cartoes, outros: a.outros + b.outros
@@ -430,6 +527,7 @@
             document.getElementById('projection-text').innerText = `Projeção Anual: Com base no seu saldo acumulado de ${fmt.format(current.s)}, está a construir um património sólido.`;
         } else {
             current = allStats[idx];
+            mesNome = getVal(currentData[idx], "Mes");
             prev = idx > 0 ? allStats[idx-1] : null;
             const diffAvg = ((current.g - avgGastos) / avgGastos * 100);
             document.getElementById('projection-text').innerText = diffAvg > 0 
@@ -501,6 +599,11 @@
         else analysis.innerText = "Equilíbrio mantido. O fluxo de caixa está a operar dentro dos parâmetros normais para a sua média histórica.";
 
         updateCharts(idx, current, allStats, avgGastos);
+        
+        // Chamada da nova função de cartões
+        const cardDetails = getCardDetails(mesNome);
+        renderCardUI(cardDetails);
+
         lucide.createIcons();
     }
 
@@ -623,7 +726,7 @@
         const items = [
             { n: 'Investimentos', v: current.i, c: '#3b82f6', p: (current.i / totalOut * 100) },
             { n: 'Contas Fixas', v: current.fixos, c: '#ef4444', p: (current.fixos / totalOut * 100) },
-            { n: 'Cartões (C6+ML)', v: current.cartoes, c: '#f59e0b', p: (current.cartoes / totalOut * 100) },
+            { n: 'Cartões', v: current.cartoes, c: '#f59e0b', p: (current.cartoes / totalOut * 100) },
             { n: 'Outros Gastos', v: current.outros, c: '#8b5cf6', p: (current.outros / totalOut * 100) }
         ].sort((a,b) => b.v - a.v);
 
@@ -634,14 +737,12 @@
                     <span style="font-size:0.75rem; font-weight:500;">${it.n}</span>
                 </div>
                 <div style="text-align:right;">
-                    <!-- Adicionada classe value-to-blur nos valores dinâmicos da lista -->
                     <div style="font-size:0.75rem; font-weight:700;" class="value-to-blur">${fmt.format(it.v)}</div>
                     <div style="font-size:0.6rem; color:var(--text-muted);">${it.p.toFixed(1)}%</div>
                 </div>
             </div>
         `).join('');
         
-        // Se o modo privado já estiver ativado via index.html, reaplica no HTML dinâmico!
         reapplyPrivacyState();
     }
 
@@ -672,8 +773,7 @@
         loadYearData(yearToLoad);
     };
 
-    // --- LÓGICA DE PRIVACIDADE ---
-    let isPrivacyModeActive = false; // Guarda o estado para reaplicar em conteúdos dinâmicos
+    let isPrivacyModeActive = false;
 
     window.addEventListener('message', (event) => {
         if (event.data.action === 'togglePrivacy') {
@@ -682,7 +782,6 @@
         }
     });
 
-    // Função para reaplicar o Blur sempre que renderizamos algo novo na tela (como trocar de mês)
     function reapplyPrivacyState() {
         document.querySelectorAll('.value-to-blur').forEach(el => {
             if(isPrivacyModeActive) {
@@ -693,9 +792,6 @@
         });
     }
 
-</script>
-
-<script>
     function enviarSaldoFinancasParaHub() {
         const elementoSaldo = document.getElementById('kpi-saldo'); 
         if (elementoSaldo && elementoSaldo.innerText !== "" && elementoSaldo.innerText !== "R$ 0,00") {
@@ -708,14 +804,6 @@
         }
     }
     setInterval(enviarSaldoFinancasParaHub, 1000);
-
-    window.addEventListener('message', (event) => {
-        if (event.data.action === 'togglePrivacy') {
-            document.querySelectorAll('.value-to-blur').forEach(el => {
-                event.data.state ? el.classList.add('blur-value') : el.classList.remove('blur-value');
-            });
-        }
-    });
 </script>                                
                                 
 </body>
