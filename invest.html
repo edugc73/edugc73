@@ -1186,6 +1186,34 @@ window.addEventListener('message', (event) => {
         }
     });
 </script>
-   
+<script>
+    // --- INTEGRAÇÃO INTELIGENTE COM O HUB ---
+    function enviarSaldoInvestParaHub() {
+        // ATENÇÃO: Substitua pelo ID correto do elemento que mostra o total investido
+        const elementoSaldo = document.getElementById('total-atual'); 
+        
+        if (elementoSaldo && elementoSaldo.innerText !== "") {
+            // Limpa a formatação (ex: "R$ 84.500,00" vira "84500.00")
+            let valorTexto = elementoSaldo.innerText.replace(/[R$\s.]/g, '').replace(',', '.');
+            let valorNumerico = parseFloat(valorTexto);
+
+            // Se for um número válido e estiver dentro do Hub, envia!
+            if (!isNaN(valorNumerico) && window.parent !== window) {
+                window.parent.postMessage({
+                    action: 'sync_data',
+                    module: 'invest', // Módulo de investimentos
+                    value: valorNumerico
+                }, '*');
+            }
+        }
+    }
+
+    // Verifica o valor na tela a cada 1 segundo
+    setInterval(enviarSaldoInvestParaHub, 1000);
+</script>
+
+
+
+    
 </body>
 </html>
