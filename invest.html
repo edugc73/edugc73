@@ -1160,38 +1160,6 @@
         }
     });
 </script>
-
-<script>
-    // Sincronização Inteligente com o Hub Principal
-    function syncInvestToHub() {
-        const el = document.getElementById('total-atual'); 
-        // Verifica se o valor não é zero nem está vazio
-        if (el && el.innerText !== "" && el.innerText !== "R$ 0,00") {
-            // Converte "R$ 277.031,96" em um número puro 277031.96
-            let val = parseFloat(el.innerText.replace(/[R$\s.]/g, '').replace(',', '.'));
-            
-            if (!isNaN(val) && val > 0 && window.parent !== window) {
-                window.parent.postMessage({ 
-                    action: 'sync_data', 
-                    module: 'invest', 
-                    value: val 
-                }, '*');
-            }
-        }
-    }
-    
-    // Tenta sincronizar a cada 1 segundo (espera o PapaParse carregar o CSV)
-    setInterval(syncInvestToHub, 1000);
-
-    // Controle de Privacidade (Blur)
-    window.addEventListener('message', (e) => {
-        if (e.data.action === 'togglePrivacy') {
-            document.querySelectorAll('.value-to-blur, #total-atual').forEach(el => {
-                e.data.state ? el.classList.add('blur-value') : el.classList.remove('blur-value');
-            });
-        }
-    });
-</script>
     <script>
     function enviarSaldoInvestParaHub() {
         const elementoSaldo = document.getElementById('total-atual'); 
