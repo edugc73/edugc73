@@ -379,11 +379,11 @@
         };
     }
 
-    // Função auxiliar para buscar CSV via Promise
-    function fetchCSV(url) {
+    // Função auxiliar para buscar CSV via Promise (Atualizada para lidar com tabelas sem cabeçalho padrão)
+    function fetchCSV(url, useHeader = true) {
         return new Promise((resolve, reject) => {
             Papa.parse(url, {
-                download: true, header: true, skipEmptyLines: true,
+                download: true, header: useHeader, skipEmptyLines: true,
                 complete: (res) => resolve(res.data),
                 error: (err) => reject(err)
             });
@@ -393,14 +393,14 @@
     async function loadYearData(year) {
         document.getElementById('loader').style.display = 'flex';
         try {
-            // Busca dados gerais e dados do cartão em paralelo
-            const [mainData, cardData] = await Promise.all([
-                fetchCSV(SOURCES[year]),
-                fetchCSV(CARD_SOURCE)
+            // Busca dados gerais (formato padrão) e dados do cartão (como matriz de linhas/colunas)
+            const [mainData, cardDataRaw] = await Promise.all([
+                fetchCSV(SOURCES[year], true),
+                fetchCSV(CARD_SOURCE, false)
             ]);
 
             currentData = mainData.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
-            currentCardData = cardData.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
+            window.currentCardDataRaw = cardDataRaw; // Guardamos os dados brutos do cartão
 
             renderUI();
             document.getElementById('loader').style.display = 'none';
@@ -408,6 +408,7 @@
         } catch (error) {
             console.error("Erro ao carregar planilhas:", error);
             alert("Erro ao sincronizar dados do Google Sheets.");
+            document.getElementById('loader').style.display = 'none';
         }
     }
 
@@ -437,38 +438,81 @@
         selectMonth(autoSelectIdx, chipToSelect);
     }
 
-    // --- NOVA LÓGICA: Processar Dados Dinâmicos do Cartão ---
+    // --- NOVA LÓGICA: Processar Dados em Blocos de Colunas (A1, C1, E1...) ---
     function getCardDetails(mesNome) {
         let details = [];
-        let rowToProcess = null;
+        let cardDataRaw = window.currentCardDataRaw || [];
+        if (cardDataRaw.length === 0) return details;
+
+        // Encontrar a linha onde os meses estão escritos e mapear em qual coluna estão
+        let monthRowIdx = -1;
+        let monthMap = {}; // Exemplo: { 'janeiro': 0 (Col A), 'fevereiro': 2 (Col C), 'marco': 4 (Col E) }
+
+        for (let r = 0; r < Math.min(10, cardDataRaw.length); r++) {
+            let found = 0;
+            for (let c = 0; c < cardDataRaw[r].length; c++) {
+                let val = normalize(cardDataRaw[r][c]);
+                if (MESES.includes(val)) {
+                    monthMap[val] = c;
+                    found++;
+                }
+            }
+            if (found > 0) {
+                monthRowIdx = r;
+                break;
+            }
+        }
+
+        if (monthRowIdx === -1) return details; // Não encontrou a linha de meses
 
         if (mesNome === 'annual') {
-            // Soma anual de todos os gastos do cartão
             let aggregated = {};
-            currentCardData.forEach(row => {
-                for (let key in row) {
-                    if (normalize(key) !== 'mes') {
-                        let val = parseVal(row[key]);
-                        if (val > 0) aggregated[key] = (aggregated[key] || 0) + val;
+            MESES.forEach(m => {
+                let c = monthMap[m];
+                if (c !== undefined) {
+                    for (let r = monthRowIdx + 1; r < cardDataRaw.length; r++) {
+                        let cat = cardDataRaw[r][c];
+                        let val = cardDataRaw[r][c+1]; // O valor está sempre na coluna imediatamente ao lado
+                        
+                        if (!cat) continue;
+                        let nCat = normalize(cat);
+                        // Ignora palavras-chave comuns de cabeçalhos ou totais
+                        if (nCat === '' || nCat.includes('total') || nCat.includes('categoria') || nCat.includes('valor')) continue;
+                        
+                        let parsedV = parseVal(val);
+                        if (parsedV > 0) {
+                            aggregated[cat] = (aggregated[cat] || 0) + parsedV;
+                        }
                     }
                 }
             });
-            Object.keys(aggregated).forEach(key => details.push({ name: key, value: aggregated[key] }));
+            Object.keys(aggregated).forEach(k => details.push({ name: k, value: aggregated[k] }));
         } else {
-            // Gastos do cartão de um mês específico
-            rowToProcess = currentCardData.find(r => normalize(getVal(r, "Mes")) === normalize(mesNome));
-            if (rowToProcess) {
-                for (let key in rowToProcess) {
-                    if (normalize(key) !== 'mes') { // Ignora a coluna de Mês
-                        let val = parseVal(rowToProcess[key]);
-                        if (val > 0) details.push({ name: key, value: val });
+            let c = monthMap[normalize(mesNome)];
+            if (c !== undefined) {
+                for (let r = monthRowIdx + 1; r < cardDataRaw.length; r++) {
+                    let cat = cardDataRaw[r][c];
+                    let val = cardDataRaw[r][c+1]; // O valor está sempre na coluna imediatamente ao lado
+                    
+                    if (!cat) continue;
+                    let nCat = normalize(cat);
+                    // Ignora palavras-chave comuns de cabeçalhos ou totais
+                    if (nCat === '' || nCat.includes('total') || nCat.includes('categoria') || nCat.includes('valor')) continue;
+                    
+                    let parsedV = parseVal(val);
+                    if (parsedV > 0) {
+                        details.push({ name: cat, value: parsedV });
                     }
                 }
             }
         }
 
-        // Ordena do maior para o menor gasto
-        return details.sort((a, b) => b.value - a.value);
+        // Agrupar categorias com o mesmo nome para evitar duplicados
+        let consolidated = {};
+        details.forEach(d => { consolidated[d.name] = (consolidated[d.name] || 0) + d.value; });
+        let finalDetails = Object.keys(consolidated).map(k => ({ name: k, value: consolidated[k] }));
+
+        return finalDetails.sort((a, b) => b.value - a.value);
     }
 
     function renderCardUI(details) {
