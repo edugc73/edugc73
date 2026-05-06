@@ -1192,6 +1192,28 @@
         }
     });
 </script>
+    <script>
+    function enviarSaldoInvestParaHub() {
+        const elementoSaldo = document.getElementById('total-atual'); 
+        if (elementoSaldo && elementoSaldo.innerText !== "" && elementoSaldo.innerText !== "R$ 0,00") {
+            let valorTexto = elementoSaldo.innerText.replace(/[R$\s.]/g, '').replace(',', '.');
+            let valorNumerico = parseFloat(valorTexto);
+
+            if (!isNaN(valorNumerico) && valorNumerico > 0 && window.parent !== window) {
+                window.parent.postMessage({ action: 'sync_data', module: 'invest', value: valorNumerico }, '*');
+            }
+        }
+    }
+    setInterval(enviarSaldoInvestParaHub, 1000);
+
+    window.addEventListener('message', (event) => {
+        if (event.data.action === 'togglePrivacy') {
+            document.querySelectorAll('.value-to-blur, #total-atual').forEach(el => {
+                event.data.state ? el.classList.add('blur-value') : el.classList.remove('blur-value');
+            });
+        }
+    });
+</script>
     
 </body>
 </html>
