@@ -699,7 +699,7 @@
     // --- INTEGRAÇÃO INTELIGENTE COM O HUB ---
     function enviarSaldoFinancasParaHub() {
         // ATENÇÃO: Substitua pelo ID correto do elemento que mostra o saldo na sua tela
-        const elementoSaldo = document.getElementById('ID_DO_SEU_SALDO_AQUI'); 
+        const elementoSaldo = document.getElementById('kpi-saldo'); 
            
         if (elementoSaldo && elementoSaldo.innerText !== "") {
             // Limpa a formatação (ex: "R$ 15.000,50" vira "15000.50") para o Hub conseguir somar
