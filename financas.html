@@ -695,29 +695,6 @@
 
 </script>
 
-<script>
-    function enviarSaldoFinancasParaHub() {
-        const elementoSaldo = document.getElementById('kpi-saldo'); 
-        if (elementoSaldo && elementoSaldo.innerText !== "" && elementoSaldo.innerText !== "R$ 0,00") {
-            let valorTexto = elementoSaldo.innerText.replace(/[R$\s.]/g, '').replace(',', '.');
-            let valorNumerico = parseFloat(valorTexto);
-
-            if (!isNaN(valorNumerico) && valorNumerico > 0 && window.parent !== window) {
-                window.parent.postMessage({ action: 'sync_data', module: 'financas', value: valorNumerico }, '*');
-            }
-        }
-    }
-    setInterval(enviarSaldoFinancasParaHub, 1000);
-
-    window.addEventListener('message', (event) => {
-        if (event.data.action === 'togglePrivacy') {
-            document.querySelectorAll('.value-to-blur').forEach(el => {
-                event.data.state ? el.classList.add('blur-value') : el.classList.remove('blur-value');
-            });
-        }
-    });
-</script>
- 
  <script>
     // Sincronização Inteligente com o Hub
     function syncToHub() {
@@ -741,6 +718,29 @@
         }
     });
 </script>
+
+<script>
+    function enviarSaldoFinancasParaHub() {
+        const elementoSaldo = document.getElementById('kpi-saldo'); 
+        if (elementoSaldo && elementoSaldo.innerText !== "" && elementoSaldo.innerText !== "R$ 0,00") {
+            let valorTexto = elementoSaldo.innerText.replace(/[R$\s.]/g, '').replace(',', '.');
+            let valorNumerico = parseFloat(valorTexto);
+
+            if (!isNaN(valorNumerico) && valorNumerico > 0 && window.parent !== window) {
+                window.parent.postMessage({ action: 'sync_data', module: 'financas', value: valorNumerico }, '*');
+            }
+        }
+    }
+    setInterval(enviarSaldoFinancasParaHub, 1000);
+
+    window.addEventListener('message', (event) => {
+        if (event.data.action === 'togglePrivacy') {
+            document.querySelectorAll('.value-to-blur').forEach(el => {
+                event.data.state ? el.classList.add('blur-value') : el.classList.remove('blur-value');
+            });
+        }
+    });
+</script>                                
                                 
 </body>
 </html>
