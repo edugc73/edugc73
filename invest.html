@@ -526,6 +526,32 @@
             }
         }
 
+// --- CÓDIGO DE INTEGRAÇÃO COM O HUB ---
+
+// 1. Função para enviar o teu saldo real para o Hub
+function sincronizarComHub(valorDoSaldo) {
+    if (window.parent !== window) {
+        window.parent.postMessage({
+            action: 'sync_data',
+            module: 'invest',
+            value: valorDoSaldo
+        }, '*');
+    }
+}
+
+// 2. Ouvinte para o botão de Privacidade (o Olho no topo do Hub)
+window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (data && data.action === 'togglePrivacy') {
+        const elementosSensiveis = document.querySelectorAll('.sensitive-value');
+        elementosSensiveis.forEach(el => {
+            if(data.state) el.classList.add('blur-value');
+            else el.classList.remove('blur-value');
+        });
+    }
+});
+
+        
         function fetchCSV(url) {
             return new Promise((resolve, reject) => {
                 Papa.parse(url, { 
