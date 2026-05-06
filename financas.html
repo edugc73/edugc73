@@ -696,29 +696,26 @@
 </script>
 
 <script>
-    // --- INTEGRAÇÃO INTELIGENTE COM O HUB ---
     function enviarSaldoFinancasParaHub() {
-        // ATENÇÃO: Substitua pelo ID correto do elemento que mostra o saldo na sua tela
         const elementoSaldo = document.getElementById('kpi-saldo'); 
-           
-        if (elementoSaldo && elementoSaldo.innerText !== "") {
-            // Limpa a formatação (ex: "R$ 15.000,50" vira "15000.50") para o Hub conseguir somar
+        if (elementoSaldo && elementoSaldo.innerText !== "" && elementoSaldo.innerText !== "R$ 0,00") {
             let valorTexto = elementoSaldo.innerText.replace(/[R$\s.]/g, '').replace(',', '.');
             let valorNumerico = parseFloat(valorTexto);
 
-            // Se for um número válido e estiver dentro do Hub, envia!
-           if (!isNaN(valorNumerico) && valorNumerico > 0 ...) && window.parent !== window) {
-                window.parent.postMessage({
-                    action: 'sync_data',
-                    module: 'financas',
-                    value: valorNumerico
-                }, '*');
+            if (!isNaN(valorNumerico) && valorNumerico > 0 && window.parent !== window) {
+                window.parent.postMessage({ action: 'sync_data', module: 'financas', value: valorNumerico }, '*');
             }
         }
     }
-
-    // Verifica o valor na tela a cada 1 segundo (garante que o CSV já foi carregado)
     setInterval(enviarSaldoFinancasParaHub, 1000);
+
+    window.addEventListener('message', (event) => {
+        if (event.data.action === 'togglePrivacy') {
+            document.querySelectorAll('.value-to-blur').forEach(el => {
+                event.data.state ? el.classList.add('blur-value') : el.classList.remove('blur-value');
+            });
+        }
+    });
 </script>
  
  <script>
