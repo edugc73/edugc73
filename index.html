@@ -507,7 +507,7 @@
         setTimeout(() => {
             window.postMessage({action: 'sync_data', module: 'financas', value: 24500.50}, '*');
             window.postMessage({action: 'sync_data', module: 'invest', value: 142300.00}, '*');
-        }, 100);
+        }, 80);
 
         window.addEventListener('message', (event) => {
             const data = event.data;
