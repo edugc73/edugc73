@@ -9,7 +9,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Configuração Tailwind -->
     <script>
@@ -21,15 +23,27 @@
                         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
                     },
                     colors: {
-                        dark: {
-                            900: '#030712', // Fundo principal
-                            800: '#111827', // Cards
-                            700: '#1f2937', // Bordas
-                        },
+                        background: '#050505', // Preto mais profundo e elegante
+                        surface: 'rgba(255, 255, 255, 0.02)', // Vidro sutil
+                        surfaceHover: 'rgba(255, 255, 255, 0.04)',
+                        border: 'rgba(255, 255, 255, 0.08)',
                         brand: {
-                            emerald: '#10b981', // Finanças
-                            cyan: '#22d3ee',    // Investimentos
-                            indigo: '#6366f1',  // CRM
+                            emerald: '#10b981',
+                            cyan: '#22d3ee',
+                            indigo: '#6366f1',
+                            accent: '#818cf8' // Cor de acento suave
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 20s infinite alternate ease-in-out',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0, 0) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0, 0) scale(1)' }
                         }
                     }
                 }
@@ -40,47 +54,46 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #030712;
-            color: #f9fafb;
+            background-color: #050505;
+            color: #f3f4f6;
             overflow: hidden; 
         }
+
+        /* Efeito de Ruído Premium (Noise) - Dá textura física ao app */
+        .noise-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.035;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
         
-        /* Efeito Glassmorphism */
-        .glass {
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        /* Glassmorphism Ultra-Refinado */
+        .glass-panel {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
-        /* Scrollbar customizada */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #030712;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4b5563;
-        }
+        /* Scrollbar Invisível/Elegante */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-        /* Animações suaves */
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        /* Animações */
+        .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         #app-frame {
-            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: scale(0.97);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            transform: scale(0.98);
             opacity: 0;
         }
         #app-frame.loaded {
@@ -88,143 +101,131 @@
             transform: scale(1);
         }
 
-        /* Classe para o efeito de Blur (Privacidade) */
+        /* Privacidade - Blur Suave */
         .blur-value {
-            filter: blur(6px);
-            opacity: 0.6;
+            filter: blur(8px);
+            opacity: 0.4;
             user-select: none;
-            transition: filter 0.3s ease, opacity 0.3s ease;
+            transition: filter 0.4s ease, opacity 0.4s ease;
         }
 
-        /* --- Estilos para a Barra Lateral Retrátil (Desktop) --- */
+        /* Sidebar Transitions Desktop */
         .sidebar-transition {
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         
-        /* Modificadores para quando colapsada (Desktop) */
         @media (min-width: 768px) {
-            .sidebar-collapsed {
-                width: 5rem !important; 
-            }
-            .sidebar-collapsed .sidebar-text {
-                display: none;
-            }
-            .sidebar-collapsed .nav-btn {
-                justify-content: center;
-                padding-left: 0;
-                padding-right: 0;
-            }
-            .sidebar-collapsed .logo-area,
-            .sidebar-collapsed .profile-area {
-                justify-content: center;
-                padding-left: 0;
-                padding-right: 0;
-            }
-            .sidebar-collapsed .profile-info {
-                display: none;
-            }
+            .sidebar-collapsed { width: 5rem !important; }
+            .sidebar-collapsed .sidebar-text { opacity: 0; display: none; }
+            .sidebar-collapsed .nav-btn { justify-content: center; padding: 0.75rem; }
+            .sidebar-collapsed .logo-area { justify-content: center; padding-left: 0; padding-right: 0; }
+            .sidebar-collapsed .profile-area { justify-content: center; }
+            .sidebar-collapsed .profile-info { display: none; }
         }
 
-        /* --- Estilos do Mesh Gradient Animado --- */
-        @keyframes blob {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(5vw, -5vh) scale(1.1); }
-            66% { transform: translate(-5vw, 5vh) scale(0.9); }
-            100% { transform: translate(0, 0) scale(1); }
-        }
-        .animate-blob {
-            animation: blob 20s infinite alternate ease-in-out;
-        }
-        .animation-delay-2000 {
-            animation-delay: -5s; 
-        }
-        .animation-delay-4000 {
-            animation-delay: -10s;
+        /* Custom glow effects for cards */
+        .hover-glow-emerald:hover { box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); }
+        .hover-glow-cyan:hover { box-shadow: 0 0 40px -10px rgba(34, 211, 238, 0.15); border-color: rgba(34, 211, 238, 0.3); }
+
+        /* Estilização da tag de notificação pulsante */
+        .dot-indicator::after {
+            content: '';
+            position: absolute;
+            top: 2px; right: 2px;
+            width: 8px; height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            border: 2px solid #050505;
         }
     </style>
 </head>
-<body class="flex h-screen antialiased selection:bg-brand-indigo selection:text-white relative overflow-hidden">
+<body class="flex h-screen antialiased selection:bg-brand-accent selection:text-white relative text-gray-300">
 
-    <!-- Fundo Mesh Gradient Animado -->
-    <div class="fixed inset-0 z-0 pointer-events-none bg-dark-900 overflow-hidden">
-        <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-brand-indigo/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
-        <div class="absolute top-[20%] right-[-10%] w-[45vw] h-[45vw] bg-brand-emerald/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
-        <div class="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw] bg-brand-cyan/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
-        <div class="absolute inset-0 bg-dark-900/60 backdrop-blur-[80px]"></div>
+    <!-- Camada de Ruído Tátil -->
+    <div class="noise-bg"></div>
+
+    <!-- Fundo de Iluminação Ambiente (Muito mais sutil e elegante) -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden opacity-40">
+        <div class="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-brand-indigo/20 rounded-full blur-[120px] animate-blob"></div>
+        <div class="absolute top-[40%] right-[-10%] w-[40vw] h-[40vw] bg-brand-emerald/10 rounded-full blur-[120px] animate-blob" style="animation-delay: -5s"></div>
+        <div class="absolute bottom-[-20%] left-[30%] w-[60vw] h-[60vw] bg-brand-cyan/10 rounded-full blur-[150px] animate-blob" style="animation-delay: -10s"></div>
     </div>
 
     <!-- Overlay para Sidebar Mobile -->
-    <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm z-20 hidden md:hidden transition-opacity opacity-0" onclick="toggleMobileSidebar()"></div>
+    <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 hidden transition-opacity duration-300 opacity-0" onclick="toggleMobileSidebar()"></div>
 
     <!-- Sidebar Lateral -->
-    <aside id="sidebar" class="sidebar-transition fixed md:relative -translate-x-full md:translate-x-0 w-64 glass flex flex-col h-full border-r border-dark-700 z-30 md:z-20 shrink-0">
+    <aside id="sidebar" class="sidebar-transition fixed md:relative -translate-x-full md:translate-x-0 w-64 glass-panel border-r-border flex flex-col h-full z-40 md:z-20 shrink-0">
         
-        <!-- Botão Retrátil (Collapse Desktop) -->
-        <button onclick="toggleSidebar()" aria-label="Recolher Menu" class="hidden md:block absolute -right-3.5 top-7 bg-dark-800 border border-dark-600 rounded-full p-1.5 text-gray-400 hover:text-white hover:bg-brand-indigo hover:border-brand-indigo transition-all shadow-lg z-50 group" title="Recolher Menu">
-            <i id="sidebar-toggle-icon" data-lucide="chevron-left" class="w-4 h-4 transition-transform group-hover:scale-110"></i>
+        <!-- Botão Retrátil (Desktop) -->
+        <button onclick="toggleSidebar()" aria-label="Recolher Menu" class="hidden md:flex items-center justify-center absolute -right-3.5 top-8 w-7 h-7 bg-[#0a0a0a] border border-border rounded-full text-gray-400 hover:text-white hover:border-brand-accent transition-all shadow-xl z-50 group">
+            <i id="sidebar-toggle-icon" data-lucide="chevron-left" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5"></i>
         </button>
 
         <!-- Botão Fechar (Mobile) -->
-        <button onclick="toggleMobileSidebar()" aria-label="Fechar Menu" class="md:hidden absolute right-4 top-6 text-gray-400 hover:text-white">
-            <i data-lucide="x" class="w-6 h-6"></i>
+        <button onclick="toggleMobileSidebar()" class="md:hidden absolute right-4 top-6 text-gray-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
         </button>
 
         <!-- Logo -->
-        <div class="h-20 flex items-center px-6 logo-area border-b border-dark-700 transition-all">
-            <div class="flex items-center gap-3 overflow-hidden">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-indigo to-purple-600 flex items-center justify-center shadow-lg shadow-brand-indigo/20 shrink-0">
-                    <i data-lucide="layout-dashboard" class="text-white w-5 h-5"></i>
+        <div class="h-24 flex items-center px-6 logo-area border-b border-border/50">
+            <div class="flex items-center gap-3 overflow-hidden w-full">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-indigo to-brand-accent flex items-center justify-center shadow-lg shadow-brand-indigo/20 shrink-0">
+                    <i data-lucide="command" class="text-white w-4 h-4"></i>
                 </div>
-                <span class="sidebar-text text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 whitespace-nowrap">
+                <span class="sidebar-text text-lg font-bold text-white tracking-tight whitespace-nowrap">
                     GonçaCRM
                 </span>
             </div>
         </div>
 
         <!-- Navegação -->
-        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2 overflow-x-hidden">
-            <p class="sidebar-text px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 whitespace-nowrap">Principal</p>
+        <nav class="flex-1 overflow-y-auto py-8 px-4 space-y-1.5 overflow-x-hidden">
+            <p class="sidebar-text px-3 text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3 whitespace-nowrap">Dashboard</p>
             
-            <button onclick="navigate('home')" id="nav-home" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all bg-brand-indigo/10 text-brand-indigo">
-                <i data-lucide="home" class="w-5 h-5 shrink-0"></i>
+            <button onclick="navigate('home')" id="nav-home" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all bg-white/[0.08] text-white border border-white/[0.05]">
+                <i data-lucide="layout-grid" class="w-4 h-4 shrink-0"></i>
                 <span class="sidebar-text whitespace-nowrap">Visão Geral</span>
             </button>
 
-            <div class="pt-4 pb-2 sidebar-text">
-                <p class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 whitespace-nowrap">Módulos</p>
+            <div class="pt-6 pb-2 sidebar-text">
+                <p class="px-3 text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1 whitespace-nowrap">Módulos</p>
             </div>
 
-            <button onclick="navigate('financas')" id="nav-financas" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
-                <i data-lucide="wallet" class="w-5 h-5 text-brand-emerald shrink-0"></i>
+            <button onclick="navigate('financas')" id="nav-financas" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-surfaceHover transition-all border border-transparent">
+                <i data-lucide="wallet" class="w-4 h-4 text-brand-emerald shrink-0"></i>
                 <span class="sidebar-text whitespace-nowrap">Finanças</span>
             </button>
 
-            <button onclick="navigate('invest')" id="nav-invest" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
-                <i data-lucide="trending-up" class="w-5 h-5 text-brand-cyan shrink-0"></i>
+            <button onclick="navigate('invest')" id="nav-invest" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-surfaceHover transition-all border border-transparent">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-cyan shrink-0"></i>
                 <span class="sidebar-text whitespace-nowrap">Investimentos</span>
             </button>
 
-            <div class="pt-4 pb-2 sidebar-text">
-                <p class="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 whitespace-nowrap">Sistema</p>
+            <div class="pt-6 pb-2 sidebar-text">
+                <p class="px-3 text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1 whitespace-nowrap">Sistema</p>
             </div>
 
-            <button class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
-                <i data-lucide="users" class="w-5 h-5 shrink-0"></i>
+            <button class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-surfaceHover transition-all border border-transparent">
+                <i data-lucide="users-2" class="w-4 h-4 shrink-0"></i>
                 <span class="sidebar-text whitespace-nowrap">Clientes</span>
             </button>
-            <button class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-dark-700 transition-all">
-                <i data-lucide="settings" class="w-5 h-5 shrink-0"></i>
+            <button class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-surfaceHover transition-all border border-transparent">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4 shrink-0"></i>
                 <span class="sidebar-text whitespace-nowrap">Configurações</span>
             </button>
         </nav>
 
         <!-- User Profile -->
-        <div class="p-4 border-t border-dark-700">
-            <div class="profile-area flex items-center gap-3 p-2 rounded-xl hover:bg-dark-700 transition-colors cursor-pointer">
-                <img src="https://ui-avatars.com/api/?name=Admin&background=1f2937&color=fff" alt="User" class="w-10 h-10 rounded-full border border-gray-600 shrink-0">
+        <div class="p-4 border-t border-border/50">
+            <div class="profile-area flex items-center gap-3 p-2.5 rounded-lg hover:bg-surfaceHover transition-all cursor-pointer border border-transparent hover:border-border/50">
+                <div class="relative shrink-0">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=111&color=fff&rounded=true" alt="User" class="w-9 h-9 rounded-full border border-gray-700">
+                    <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-brand-emerald border-2 border-[#050505] rounded-full"></div>
+                </div>
                 <div class="profile-info overflow-hidden">
-                    <p class="text-sm font-medium text-white truncate">Administrador</p>
-                    <p class="text-xs text-gray-400 truncate">admin@goncacrm.com</p>
+                    <p class="text-sm font-semibold text-gray-200 truncate leading-none mb-1">Administrador</p>
+                    <p class="text-[11px] text-gray-500 truncate leading-none">admin@goncacrm.com</p>
                 </div>
             </div>
         </div>
@@ -233,31 +234,35 @@
     <!-- Área Principal -->
     <main class="flex-1 flex flex-col h-screen relative z-10 w-full">
 
-        <!-- Topbar -->
-        <header class="h-20 glass border-b border-dark-700 flex items-center justify-between px-6 z-10">
+        <!-- Topbar Minimalista -->
+        <header class="h-24 flex items-center justify-between px-8 z-10">
             <div class="flex items-center gap-4">
-                <!-- Botão Menu Mobile Corrigido -->
-                <button onclick="toggleMobileSidebar()" aria-label="Abrir Menu" class="md:hidden text-gray-400 hover:text-white">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
+                <button onclick="toggleMobileSidebar()" class="md:hidden text-gray-400 hover:text-white">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
-                <h1 id="page-title" class="text-xl font-semibold text-white tracking-tight">Visão Geral</h1>
+                <div>
+                    <h1 id="page-title" class="text-xl font-bold text-white tracking-tight">Visão Geral</h1>
+                    <p id="current-date" class="text-xs text-gray-500 mt-0.5 font-medium"></p>
+                </div>
             </div>
             
-            <div class="flex items-center gap-2 sm:gap-4">
-                <!-- Botão de Privacidade Global -->
-                <button id="privacy-btn" onclick="togglePrivacyMode()" aria-label="Alternar Privacidade" class="p-2 text-brand-indigo hover:text-indigo-400 hover:bg-brand-indigo/10 rounded-lg transition-all" title="Modo Privacidade">
-                    <i id="privacy-icon" data-lucide="eye" class="w-5 h-5"></i>
+            <div class="flex items-center gap-2">
+                <!-- Modo Privacidade -->
+                <button id="privacy-btn" onclick="togglePrivacyMode()" class="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-surface transition-all">
+                    <i id="privacy-icon" data-lucide="eye" class="w-4 h-4"></i>
                 </button>
 
-                <div class="h-5 w-px bg-dark-700 mx-1 hidden sm:block"></div>
+                <!-- Divisor sutil -->
+                <div class="h-4 w-[1px] bg-border mx-1"></div>
 
-                <button onclick="toggleNotifications()" aria-label="Notificações" class="p-2 text-gray-400 hover:text-white transition-colors relative">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
-                    <!-- Indicador pulsante -->
-                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-emerald rounded-full border-[2px] border-dark-900 animate-pulse"></span>
+                <!-- Notificações -->
+                <button onclick="toggleNotifications()" class="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-surface transition-all relative dot-indicator">
+                    <i data-lucide="bell" class="w-4 h-4"></i>
                 </button>
-                <button id="popout-btn" onclick="openExternal()" aria-label="Abrir em nova aba" class="hidden p-2 text-gray-400 hover:text-white transition-colors" title="Abrir em nova guia">
-                    <i data-lucide="external-link" class="w-5 h-5"></i>
+                
+                <!-- Popout -->
+                <button id="popout-btn" onclick="openExternal()" class="hidden w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-surface transition-all">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
                 </button>
             </div>
         </header>
@@ -266,241 +271,249 @@
         <div class="flex-1 overflow-hidden relative z-10">
             
             <!-- VIEW: HOME (Dashboard Resumo) -->
-            <div id="view-home" class="h-full overflow-y-auto p-4 sm:p-6 md:p-8 space-y-8 fade-in">
+            <div id="view-home" class="h-full overflow-y-auto px-4 sm:px-8 pb-10 space-y-6">
                 
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-1">Olá, de volta! 👋</h2>
-                        <p class="text-gray-400 text-sm sm:text-base">Aqui está o resumo do seu ecossistema financeiro hoje.</p>
-                    </div>
-                    <div class="text-left md:text-right text-sm text-gray-400">
-                        <p id="current-date"></p>
-                    </div>
-                </div>
+                <!-- Widget Hero: Patrimônio (Estilo Cartão Black) -->
+                <div class="glass-panel rounded-[2rem] p-8 sm:p-10 relative overflow-hidden group fade-up" style="animation-delay: 0.1s;">
+                    <!-- Brilho interno animado -->
+                    <div class="absolute -top-40 -right-40 w-96 h-96 bg-brand-indigo/10 rounded-full blur-[80px] group-hover:bg-brand-accent/20 transition-all duration-1000"></div>
+                    <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-white/[0.02] to-transparent pointer-events-none"></div>
 
-                <!-- Widget de Patrimônio Total Vivo -->
-                <div class="glass rounded-2xl p-4 sm:p-6 border border-brand-indigo/30 relative overflow-hidden group">
-                    <div class="absolute top-0 right-0 w-64 h-64 bg-brand-indigo/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-brand-indigo/20 transition-all duration-900"></div>
-                    <div class="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                    <div class="relative z-10 flex flex-col xl:flex-row xl:items-end justify-between gap-8">
                         <div>
-                            <p class="text-sm font-medium text-gray-400 mb-1">Patrimônio Consolidado</p>
-                            <h3 class="text-3xl sm:text-4xl font-bold text-white tracking-tight sensitive-value flex items-center gap-3">
-                                <span id="patrimonio-total">Aguardando...</span>
-                                <span class="flex h-3 w-3 relative" title="Sincronização Ativa">
-                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-emerald opacity-75 transition-colors duration-700" id="sync-led"></span>
-                                  <span class="relative inline-flex rounded-full h-3 w-3 bg-brand-emerald"></span>
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-2 h-2 rounded-full bg-brand-accent animate-pulse-slow"></div>
+                                <p class="text-xs font-semibold text-brand-accent tracking-widest uppercase">Patrimônio Consolidado</p>
+                            </div>
+                            <h3 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tighter sensitive-value mb-2 flex items-center gap-4">
+                                <span id="patrimonio-total">R$ 0,00</span>
+                                <!-- Status de Sincronização Sutil -->
+                                <span class="flex h-2 w-2 relative" title="Sincronização Ativa">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-emerald opacity-50" id="sync-led"></span>
+                                  <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-emerald"></span>
                                 </span>
                             </h3>
+                            <p class="text-sm text-gray-500">Atualizado em tempo real com seus módulos.</p>
                         </div>
-                        <div class="flex flex-col sm:flex-row flex-wrap gap-4 w-full xl:w-auto">
-                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 flex-1 min-w-[150px]">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <i data-lucide="wallet" class="w-4 h-4 text-brand-emerald"></i>
+
+                        <!-- Mini Cards de Divisão -->
+                        <div class="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+                            <div class="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/[0.05] flex-1 min-w-[180px]">
+                                <div class="flex items-center justify-between mb-2">
                                     <span class="text-xs text-gray-400 font-medium">Conta Corrente</span>
+                                    <i data-lucide="wallet" class="w-4 h-4 text-brand-emerald opacity-70"></i>
                                 </div>
-                                <p class="text-lg font-semibold text-white sensitive-value" id="patrimonio-financas">Calculando...</p>
+                                <p class="text-xl font-bold text-white sensitive-value tracking-tight" id="patrimonio-financas">R$ 0,00</p>
                             </div>
-                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 flex-1 min-w-[150px]">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <i data-lucide="trending-up" class="w-4 h-4 text-brand-cyan"></i>
+                            <div class="bg-black/40 backdrop-blur-md rounded-2xl p-5 border border-white/[0.05] flex-1 min-w-[180px]">
+                                <div class="flex items-center justify-between mb-2">
                                     <span class="text-xs text-gray-400 font-medium">Investimentos</span>
+                                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-cyan opacity-70"></i>
                                 </div>
-                                <p class="text-lg font-semibold text-white sensitive-value" id="patrimonio-invest">Calculando...</p>
+                                <p class="text-xl font-bold text-white sensitive-value tracking-tight" id="patrimonio-invest">R$ 0,00</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Cards de Navegação de Módulos -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-up" style="animation-delay: 0.2s;">
+                    
                     <!-- Card Finanças -->
-                    <div onclick="navigate('financas')" class="glass rounded-2xl p-6 border border-dark-700 hover:border-brand-emerald/50 cursor-pointer group transition-all duration-700 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-emerald/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-brand-emerald/20 transition-all"></div>
-                        <div class="flex justify-between items-start mb-4 relative z-10">
-                            <div class="w-12 h-12 rounded-xl bg-brand-emerald/10 flex items-center justify-center border border-brand-emerald/20 text-brand-emerald">
-                                <i data-lucide="wallet" class="w-6 h-6"></i>
+                    <div onclick="navigate('financas')" class="glass-panel rounded-3xl p-7 cursor-pointer transition-all duration-500 hover-glow-emerald group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-brand-emerald/10 flex items-center justify-center border border-brand-emerald/20 text-brand-emerald group-hover:scale-110 transition-transform duration-500">
+                                <i data-lucide="wallet" class="w-5 h-5"></i>
                             </div>
-                            <button aria-label="Abrir Finanças" class="text-gray-500 group-hover:text-brand-emerald transition-colors">
-                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                            </button>
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center bg-surface group-hover:bg-brand-emerald/20 transition-colors">
+                                <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400 group-hover:text-brand-emerald"></i>
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-2 relative z-10">GonçaFinances</h3>
-                        <p class="text-sm text-gray-400 relative z-10">Controle seu orçamento, receitas e despesas com gestão detalhada de categorias.</p>
+                        <h3 class="text-xl font-bold text-white mb-2 tracking-tight">GonçaFinances</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed">Gestão orçamentária inteligente. Controle receitas, despesas e fluxos de caixa com precisão.</p>
                     </div>
 
                     <!-- Card Investimentos -->
-                    <div onclick="navigate('invest')" class="glass rounded-2xl p-6 border border-dark-700 hover:border-brand-cyan/50 cursor-pointer group transition-all duration-700 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-cyan/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-brand-cyan/20 transition-all"></div>
-                        <div class="flex justify-between items-start mb-4 relative z-10">
-                            <div class="w-12 h-12 rounded-xl bg-brand-cyan/10 flex items-center justify-center border border-brand-cyan/20 text-brand-cyan">
-                                <i data-lucide="trending-up" class="w-6 h-6"></i>
+                    <div onclick="navigate('invest')" class="glass-panel rounded-3xl p-7 cursor-pointer transition-all duration-500 hover-glow-cyan group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-brand-cyan/10 flex items-center justify-center border border-brand-cyan/20 text-brand-cyan group-hover:scale-110 transition-transform duration-500">
+                                <i data-lucide="line-chart" class="w-5 h-5"></i>
                             </div>
-                            <button aria-label="Abrir Investimentos" class="text-gray-500 group-hover:text-brand-cyan transition-colors">
-                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                            </button>
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center bg-surface group-hover:bg-brand-cyan/20 transition-colors">
+                                <i data-lucide="arrow-right" class="w-4 h-4 text-gray-400 group-hover:text-brand-cyan"></i>
+                            </div>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-2 relative z-10">GonçaInvest</h3>
-                        <p class="text-sm text-gray-400 relative z-10">Gerencie seu portfólio de ativos, acompanhe dividendos e rentabilidade global.</p>
+                        <h3 class="text-xl font-bold text-white mb-2 tracking-tight">GonçaInvest</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed">Acompanhamento de portfólio. Monitore ativos, dividendos e a rentabilidade global em tempo real.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 glass rounded-2xl p-4 sm:p-6 border border-dark-700">
+                <!-- Área Inferior: Gráfico e Metas -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-up" style="animation-delay: 0.3s;">
+                    
+                    <!-- Gráfico Elegante -->
+                    <div class="lg:col-span-2 glass-panel rounded-3xl p-7">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-semibold text-white">Atividade do Sistema</h3>
-                            <button class="text-sm text-brand-indigo hover:text-indigo-400">Ver Relatório</button>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Fluxo de Interações</h3>
+                                <p class="text-xs text-gray-500 mt-1">Análise de atividade do sistema nos últimos meses</p>
+                            </div>
+                            <button class="text-xs font-medium text-brand-accent hover:text-indigo-300 flex items-center gap-1">
+                                Ver Detalhes <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                            </button>
                         </div>
-                        <div class="h-64 relative w-full">
+                        <div class="h-60 relative w-full">
                             <canvas id="crmChart"></canvas>
                         </div>
                     </div>
                     
-                    <div class="glass rounded-2xl p-4 sm:p-6 border border-dark-700 flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-white mb-2">Metas do Mês</h3>
-                            <p class="text-sm text-gray-400 mb-6">Acompanhamento de progresso geral</p>
+                    <!-- Metas Minimalistas -->
+                    <div class="glass-panel rounded-3xl p-7 flex flex-col">
+                        <h3 class="text-base font-bold text-white mb-1">Indicadores Chave</h3>
+                        <p class="text-xs text-gray-500 mb-8">Progresso das metas deste mês</p>
+                        
+                        <div class="space-y-6 flex-1 flex flex-col justify-center">
                             
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-300">Economia</span>
-                                        <span class="text-brand-emerald font-medium sensitive-value">85%</span>
-                                    </div>
-                                    <div class="w-full bg-dark-900 rounded-full h-2">
-                                        <div class="bg-brand-emerald h-2 rounded-full" style="width: 85%"></div>
-                                    </div>
+                            <!-- Item de Meta -->
+                            <div>
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-sm text-gray-300 font-medium">Economia Mensal</span>
+                                    <span class="text-sm text-white font-bold sensitive-value">85%</span>
                                 </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-300">Aportes</span>
-                                        <span class="text-brand-cyan font-medium sensitive-value">60%</span>
-                                    </div>
-                                    <div class="w-full bg-dark-900 rounded-full h-2">
-                                        <div class="bg-brand-cyan h-2 rounded-full" style="width: 60%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-300">Novos Clientes</span>
-                                        <span class="text-brand-indigo font-medium sensitive-value">40%</span>
-                                    </div>
-                                    <div class="w-full bg-dark-900 rounded-full h-2">
-                                        <div class="bg-brand-indigo h-2 rounded-full" style="width: 40%"></div>
+                                <div class="w-full bg-white/[0.05] rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-brand-emerald h-full rounded-full relative" style="width: 85%">
+                                        <div class="absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white/30"></div>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Item de Meta -->
+                            <div>
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-sm text-gray-300 font-medium">Aportes Realizados</span>
+                                    <span class="text-sm text-white font-bold sensitive-value">60%</span>
+                                </div>
+                                <div class="w-full bg-white/[0.05] rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-brand-cyan h-full rounded-full relative" style="width: 60%">
+                                        <div class="absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white/30"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Item de Meta -->
+                            <div>
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-sm text-gray-300 font-medium">Novos Clientes CRM</span>
+                                    <span class="text-sm text-white font-bold sensitive-value">40%</span>
+                                </div>
+                                <div class="w-full bg-white/[0.05] rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-brand-accent h-full rounded-full relative" style="width: 40%">
+                                        <div class="absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white/30"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- VIEW: IFRAME APP -->
-            <div id="view-app" class="h-full w-full hidden relative">
+            <div id="view-app" class="h-full w-full hidden relative bg-[#050505]">
                 
-                <!-- Loading Screen Premium -->
-                <div id="skeleton-loader" class="absolute inset-0 z-20 bg-dark-900/80 backdrop-blur-xl flex items-center justify-center transition-opacity duration-500">
-                    <div class="relative flex flex-col items-center p-4 text-center">
-                        <!-- Glow background dinâmico -->
-                        <div id="module-glow" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 rounded-full blur-[80px] animate-pulse"></div>
-                        
-                        <!-- Logo Box -->
-                        <div id="module-icon-box" class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-dark-800/80 border border-dark-700 flex items-center justify-center shadow-2xl mb-6 sm:mb-8 z-10 overflow-hidden backdrop-blur-sm transition-all duration-300">
-                            <!-- Preenchido via JS -->
+                <!-- Loading Screen Elegante -->
+                <div id="skeleton-loader" class="absolute inset-0 z-20 bg-[#050505]/80 backdrop-blur-2xl flex items-center justify-center transition-opacity duration-700">
+                    <div class="relative flex flex-col items-center">
+                        <!-- Anel de carregamento abstrato -->
+                        <div class="relative w-24 h-24 flex items-center justify-center mb-8">
+                            <div class="absolute inset-0 border border-white/10 rounded-full animate-[spin_4s_linear_infinite]"></div>
+                            <div class="absolute inset-2 border-t-2 border-brand-accent rounded-full animate-spin"></div>
+                            <div id="module-icon-container" class="relative z-10 text-white">
+                                <!-- Ícone injetado -->
+                            </div>
                         </div>
 
-                        <!-- Textos -->
-                        <h3 id="module-loading-title" class="text-xl sm:text-2xl font-bold text-white mb-4 z-10 relative tracking-tight">Carregando Módulo</h3>
-                        <div class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-dark-800/50 border border-dark-700/50 backdrop-blur-md z-10 relative flex items-center gap-3">
-                            <span class="text-xs sm:text-sm text-gray-400 font-medium">Sincronizando dados seguros</span>
-                            <span class="flex gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-brand-indigo animate-bounce" style="animation-delay: 0s"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce" style="animation-delay: 0.15s"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-bounce" style="animation-delay: 0.3s"></span>
-                            </span>
-                        </div>
+                        <h3 id="module-loading-title" class="text-xl font-bold text-white mb-2 tracking-tight">Iniciando...</h3>
+                        <p class="text-xs text-gray-500 font-medium uppercase tracking-widest">Estabelecendo conexão segura</p>
                     </div>
                 </div>
 
-                <!-- Iframe do Módulo -->
-                <iframe id="app-frame" src="about:blank" title="Módulo da Aplicação" class="w-full h-full border-none relative z-10"></iframe>
+                <iframe id="app-frame" src="about:blank" title="Módulo" class="w-full h-full border-none relative z-10"></iframe>
             </div>
 
         </div>
     </main>
 
-    <!-- Overlay de Fundo para Notificações -->
-    <div id="notification-overlay" class="fixed inset-0 bg-dark-900/40 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="toggleNotifications()"></div>
+    <!-- Overlay Notificações -->
+    <div id="notification-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-opacity duration-400 opacity-0" onclick="toggleNotifications()"></div>
     
     <!-- Painel Lateral de Notificações -->
-    <aside id="notification-panel" class="fixed top-0 right-0 h-full w-80 sm:w-96 glass border-l border-dark-700 z-50 transform translate-x-full transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col">
-        <div class="h-20 border-b border-dark-700 flex items-center justify-between px-6 shrink-0 bg-dark-800/30">
-            <div class="flex items-center gap-3">
-                <h2 class="text-lg font-semibold text-white">Notificações</h2>
-                <span class="px-2 py-0.5 rounded-full bg-brand-emerald/20 text-brand-emerald text-xs font-bold">2 Novas</span>
+    <aside id="notification-panel" class="fixed top-0 right-0 h-full w-80 sm:w-96 glass-panel border-l-border z-50 transform translate-x-full transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) flex flex-col shadow-2xl">
+        
+        <div class="h-24 border-b border-border/50 flex items-center justify-between px-6 shrink-0">
+            <div class="flex flex-col">
+                <h2 class="text-lg font-bold text-white">Caixa de Entrada</h2>
+                <p class="text-xs text-gray-400 mt-0.5">2 não lidas</p>
             </div>
-            <button onclick="toggleNotifications()" aria-label="Fechar Notificações" class="p-2 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors">
-                <i data-lucide="x" class="w-5 h-5"></i>
+            <button onclick="toggleNotifications()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-gray-400 hover:text-white transition-all">
+                <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
         
-        <div class="flex-1 overflow-y-auto p-4 space-y-3">
-            <div class="bg-dark-800/80 border border-brand-emerald/30 rounded-xl p-4 flex gap-4 hover:bg-dark-700 transition-colors cursor-pointer relative overflow-hidden group">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-brand-emerald"></div>
-                <div class="w-10 h-10 rounded-full bg-brand-emerald/10 flex items-center justify-center shrink-0 text-brand-emerald group-hover:scale-110 transition-transform">
-                    <i data-lucide="target" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h4 class="text-sm font-semibold text-white mb-1">Meta de Economia Atingida! 🎯</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">Você alcançou 85% de retenção da sua receita mensal. Continue assim até ao fim do mês.</p>
-                    <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-wider">Há 2 horas</span>
-                </div>
-            </div>
-
-            <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4 flex gap-4 hover:border-brand-cyan/50 hover:bg-dark-700 transition-colors cursor-pointer group">
-                <div class="w-10 h-10 rounded-full bg-brand-cyan/10 flex items-center justify-center shrink-0 text-brand-cyan group-hover:scale-110 transition-transform">
-                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h4 class="text-sm font-semibold text-white mb-1">Atualização Pendente</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">Lembrete: Atualize o CSV com o fecho do mercado dos seus ativos da corretora.</p>
-                    <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-wider">Ontem</span>
+        <div class="flex-1 overflow-y-auto p-4 space-y-2">
+            <!-- Notificação Destaque -->
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] transition-all cursor-pointer relative overflow-hidden group">
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-emerald rounded-r-md"></div>
+                <div class="flex gap-4 pl-2">
+                    <div class="w-8 h-8 rounded-full bg-brand-emerald/10 flex items-center justify-center shrink-0 text-brand-emerald mt-1">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-1">Meta Atingida!</h4>
+                        <p class="text-xs text-gray-400 leading-relaxed">Você alcançou 85% de retenção da sua receita mensal.</p>
+                        <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-widest">Agora mesmo</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4 flex gap-4 hover:border-brand-indigo/50 hover:bg-dark-700 transition-colors cursor-pointer group opacity-70">
-                <div class="w-10 h-10 rounded-full bg-brand-indigo/10 flex items-center justify-center shrink-0 text-brand-indigo group-hover:scale-110 transition-transform">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h4 class="text-sm font-semibold text-white mb-1">Reunião de Consultoria</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">Revisão trimestral do plano de investimentos.</p>
-                    <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-wider">12 de Maio</span>
+            <!-- Notificação Padrão -->
+            <div class="p-4 rounded-2xl border border-transparent hover:bg-white/[0.03] transition-all cursor-pointer group">
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-brand-cyan/10 flex items-center justify-center shrink-0 text-brand-cyan mt-1">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-200 mb-1">Atualização Pendente</h4>
+                        <p class="text-xs text-gray-400 leading-relaxed">Atualize o CSV com o fecho do mercado da corretora.</p>
+                        <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-widest">Ontem</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="p-4 border-t border-dark-700 shrink-0 bg-dark-800/30">
-            <button onclick="toggleNotifications()" class="w-full py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-sm font-medium text-white transition-all border border-dark-600 hover:border-gray-400">
+        <div class="p-4 border-t border-border/50 shrink-0">
+            <button onclick="toggleNotifications()" class="w-full py-3 rounded-xl bg-white text-[#050505] hover:bg-gray-200 text-sm font-bold transition-all text-center">
                 Marcar todas como lidas
             </button>
         </div>
     </aside>
 
-    <!-- Iframes Ocultos para Sincronização em Background -->
-    <!-- NOTA: Em produção, considere substituir isso por localStorage, IndexedDB ou BroadcastChannel API para melhor performance -->
+    <!-- Iframes Ocultos (Mockup Background Sync) -->
     <div class="absolute w-0 h-0 overflow-hidden opacity-0 pointer-events-none">
-        <iframe id="bg-financas" src="financas.html" aria-hidden="true"></iframe>
-        <iframe id="bg-invest" src="invest.html" aria-hidden="true"></iframe>
+        <iframe id="bg-financas" src="about:blank" aria-hidden="true"></iframe>
+        <iframe id="bg-invest" src="about:blank" aria-hidden="true"></iframe>
     </div>
 
     <script>
         lucide.createIcons();
 
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
+        // Data formatada com a primeira letra maiúscula
+        const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+        let dateStr = new Date().toLocaleDateString('pt-BR', dateOptions);
+        document.getElementById('current-date').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
         let currentAppUrl = '';
         let isPrivacyMode = false;
-
         let saldos = { financas: 0, invest: 0 };
 
         function formatCurrency(value) {
@@ -513,10 +526,7 @@
             document.getElementById('patrimonio-invest').innerText = formatCurrency(saldos.invest);
         }
 
-        // Segurança adicionada: Verificando a origem da mensagem (descomentar/ajustar a linha de origin em prod)
         window.addEventListener('message', (event) => {
-            // if (event.origin !== window.location.origin) return; // Descomente em produção para evitar XSS via iframe
-            
             const data = event.data;
             if (data && data.action === 'sync_data') {
                 if (data.module === 'financas') saldos.financas = parseFloat(data.value) || 0;
@@ -526,13 +536,17 @@
                 
                 const ping = document.getElementById('sync-led');
                 if(ping) {
-                    ping.classList.replace('bg-brand-emerald', 'bg-brand-cyan');
-                    setTimeout(() => ping.classList.replace('bg-brand-cyan', 'bg-brand-emerald'), 800);
+                    ping.classList.remove('opacity-50');
+                    ping.classList.add('bg-white', 'opacity-100');
+                    setTimeout(() => {
+                        ping.classList.remove('bg-white', 'opacity-100');
+                        ping.classList.add('opacity-50');
+                    }, 500);
                 }
             }
         });
 
-        // Toggle Painel de Notificações
+        // Toggle Panels
         let isNotificationsOpen = false;
         function toggleNotifications() {
             isNotificationsOpen = !isNotificationsOpen;
@@ -552,14 +566,10 @@
                 overlay.classList.add('opacity-0');
                 panel.classList.remove('translate-x-0');
                 panel.classList.add('translate-x-full');
-                
-                setTimeout(() => {
-                    overlay.classList.add('hidden');
-                }, 300); 
+                setTimeout(() => overlay.classList.add('hidden'), 400); 
             }
         }
 
-        // Lógica: Barra Lateral Retrátil (Desktop)
         let isSidebarCollapsed = false;
         function toggleSidebar() {
             isSidebarCollapsed = !isSidebarCollapsed;
@@ -576,7 +586,6 @@
             lucide.createIcons();
         }
 
-        // Lógica: Barra Lateral Mobile
         let isMobileSidebarOpen = false;
         function toggleMobileSidebar() {
             isMobileSidebarOpen = !isMobileSidebarOpen;
@@ -594,57 +603,37 @@
             }
         }
 
-        // Lógica: Alternar Modo Privacidade
         function togglePrivacyMode() {
             isPrivacyMode = !isPrivacyMode;
-            
             const icon = document.getElementById('privacy-icon');
             const btn = document.getElementById('privacy-btn');
             
             if (isPrivacyMode) {
                 icon.setAttribute('data-lucide', 'eye-off');
-                btn.classList.add('bg-brand-indigo/20', 'text-indigo-300');
+                btn.classList.add('text-white', 'bg-surface');
             } else {
                 icon.setAttribute('data-lucide', 'eye');
-                btn.classList.remove('bg-brand-indigo/20', 'text-indigo-300');
+                btn.classList.remove('text-white', 'bg-surface');
             }
             lucide.createIcons();
 
             document.querySelectorAll('.sensitive-value').forEach(el => {
-                if(isPrivacyMode) el.classList.add('blur-value');
-                else el.classList.remove('blur-value');
+                isPrivacyMode ? el.classList.add('blur-value') : el.classList.remove('blur-value');
             });
 
             const frame = document.getElementById('app-frame');
             if(frame.contentWindow) {
-                frame.contentWindow.postMessage({ 
-                    action: 'togglePrivacy', 
-                    state: isPrivacyMode 
-                }, '*'); // Adicionar targetOrigin em prod
+                frame.contentWindow.postMessage({ action: 'togglePrivacy', state: isPrivacyMode }, '*');
             }
         }
 
-        // Refatoração: Objeto de Configuração de Módulos (DRY Principle)
+        // Configuração de Módulos
         const modulesConfig = {
-            financas: {
-                title: 'Controle Financeiro',
-                url: 'financas.html',
-                colorClass: 'emerald',
-                icon: 'wallet',
-                appName: 'GonçaFinances'
-            },
-            invest: {
-                title: 'Gestão de Portfólio',
-                url: 'invest.html',
-                colorClass: 'cyan',
-                icon: 'trending-up',
-                appName: 'GonçaInvest'
-            }
+            financas: { title: 'Controle Financeiro', url: 'financas.html', color: 'text-brand-emerald', icon: 'wallet', appName: 'GonçaFinances' },
+            invest: { title: 'Gestão de Portfólio', url: 'invest.html', color: 'text-brand-cyan', icon: 'line-chart', appName: 'GonçaInvest' }
         };
 
-        // Lógica: Navegação e Skeleton Loader
         function navigate(moduleKey) {
-            // Fecha menu mobile ao navegar
             if(isMobileSidebarOpen) toggleMobileSidebar();
 
             const homeView = document.getElementById('view-home');
@@ -655,10 +644,10 @@
             const skeleton = document.getElementById('skeleton-loader');
             const activeBtn = document.getElementById(`nav-${moduleKey}`);
 
-            // Resetar estilos dos botões
+            // Reset Tabs
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-brand-indigo/10', 'text-brand-indigo', 'bg-dark-700', 'text-white');
-                btn.classList.add('text-gray-400');
+                btn.classList.remove('bg-white/[0.08]', 'text-white', 'border-white/[0.05]');
+                btn.classList.add('text-gray-400', 'border-transparent');
             });
 
             if (moduleKey === 'home') {
@@ -668,69 +657,57 @@
                 title.innerText = 'Visão Geral';
                 
                 if (activeBtn) {
-                    activeBtn.classList.remove('text-gray-400');
-                    activeBtn.classList.add('bg-brand-indigo/10', 'text-brand-indigo');
+                    activeBtn.classList.remove('text-gray-400', 'border-transparent');
+                    activeBtn.classList.add('bg-white/[0.08]', 'text-white', 'border-white/[0.05]');
                 }
                 popoutBtn.classList.add('hidden');
                 currentAppUrl = '';
-                return; // Early return
+                return;
             }
 
-            // Lógica para Módulos (usando o Dicionário de Configuração)
             const config = modulesConfig[moduleKey];
             if (!config) return;
 
             homeView.classList.add('hidden');
             appView.classList.remove('hidden');
-            
             skeleton.classList.remove('hidden');
             skeleton.style.opacity = '1';
             frame.classList.remove('loaded');
             
-            const glow = document.getElementById('module-glow');
-            const iconBox = document.getElementById('module-icon-box');
+            const iconContainer = document.getElementById('module-icon-container');
             const loadingTitle = document.getElementById('module-loading-title');
             
             frame.src = config.url; 
             title.innerText = config.title;
             currentAppUrl = config.url;
             
-            // Injeção dinâmica de classes baseada na configuração
-            glow.className = `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 bg-brand-${config.colorClass}/20 rounded-full blur-[80px] animate-pulse`;
-            iconBox.innerHTML = `<div class="absolute inset-0 bg-gradient-to-br from-brand-${config.colorClass}/10 to-transparent opacity-50"></div><i data-lucide="${config.icon}" class="w-10 h-10 sm:w-12 sm:h-12 text-brand-${config.colorClass} animate-pulse"></i>`;
+            iconContainer.innerHTML = `<i data-lucide="${config.icon}" class="w-8 h-8 ${config.color}"></i>`;
             loadingTitle.innerText = config.appName;
-            
             lucide.createIcons();
             
             if (activeBtn) {
-                activeBtn.classList.remove('text-gray-400');
-                activeBtn.classList.add('bg-dark-700', 'text-white');
+                activeBtn.classList.remove('text-gray-400', 'border-transparent');
+                activeBtn.classList.add('bg-white/[0.08]', 'text-white', 'border-white/[0.05]');
             }
             popoutBtn.classList.remove('hidden');
 
             frame.onload = () => {
                 setTimeout(() => {
                     skeleton.style.opacity = '0';
-                    setTimeout(() => skeleton.classList.add('hidden'), 500);
+                    setTimeout(() => skeleton.classList.add('hidden'), 700);
                     frame.classList.add('loaded');
-                    
-                    frame.contentWindow.postMessage({ 
-                        action: 'togglePrivacy', 
-                        state: isPrivacyMode 
-                    }, '*'); // Adicionar targetOrigin em prod
-                }, 1000); 
+                    frame.contentWindow.postMessage({ action: 'togglePrivacy', state: isPrivacyMode }, '*');
+                }, 800); 
             };
         }
 
-        function openExternal() {
-            if(currentAppUrl) window.open(currentAppUrl, '_blank');
-        }
+        function openExternal() { if(currentAppUrl) window.open(currentAppUrl, '_blank'); }
 
-        // Gráfico Dummy
+        // Gráfico Premium (Chart.js)
         const ctx = document.getElementById('crmChart').getContext('2d');
-        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); 
-        gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(129, 140, 248, 0.4)'); // brand-accent
+        gradient.addColorStop(1, 'rgba(129, 140, 248, 0.0)');
 
         new Chart(ctx, {
             type: 'line',
@@ -738,26 +715,50 @@
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'],
                 datasets: [{
                     label: 'Interações',
-                    data: [65, 78, 60, 92, 115, 105, 130],
-                    borderColor: '#6366f1',
+                    data: [45, 62, 50, 85, 120, 95, 140],
+                    borderColor: '#818cf8',
                     backgroundColor: gradient,
-                    borderWidth: 2,
-                    pointBackgroundColor: '#111827',
-                    pointBorderColor: '#6366f1',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#050505',
+                    pointBorderColor: '#818cf8',
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4 // Linha suave
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(5, 5, 5, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, ticks: { color: '#6b7280' } },
-                    x: { grid: { display: false, drawBorder: false }, ticks: { color: '#6b7280' } }
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: 'rgba(255, 255, 255, 0.03)', drawBorder: false }, 
+                        ticks: { color: '#6b7280', font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } },
+                        border: { display: false }
+                    },
+                    x: { 
+                        grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false, borderDash: [5, 5] }, 
+                        ticks: { color: '#6b7280', font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } },
+                        border: { display: false }
+                    }
                 }
             }
         });
