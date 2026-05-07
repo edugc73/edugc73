@@ -338,8 +338,8 @@
                     <div class="lg:col-span-2 glass-panel rounded-3xl p-6 border-white/5">
                         <div class="flex justify-between items-center mb-8">
                             <div>
-                                <h3 class="text-lg font-semibold text-white tracking-tight">Evolução de Dividendos</h3>
-                                <p class="text-xs text-zinc-500 mt-1">Sincronizado via Google Sheets</p>
+                                <h3 class="text-lg font-semibold text-white tracking-tight">Dividendos por Ano</h3>
+                                <p class="text-xs text-zinc-500 mt-1">Acumulado anual sincronizado via Google Sheets</p>
                             </div>
                             <button class="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white transition-colors border border-white/5">
                                 Relatório Completo
@@ -705,45 +705,65 @@
                 const csvText = await response.text();
                 
                 const linhas = parseCSV(csvText);
-                const labels = [];
-                const dados = [];
+                const totaisPorAno = {}; // Objeto para armazenar a soma de cada ano
 
-                // O loop começa em 1 para pular o cabeçalho (ex: "Mês", "Valor") da linha 0
+                // O loop começa em 1 para pular o cabeçalho (Linha 1 do Sheets)
                 for (let i = 1; i < linhas.length; i++) {
                     const colunas = linhas[i];
                     
-                    if (colunas.length >= 2) {
-                        // Assume Coluna 0 como Mês (Label) e Coluna 1 como Valor do Dividendo
-                        // Se a sua planilha for diferente (ex: Valor está na coluna C), mude o índice abaixo para colunas[2]
-                        const label = colunas[0];
-                        let valorBruto = colunas[1];
+                    // Verifica se existe a coluna A (Ano)
+                    if (colunas.length > 0) {
+                        const labelRaw = colunas[0];
+                        if (!labelRaw) continue;
                         
-                        if (label && valorBruto) {
-                            // Limpa símbolos de moeda e espaços
-                            valorBruto = valorBruto.replace(/[R$\s]/g, '');
-                            
-                            // Converte formato brasileiro (ex: 1.250,50) para Float (1250.50)
-                            if (valorBruto.includes(',')) {
-                                valorBruto = valorBruto.replace(/\./g, '').replace(',', '.');
-                            }
-                            
-                            const valor = parseFloat(valorBruto);
-                            
-                            if (!isNaN(valor)) {
-                                labels.push(label);
-                                dados.push(valor);
+                        // Extrai o ano do texto (procura por 20xx na string da data/ano)
+                        const matchAno = labelRaw.match(/\b(20\d{2})\b/);
+                        const ano = matchAno ? matchAno[1] : labelRaw.trim();
+                        
+                        if (ano) {
+                            // Percorre da Coluna B (índice 1) até M (índice 12) - Janeiro a Dezembro
+                            for (let j = 1; j <= 12; j++) {
+                                let valorBruto = colunas[j];
+                                
+                                if (valorBruto) {
+                                    // Limpa símbolos de moeda, espaços vazios ou traços (células vazias na folha)
+                                    valorBruto = valorBruto.replace(/[R$\s\-]/g, '');
+                                    
+                                    if (valorBruto.length > 0) {
+                                        // Converte o formato do Brasil para Float (ex: 1.250,50 -> 1250.50)
+                                        if (valorBruto.includes(',')) {
+                                            valorBruto = valorBruto.replace(/\./g, '').replace(',', '.');
+                                        } else if (valorBruto.includes('.')) {
+                                            // Evita falhas com pontos de milhar que não tenham vírgula no final (ex: 1.250)
+                                            if (valorBruto.split('.').length > 2 || !valorBruto.match(/\.\d{1,2}$/)) {
+                                                valorBruto = valorBruto.replace(/\./g, '');
+                                            }
+                                        }
+                                        
+                                        const valor = parseFloat(valorBruto);
+                                        
+                                        if (!isNaN(valor)) {
+                                            // Acumula o valor na somatória daquele ano específico
+                                            totaisPorAno[ano] = (totaisPorAno[ano] || 0) + valor;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                // Renderiza o gráfico com os dados capturados
+                // Prepara os arrays para o gráfico, ordenados pelo ano cronologicamente
+                const labels = Object.keys(totaisPorAno).sort();
+                const dados = labels.map(ano => totaisPorAno[ano]);
+
+                // Renderiza o gráfico com os dados agregados
                 renderizarGrafico(labels, dados);
 
             } catch (error) {
                 console.error("Erro ao puxar os dados do Google Sheets:", error);
                 // Dados fictícios de fallback caso a planilha saia do ar ou dê erro
-                renderizarGrafico(['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'], [120, 135, 125, 145, 160, 155, 180]);
+                renderizarGrafico(['2023', '2024', '2025'], [1500, 3200, 4800]);
             }
         }
 
