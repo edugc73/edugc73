@@ -503,11 +503,11 @@
             document.getElementById('patrimonio-invest').innerText = formatCurrency(saldos.invest);
         }
 
-        // Mock Data de teste para ver o painel preenchido (Remover em prod)
+        // Mock Data: Tempo reduzido de 1500ms para 100ms para exibição instantânea
         setTimeout(() => {
             window.postMessage({action: 'sync_data', module: 'financas', value: 24500.50}, '*');
             window.postMessage({action: 'sync_data', module: 'invest', value: 142300.00}, '*');
-        }, 1500);
+        }, 100);
 
         window.addEventListener('message', (event) => {
             const data = event.data;
