@@ -338,8 +338,8 @@
                     <div class="lg:col-span-2 glass-panel rounded-3xl p-6 border-white/5">
                         <div class="flex justify-between items-center mb-8">
                             <div>
-                                <h3 class="text-lg font-semibold text-white tracking-tight">Crescimento Patrimonial</h3>
-                                <p class="text-xs text-zinc-500 mt-1">Evolução dos últimos 7 meses</p>
+                                <h3 class="text-lg font-semibold text-white tracking-tight">Evolução de Dividendos</h3>
+                                <p class="text-xs text-zinc-500 mt-1">Sincronizado via Google Sheets</p>
                             </div>
                             <button class="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white transition-colors border border-white/5">
                                 Relatório Completo
@@ -507,7 +507,7 @@
         setTimeout(() => {
             window.postMessage({action: 'sync_data', module: 'financas', value: 24500.50}, '*');
             window.postMessage({action: 'sync_data', module: 'invest', value: 142300.00}, '*');
-        }, 80);
+        }, 100);
 
         window.addEventListener('message', (event) => {
             const data = event.data;
@@ -667,7 +667,25 @@
             if(currentAppUrl) window.open(currentAppUrl, '_blank');
         }
 
-        // Gráfico Premium (Chart.js ajustado)
+        // Função robusta para ler CSV (lida com aspas em números formatados)
+        function parseCSV(str) {
+            const arr = [];
+            let quote = false;
+            let row = [];
+            let col = '';
+            for (let c of str) {
+                if (c === '"' && quote) quote = false;
+                else if (c === '"' && !quote) quote = true;
+                else if (c === ',' && !quote) { row.push(col.trim()); col = ''; }
+                else if (c === '\n' && !quote) { row.push(col.trim()); arr.push(row); row = []; col = ''; }
+                else if (c !== '\r') col += c;
+            }
+            row.push(col.trim());
+            arr.push(row);
+            return arr;
+        }
+
+        // Gráfico Premium (Chart.js dinâmico com Google Sheets)
         Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
         Chart.defaults.color = '#71717a'; // zinc-500
         
@@ -676,58 +694,133 @@
         gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)'); // brand-indigo
         gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
 
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'],
-                datasets: [{
-                    label: 'Patrimônio',
-                    data: [120, 135, 125, 145, 160, 155, 180],
-                    borderColor: '#6366f1',
-                    backgroundColor: gradient,
-                    borderWidth: 2,
-                    pointBackgroundColor: '#0a0a0a',
-                    pointBorderColor: '#6366f1',
-                    pointBorderWidth: 2,
-                    pointRadius: 0, // Esconde pontos por padrão
-                    pointHoverRadius: 6,
-                    fill: true,
-                    tension: 0.4 // Curvas suaves
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#a1a1aa',
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
-                        borderWidth: 1,
-                        padding: 12,
-                        displayColors: false,
-                        cornerRadius: 8
-                    }
-                },
-                scales: {
-                    y: { 
-                        beginAtZero: false, 
-                        grid: { display: true, color: 'rgba(255, 255, 255, 0.03)', drawBorder: false }, 
-                        border: { display: false }
-                    },
-                    x: { 
-                        grid: { display: false, drawBorder: false }, 
-                        border: { display: false }
+        let crmChart; // Variável global para manter a instância do gráfico
+
+        async function carregarDadosPlanilha() {
+            try {
+                // Link CSV fornecido por você
+                const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJFWclSmOeIDQwo5VepSJ5_XG-t-0OVr4FhWsVlmUA4t5wEk-bjTbZdOD1cXGcGnnZ6IBm2vGVZ8HQ/pub?gid=440281931&single=true&output=csv';
+                
+                const response = await fetch(sheetUrl);
+                const csvText = await response.text();
+                
+                const linhas = parseCSV(csvText);
+                const labels = [];
+                const dados = [];
+
+                // O loop começa em 1 para pular o cabeçalho (ex: "Mês", "Valor") da linha 0
+                for (let i = 1; i < linhas.length; i++) {
+                    const colunas = linhas[i];
+                    
+                    if (colunas.length >= 2) {
+                        // Assume Coluna 0 como Mês (Label) e Coluna 1 como Valor do Dividendo
+                        // Se a sua planilha for diferente (ex: Valor está na coluna C), mude o índice abaixo para colunas[2]
+                        const label = colunas[0];
+                        let valorBruto = colunas[1];
+                        
+                        if (label && valorBruto) {
+                            // Limpa símbolos de moeda e espaços
+                            valorBruto = valorBruto.replace(/[R$\s]/g, '');
+                            
+                            // Converte formato brasileiro (ex: 1.250,50) para Float (1250.50)
+                            if (valorBruto.includes(',')) {
+                                valorBruto = valorBruto.replace(/\./g, '').replace(',', '.');
+                            }
+                            
+                            const valor = parseFloat(valorBruto);
+                            
+                            if (!isNaN(valor)) {
+                                labels.push(label);
+                                dados.push(valor);
+                            }
+                        }
                     }
                 }
+
+                // Renderiza o gráfico com os dados capturados
+                renderizarGrafico(labels, dados);
+
+            } catch (error) {
+                console.error("Erro ao puxar os dados do Google Sheets:", error);
+                // Dados fictícios de fallback caso a planilha saia do ar ou dê erro
+                renderizarGrafico(['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'], [120, 135, 125, 145, 160, 155, 180]);
             }
-        });
+        }
+
+        function renderizarGrafico(labels, dados) {
+            if (crmChart) crmChart.destroy(); // Limpa o gráfico antigo antes de atualizar
+
+            crmChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Dividendos (R$)',
+                        data: dados,
+                        borderColor: '#6366f1',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#0a0a0a',
+                        pointBorderColor: '#6366f1',
+                        pointBorderWidth: 2,
+                        pointRadius: 0, // Esconde pontos por padrão
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4 // Curvas suaves
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#a1a1aa',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { display: true, color: 'rgba(255, 255, 255, 0.03)', drawBorder: false }, 
+                            border: { display: false },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value;
+                                }
+                            }
+                        },
+                        x: { 
+                            grid: { display: false, drawBorder: false }, 
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chama a função para puxar a planilha e montar o gráfico assim que a página carrega
+        carregarDadosPlanilha();
     </script>
 </body>
 </html>
