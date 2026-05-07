@@ -353,40 +353,46 @@
                     <!-- Metas (Ocupa 1/3) -->
                     <div class="glass-panel rounded-3xl p-6 border-white/5 flex flex-col justify-between relative overflow-hidden">
                         <div class="relative z-10">
-                            <h3 class="text-lg font-semibold text-white tracking-tight mb-1">Metas Mensais</h3>
-                            <p class="text-xs text-zinc-500 mb-8">Progresso atualizado em tempo real</p>
+                            <h3 class="text-lg font-semibold text-white tracking-tight mb-1">Metas de Dividendos</h3>
+                            <p class="text-xs text-zinc-500 mb-8">Calculado em tempo real via planilha</p>
                             
                             <div class="space-y-6">
-                                <!-- Progresso 1 -->
+                                <!-- Progresso 1: Meta de 5k -->
                                 <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span class="text-sm font-medium text-zinc-300">Meta Mensal (R$ 5k)</span>
+                                        <span id="valor-meta-mensal" class="text-sm text-brand-emerald font-semibold sensitive-value">--%</span>
+                                    </div>
                                     <div class="flex justify-between items-end mb-2">
-                                        <span class="text-sm font-medium text-zinc-300">Taxa de Poupança</span>
-                                        <span class="text-sm text-brand-emerald font-semibold sensitive-value">85%</span>
+                                        <span id="text-meta-mensal" class="text-[10px] text-zinc-500">Média atual: R$ 0,00</span>
                                     </div>
                                     <div class="w-full bg-black/50 rounded-full h-1.5 border border-white/5 overflow-hidden">
-                                        <div class="bg-brand-emerald h-full rounded-full relative" style="width: 85%">
+                                        <div id="bar-meta-mensal" class="bg-brand-emerald h-full rounded-full relative transition-all duration-1000" style="width: 0%">
                                             <div class="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]"></div>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Progresso 2 -->
+                                <!-- Progresso 2: Bater ano passado -->
+                                <div>
+                                    <div class="flex justify-between items-end mb-1">
+                                        <span id="titulo-meta-ano" class="text-sm font-medium text-zinc-300">Crescimento Anual</span>
+                                        <span id="valor-meta-ano" class="text-sm text-brand-cyan font-semibold sensitive-value">--%</span>
+                                    </div>
+                                    <div class="flex justify-between items-end mb-2">
+                                        <span id="text-meta-ano" class="text-[10px] text-zinc-500">Ano atual vs anterior</span>
+                                    </div>
+                                    <div class="w-full bg-black/50 rounded-full h-1.5 border border-white/5 overflow-hidden">
+                                        <div id="bar-meta-ano" class="bg-brand-cyan h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <!-- Progresso 3: Aportes Regulares -->
                                 <div>
                                     <div class="flex justify-between items-end mb-2">
                                         <span class="text-sm font-medium text-zinc-300">Aportes Regulares</span>
-                                        <span class="text-sm text-brand-cyan font-semibold sensitive-value">60%</span>
+                                        <span class="text-sm text-brand-indigo font-semibold sensitive-value">Em dia</span>
                                     </div>
                                     <div class="w-full bg-black/50 rounded-full h-1.5 border border-white/5 overflow-hidden">
-                                        <div class="bg-brand-cyan h-full rounded-full" style="width: 60%"></div>
-                                    </div>
-                                </div>
-                                <!-- Progresso 3 -->
-                                <div>
-                                    <div class="flex justify-between items-end mb-2">
-                                        <span class="text-sm font-medium text-zinc-300">Novos Clientes CRM</span>
-                                        <span class="text-sm text-brand-indigo font-semibold sensitive-value">40%</span>
-                                    </div>
-                                    <div class="w-full bg-black/50 rounded-full h-1.5 border border-white/5 overflow-hidden">
-                                        <div class="bg-brand-indigo h-full rounded-full" style="width: 40%"></div>
+                                        <div class="bg-brand-indigo h-full rounded-full" style="width: 100%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -706,6 +712,7 @@
                 
                 const linhas = parseCSV(csvText);
                 const totaisPorAno = {}; // Objeto para armazenar a soma de cada ano
+                const dadosPorAno = {};  // Objeto para armazenar os pagamentos individuais
 
                 // O loop começa em 1 para pular o cabeçalho (Linha 1 do Sheets)
                 for (let i = 1; i < linhas.length; i++) {
@@ -721,6 +728,8 @@
                         const ano = matchAno ? matchAno[1] : labelRaw.trim();
                         
                         if (ano) {
+                            if (!dadosPorAno[ano]) dadosPorAno[ano] = [];
+
                             // Percorre da Coluna B (índice 1) até M (índice 12) - Janeiro a Dezembro
                             for (let j = 1; j <= 12; j++) {
                                 let valorBruto = colunas[j];
@@ -742,9 +751,10 @@
                                         
                                         const valor = parseFloat(valorBruto);
                                         
-                                        if (!isNaN(valor)) {
-                                            // Acumula o valor na somatória daquele ano específico
+                                        // Apenas contabiliza se o valor for numérico e maior que zero
+                                        if (!isNaN(valor) && valor > 0) {
                                             totaisPorAno[ano] = (totaisPorAno[ano] || 0) + valor;
+                                            dadosPorAno[ano].push(valor); // Guarda registro para calcular a média
                                         }
                                     }
                                 }
@@ -756,6 +766,37 @@
                 // Prepara os arrays para o gráfico, ordenados pelo ano cronologicamente
                 const labels = Object.keys(totaisPorAno).sort();
                 const dados = labels.map(ano => totaisPorAno[ano]);
+
+                // --- INÍCIO DA LÓGICA DAS METAS ---
+                if (labels.length > 0) {
+                    const anoAtualStr = labels[labels.length - 1]; // Último ano preenchido na planilha
+                    const anoPassadoStr = labels.length > 1 ? labels[labels.length - 2] : null;
+
+                    // 1. Meta Mensal de R$ 5.000
+                    const totalAnoAtual = totaisPorAno[anoAtualStr] || 0;
+                    const mesesComDadosAtual = dadosPorAno[anoAtualStr].length || 1; // Conta os meses que já renderam dividendos neste ano
+                    const mediaMensalAtual = totalAnoAtual / mesesComDadosAtual;
+                    const metaMensal = 5000; // SUA META AQUI
+                    const percentualMeta = Math.min((mediaMensalAtual / metaMensal) * 100, 100);
+
+                    document.getElementById('text-meta-mensal').innerText = `Média de ${anoAtualStr}: ${formatCurrency(mediaMensalAtual)} / R$ 5.000,00`;
+                    document.getElementById('valor-meta-mensal').innerText = `${((mediaMensalAtual / metaMensal) * 100).toFixed(1)}%`;
+                    document.getElementById('bar-meta-mensal').style.width = `${percentualMeta}%`;
+
+                    // 2. Crescimento Anual (Bater o ano anterior)
+                    if (anoPassadoStr) {
+                        const totalAnoPassado = totaisPorAno[anoPassadoStr] || 1; // Para evitar divisão por zero
+                        const percentualCrescimento = Math.min((totalAnoAtual / totalAnoPassado) * 100, 100);
+                        
+                        document.getElementById('titulo-meta-ano').innerText = `Superar ${anoPassadoStr}`;
+                        document.getElementById('text-meta-ano').innerText = `${formatCurrency(totalAnoAtual)} de ${formatCurrency(totalAnoPassado)}`;
+                        document.getElementById('valor-meta-ano').innerText = `${((totalAnoAtual / totalAnoPassado) * 100).toFixed(1)}%`;
+                        document.getElementById('bar-meta-ano').style.width = `${percentualCrescimento}%`;
+                    } else {
+                        document.getElementById('text-meta-ano').innerText = `Sem dados suficientes do ano anterior`;
+                    }
+                }
+                // --- FIM DA LÓGICA DAS METAS ---
 
                 // Renderiza o gráfico com os dados agregados
                 renderizarGrafico(labels, dados);
