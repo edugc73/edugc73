@@ -96,29 +96,33 @@
             transition: filter 0.3s ease, opacity 0.3s ease;
         }
 
-        /* --- Estilos para a Barra Lateral Retrátil --- */
+        /* --- Estilos para a Barra Lateral Retrátil (Desktop) --- */
         .sidebar-transition {
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .sidebar-collapsed {
-            width: 5rem !important; /* w-20 equivalente */
-        }
-        .sidebar-collapsed .sidebar-text {
-            display: none;
-        }
-        .sidebar-collapsed .nav-btn {
-            justify-content: center;
-            padding-left: 0;
-            padding-right: 0;
-        }
-        .sidebar-collapsed .logo-area,
-        .sidebar-collapsed .profile-area {
-            justify-content: center;
-            padding-left: 0;
-            padding-right: 0;
-        }
-        .sidebar-collapsed .profile-info {
-            display: none;
+        
+        /* Modificadores para quando colapsada (Desktop) */
+        @media (min-width: 768px) {
+            .sidebar-collapsed {
+                width: 5rem !important; 
+            }
+            .sidebar-collapsed .sidebar-text {
+                display: none;
+            }
+            .sidebar-collapsed .nav-btn {
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .sidebar-collapsed .logo-area,
+            .sidebar-collapsed .profile-area {
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .sidebar-collapsed .profile-info {
+                display: none;
+            }
         }
 
         /* --- Estilos do Mesh Gradient Animado --- */
@@ -132,7 +136,7 @@
             animation: blob 20s infinite alternate ease-in-out;
         }
         .animation-delay-2000 {
-            animation-delay: -5s; /* Delay negativo para já começar num estado diferente */
+            animation-delay: -5s; 
         }
         .animation-delay-4000 {
             animation-delay: -10s;
@@ -143,20 +147,26 @@
 
     <!-- Fundo Mesh Gradient Animado -->
     <div class="fixed inset-0 z-0 pointer-events-none bg-dark-900 overflow-hidden">
-        <!-- Blobs de cor -->
         <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-brand-indigo/30 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
         <div class="absolute top-[20%] right-[-10%] w-[45vw] h-[45vw] bg-brand-emerald/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
         <div class="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw] bg-brand-cyan/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
-        <!-- Overlay Escuro e Efeito de Vidro Ultra-Suave -->
         <div class="absolute inset-0 bg-dark-900/60 backdrop-blur-[80px]"></div>
     </div>
 
+    <!-- Overlay para Sidebar Mobile -->
+    <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-dark-900/80 backdrop-blur-sm z-20 hidden md:hidden transition-opacity opacity-0" onclick="toggleMobileSidebar()"></div>
+
     <!-- Sidebar Lateral -->
-    <aside id="sidebar" class="sidebar-transition w-64 glass flex flex-col h-full border-r border-dark-700 z-20 hidden md:flex shrink-0 relative">
+    <aside id="sidebar" class="sidebar-transition fixed md:relative -translate-x-full md:translate-x-0 w-64 glass flex flex-col h-full border-r border-dark-700 z-30 md:z-20 shrink-0">
         
-        <!-- Botão Retrátil (Collapse) -->
-        <button onclick="toggleSidebar()" class="absolute -right-3.5 top-7 bg-dark-800 border border-dark-600 rounded-full p-1.5 text-gray-400 hover:text-white hover:bg-brand-indigo hover:border-brand-indigo transition-all shadow-lg z-50 group" title="Recolher Menu">
+        <!-- Botão Retrátil (Collapse Desktop) -->
+        <button onclick="toggleSidebar()" aria-label="Recolher Menu" class="hidden md:block absolute -right-3.5 top-7 bg-dark-800 border border-dark-600 rounded-full p-1.5 text-gray-400 hover:text-white hover:bg-brand-indigo hover:border-brand-indigo transition-all shadow-lg z-50 group" title="Recolher Menu">
             <i id="sidebar-toggle-icon" data-lucide="chevron-left" class="w-4 h-4 transition-transform group-hover:scale-110"></i>
+        </button>
+
+        <!-- Botão Fechar (Mobile) -->
+        <button onclick="toggleMobileSidebar()" aria-label="Fechar Menu" class="md:hidden absolute right-4 top-6 text-gray-400 hover:text-white">
+            <i data-lucide="x" class="w-6 h-6"></i>
         </button>
 
         <!-- Logo -->
@@ -221,31 +231,32 @@
     </aside>
 
     <!-- Área Principal -->
-    <main class="flex-1 flex flex-col h-screen relative z-10">
+    <main class="flex-1 flex flex-col h-screen relative z-10 w-full">
 
         <!-- Topbar -->
         <header class="h-20 glass border-b border-dark-700 flex items-center justify-between px-6 z-10">
             <div class="flex items-center gap-4">
-                <button class="md:hidden text-gray-400 hover:text-white">
+                <!-- Botão Menu Mobile Corrigido -->
+                <button onclick="toggleMobileSidebar()" aria-label="Abrir Menu" class="md:hidden text-gray-400 hover:text-white">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
                 <h1 id="page-title" class="text-xl font-semibold text-white tracking-tight">Visão Geral</h1>
             </div>
             
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 sm:gap-4">
                 <!-- Botão de Privacidade Global -->
-                <button id="privacy-btn" onclick="togglePrivacyMode()" class="p-2 text-brand-indigo hover:text-indigo-400 hover:bg-brand-indigo/10 rounded-lg transition-all" title="Modo Privacidade">
+                <button id="privacy-btn" onclick="togglePrivacyMode()" aria-label="Alternar Privacidade" class="p-2 text-brand-indigo hover:text-indigo-400 hover:bg-brand-indigo/10 rounded-lg transition-all" title="Modo Privacidade">
                     <i id="privacy-icon" data-lucide="eye" class="w-5 h-5"></i>
                 </button>
 
-                <div class="h-5 w-px bg-dark-700 mx-1"></div>
+                <div class="h-5 w-px bg-dark-700 mx-1 hidden sm:block"></div>
 
-                <button onclick="toggleNotifications()" class="p-2 text-gray-400 hover:text-white transition-colors relative">
+                <button onclick="toggleNotifications()" aria-label="Notificações" class="p-2 text-gray-400 hover:text-white transition-colors relative">
                     <i data-lucide="bell" class="w-5 h-5"></i>
                     <!-- Indicador pulsante -->
                     <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-emerald rounded-full border-[2px] border-dark-900 animate-pulse"></span>
                 </button>
-                <button id="popout-btn" onclick="openExternal()" class="hidden p-2 text-gray-400 hover:text-white transition-colors" title="Abrir em nova guia">
+                <button id="popout-btn" onclick="openExternal()" aria-label="Abrir em nova aba" class="hidden p-2 text-gray-400 hover:text-white transition-colors" title="Abrir em nova guia">
                     <i data-lucide="external-link" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -255,42 +266,41 @@
         <div class="flex-1 overflow-hidden relative z-10">
             
             <!-- VIEW: HOME (Dashboard Resumo) -->
-            <div id="view-home" class="h-full overflow-y-auto p-6 md:p-8 space-y-8 fade-in">
+            <div id="view-home" class="h-full overflow-y-auto p-4 sm:p-6 md:p-8 space-y-8 fade-in">
                 
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <h2 class="text-3xl font-bold text-white mb-1">Olá, de volta! 👋</h2>
-                        <p class="text-gray-400">Aqui está o resumo do seu ecossistema financeiro hoje.</p>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-1">Olá, de volta! 👋</h2>
+                        <p class="text-gray-400 text-sm sm:text-base">Aqui está o resumo do seu ecossistema financeiro hoje.</p>
                     </div>
-                    <div class="text-right text-sm text-gray-400">
+                    <div class="text-left md:text-right text-sm text-gray-400">
                         <p id="current-date"></p>
                     </div>
                 </div>
 
-                <!-- NOVO: Widget de Patrimônio Total Vivo -->
-                <div class="glass rounded-2xl p-6 border border-brand-indigo/30 relative overflow-hidden group">
+                <!-- Widget de Patrimônio Total Vivo -->
+                <div class="glass rounded-2xl p-4 sm:p-6 border border-brand-indigo/30 relative overflow-hidden group">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-brand-indigo/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-brand-indigo/20 transition-all duration-900"></div>
-                    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                         <div>
                             <p class="text-sm font-medium text-gray-400 mb-1">Patrimônio Consolidado</p>
-                            <h3 class="text-4xl font-bold text-white tracking-tight sensitive-value flex items-center gap-3">
+                            <h3 class="text-3xl sm:text-4xl font-bold text-white tracking-tight sensitive-value flex items-center gap-3">
                                 <span id="patrimonio-total">Aguardando...</span>
-                                <!-- LED de Sincronização -->
                                 <span class="flex h-3 w-3 relative" title="Sincronização Ativa">
                                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-emerald opacity-75 transition-colors duration-700" id="sync-led"></span>
                                   <span class="relative inline-flex rounded-full h-3 w-3 bg-brand-emerald"></span>
                                 </span>
                             </h3>
                         </div>
-                        <div class="flex flex-wrap gap-4">
-                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 min-w-[150px]">
+                        <div class="flex flex-col sm:flex-row flex-wrap gap-4 w-full xl:w-auto">
+                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 flex-1 min-w-[150px]">
                                 <div class="flex items-center gap-2 mb-1">
                                     <i data-lucide="wallet" class="w-4 h-4 text-brand-emerald"></i>
                                     <span class="text-xs text-gray-400 font-medium">Conta Corrente</span>
                                 </div>
                                 <p class="text-lg font-semibold text-white sensitive-value" id="patrimonio-financas">Calculando...</p>
                             </div>
-                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 min-w-[150px]">
+                            <div class="bg-dark-800/80 rounded-xl p-4 border border-dark-700 flex-1 min-w-[150px]">
                                 <div class="flex items-center gap-2 mb-1">
                                     <i data-lucide="trending-up" class="w-4 h-4 text-brand-cyan"></i>
                                     <span class="text-xs text-gray-400 font-medium">Investimentos</span>
@@ -301,7 +311,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Card Finanças -->
                     <div onclick="navigate('financas')" class="glass rounded-2xl p-6 border border-dark-700 hover:border-brand-emerald/50 cursor-pointer group transition-all duration-700 relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-brand-emerald/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-brand-emerald/20 transition-all"></div>
@@ -309,7 +319,7 @@
                             <div class="w-12 h-12 rounded-xl bg-brand-emerald/10 flex items-center justify-center border border-brand-emerald/20 text-brand-emerald">
                                 <i data-lucide="wallet" class="w-6 h-6"></i>
                             </div>
-                            <button class="text-gray-500 group-hover:text-brand-emerald transition-colors">
+                            <button aria-label="Abrir Finanças" class="text-gray-500 group-hover:text-brand-emerald transition-colors">
                                 <i data-lucide="arrow-right" class="w-5 h-5"></i>
                             </button>
                         </div>
@@ -324,7 +334,7 @@
                             <div class="w-12 h-12 rounded-xl bg-brand-cyan/10 flex items-center justify-center border border-brand-cyan/20 text-brand-cyan">
                                 <i data-lucide="trending-up" class="w-6 h-6"></i>
                             </div>
-                            <button class="text-gray-500 group-hover:text-brand-cyan transition-colors">
+                            <button aria-label="Abrir Investimentos" class="text-gray-500 group-hover:text-brand-cyan transition-colors">
                                 <i data-lucide="arrow-right" class="w-5 h-5"></i>
                             </button>
                         </div>
@@ -334,7 +344,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 glass rounded-2xl p-6 border border-dark-700">
+                    <div class="lg:col-span-2 glass rounded-2xl p-4 sm:p-6 border border-dark-700">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-lg font-semibold text-white">Atividade do Sistema</h3>
                             <button class="text-sm text-brand-indigo hover:text-indigo-400">Ver Relatório</button>
@@ -344,7 +354,7 @@
                         </div>
                     </div>
                     
-                    <div class="glass rounded-2xl p-6 border border-dark-700 flex flex-col justify-between">
+                    <div class="glass rounded-2xl p-4 sm:p-6 border border-dark-700 flex flex-col justify-between">
                         <div>
                             <h3 class="text-lg font-semibold text-white mb-2">Metas do Mês</h3>
                             <p class="text-sm text-gray-400 mb-6">Acompanhamento de progresso geral</p>
@@ -386,21 +396,21 @@
             <!-- VIEW: IFRAME APP -->
             <div id="view-app" class="h-full w-full hidden relative">
                 
-                <!-- Loading Screen Premium (Fator Uau) -->
+                <!-- Loading Screen Premium -->
                 <div id="skeleton-loader" class="absolute inset-0 z-20 bg-dark-900/80 backdrop-blur-xl flex items-center justify-center transition-opacity duration-500">
-                    <div class="relative flex flex-col items-center">
+                    <div class="relative flex flex-col items-center p-4 text-center">
                         <!-- Glow background dinâmico -->
-                        <div id="module-glow" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-[80px] animate-pulse"></div>
+                        <div id="module-glow" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 rounded-full blur-[80px] animate-pulse"></div>
                         
                         <!-- Logo Box -->
-                        <div id="module-icon-box" class="relative w-24 h-24 rounded-3xl bg-dark-800/80 border border-dark-700 flex items-center justify-center shadow-2xl mb-8 z-10 overflow-hidden backdrop-blur-sm transition-all duration-300">
+                        <div id="module-icon-box" class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-dark-800/80 border border-dark-700 flex items-center justify-center shadow-2xl mb-6 sm:mb-8 z-10 overflow-hidden backdrop-blur-sm transition-all duration-300">
                             <!-- Preenchido via JS -->
                         </div>
 
                         <!-- Textos -->
-                        <h3 id="module-loading-title" class="text-2xl font-bold text-white mb-4 z-10 relative tracking-tight">Carregando Módulo</h3>
-                        <div class="px-5 py-2.5 rounded-full bg-dark-800/50 border border-dark-700/50 backdrop-blur-md z-10 relative flex items-center gap-3">
-                            <span class="text-sm text-gray-400 font-medium">Sincronizando dados seguros</span>
+                        <h3 id="module-loading-title" class="text-xl sm:text-2xl font-bold text-white mb-4 z-10 relative tracking-tight">Carregando Módulo</h3>
+                        <div class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-dark-800/50 border border-dark-700/50 backdrop-blur-md z-10 relative flex items-center gap-3">
+                            <span class="text-xs sm:text-sm text-gray-400 font-medium">Sincronizando dados seguros</span>
                             <span class="flex gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-brand-indigo animate-bounce" style="animation-delay: 0s"></span>
                                 <span class="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce" style="animation-delay: 0.15s"></span>
@@ -411,7 +421,7 @@
                 </div>
 
                 <!-- Iframe do Módulo -->
-                <iframe id="app-frame" src="about:blank" class="w-full h-full border-none relative z-10"></iframe>
+                <iframe id="app-frame" src="about:blank" title="Módulo da Aplicação" class="w-full h-full border-none relative z-10"></iframe>
             </div>
 
         </div>
@@ -422,21 +432,17 @@
     
     <!-- Painel Lateral de Notificações -->
     <aside id="notification-panel" class="fixed top-0 right-0 h-full w-80 sm:w-96 glass border-l border-dark-700 z-50 transform translate-x-full transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col">
-        <!-- Header do Painel -->
         <div class="h-20 border-b border-dark-700 flex items-center justify-between px-6 shrink-0 bg-dark-800/30">
             <div class="flex items-center gap-3">
                 <h2 class="text-lg font-semibold text-white">Notificações</h2>
                 <span class="px-2 py-0.5 rounded-full bg-brand-emerald/20 text-brand-emerald text-xs font-bold">2 Novas</span>
             </div>
-            <button onclick="toggleNotifications()" class="p-2 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors">
+            <button onclick="toggleNotifications()" aria-label="Fechar Notificações" class="p-2 text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
         
-        <!-- Lista de Notificações -->
         <div class="flex-1 overflow-y-auto p-4 space-y-3">
-            
-            <!-- Notificação 1: Finanças (Emerald) -->
             <div class="bg-dark-800/80 border border-brand-emerald/30 rounded-xl p-4 flex gap-4 hover:bg-dark-700 transition-colors cursor-pointer relative overflow-hidden group">
                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-brand-emerald"></div>
                 <div class="w-10 h-10 rounded-full bg-brand-emerald/10 flex items-center justify-center shrink-0 text-brand-emerald group-hover:scale-110 transition-transform">
@@ -449,7 +455,6 @@
                 </div>
             </div>
 
-            <!-- Notificação 2: Investimentos (Cyan) -->
             <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4 flex gap-4 hover:border-brand-cyan/50 hover:bg-dark-700 transition-colors cursor-pointer group">
                 <div class="w-10 h-10 rounded-full bg-brand-cyan/10 flex items-center justify-center shrink-0 text-brand-cyan group-hover:scale-110 transition-transform">
                     <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
@@ -461,7 +466,6 @@
                 </div>
             </div>
 
-            <!-- Notificação 3: CRM (Indigo) -->
             <div class="bg-dark-800/50 border border-dark-700 rounded-xl p-4 flex gap-4 hover:border-brand-indigo/50 hover:bg-dark-700 transition-colors cursor-pointer group opacity-70">
                 <div class="w-10 h-10 rounded-full bg-brand-indigo/10 flex items-center justify-center shrink-0 text-brand-indigo group-hover:scale-110 transition-transform">
                     <i data-lucide="calendar" class="w-5 h-5"></i>
@@ -472,10 +476,8 @@
                     <span class="text-[10px] text-gray-500 mt-2 block font-medium uppercase tracking-wider">12 de Maio</span>
                 </div>
             </div>
-
         </div>
 
-        <!-- Footer do Painel -->
         <div class="p-4 border-t border-dark-700 shrink-0 bg-dark-800/30">
             <button onclick="toggleNotifications()" class="w-full py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-sm font-medium text-white transition-all border border-dark-600 hover:border-gray-400">
                 Marcar todas como lidas
@@ -483,10 +485,11 @@
         </div>
     </aside>
 
-    <!-- Iframes Ocultos para Sincronização em Background: A MAGIA ACONTECE AQUI -->
+    <!-- Iframes Ocultos para Sincronização em Background -->
+    <!-- NOTA: Em produção, considere substituir isso por localStorage, IndexedDB ou BroadcastChannel API para melhor performance -->
     <div class="absolute w-0 h-0 overflow-hidden opacity-0 pointer-events-none">
-        <iframe id="bg-financas" src="financas.html"></iframe>
-        <iframe id="bg-invest" src="invest.html"></iframe>
+        <iframe id="bg-financas" src="financas.html" aria-hidden="true"></iframe>
+        <iframe id="bg-invest" src="invest.html" aria-hidden="true"></iframe>
     </div>
 
     <script>
@@ -496,9 +499,8 @@
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
 
         let currentAppUrl = '';
-        let isPrivacyMode = false; // Estado Global de Privacidade
+        let isPrivacyMode = false;
 
-        // --- Lógica: Hub Inteligente (Comunicação via postMessage) ---
         let saldos = { financas: 0, invest: 0 };
 
         function formatCurrency(value) {
@@ -511,8 +513,10 @@
             document.getElementById('patrimonio-invest').innerText = formatCurrency(saldos.invest);
         }
 
-        // Ouve mensagens recebidas dos Módulos ocultos ou abertos
+        // Segurança adicionada: Verificando a origem da mensagem (descomentar/ajustar a linha de origin em prod)
         window.addEventListener('message', (event) => {
+            // if (event.origin !== window.location.origin) return; // Descomente em produção para evitar XSS via iframe
+            
             const data = event.data;
             if (data && data.action === 'sync_data') {
                 if (data.module === 'financas') saldos.financas = parseFloat(data.value) || 0;
@@ -520,7 +524,6 @@
                 
                 atualizarPatrimonio();
                 
-                // Pisca o indicador para simular "receção de dados ao vivo"
                 const ping = document.getElementById('sync-led');
                 if(ping) {
                     ping.classList.replace('bg-brand-emerald', 'bg-brand-cyan');
@@ -529,7 +532,7 @@
             }
         });
 
-        // Lógica: Painel de Notificações
+        // Toggle Painel de Notificações
         let isNotificationsOpen = false;
         function toggleNotifications() {
             isNotificationsOpen = !isNotificationsOpen;
@@ -537,7 +540,6 @@
             const panel = document.getElementById('notification-panel');
             
             if (isNotificationsOpen) {
-                // Abrir: Mostrar o overlay primeiro (display block) e animar opacidade e slide
                 overlay.classList.remove('hidden');
                 setTimeout(() => {
                     overlay.classList.remove('opacity-0');
@@ -546,7 +548,6 @@
                     panel.classList.add('translate-x-0');
                 }, 10);
             } else {
-                // Fechar: Animar opacidade e slide, e depois ocultar (display none)
                 overlay.classList.remove('opacity-100');
                 overlay.classList.add('opacity-0');
                 panel.classList.remove('translate-x-0');
@@ -554,11 +555,11 @@
                 
                 setTimeout(() => {
                     overlay.classList.add('hidden');
-                }, 300); // Aguarda o fim da transição CSS (300ms)
+                }, 300); 
             }
         }
 
-        // Lógica: Barra Lateral Retrátil
+        // Lógica: Barra Lateral Retrátil (Desktop)
         let isSidebarCollapsed = false;
         function toggleSidebar() {
             isSidebarCollapsed = !isSidebarCollapsed;
@@ -573,6 +574,24 @@
                 icon.setAttribute('data-lucide', 'chevron-left');
             }
             lucide.createIcons();
+        }
+
+        // Lógica: Barra Lateral Mobile
+        let isMobileSidebarOpen = false;
+        function toggleMobileSidebar() {
+            isMobileSidebarOpen = !isMobileSidebarOpen;
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+
+            if(isMobileSidebarOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
         }
 
         // Lógica: Alternar Modo Privacidade
@@ -601,18 +620,40 @@
                 frame.contentWindow.postMessage({ 
                     action: 'togglePrivacy', 
                     state: isPrivacyMode 
-                }, '*');
+                }, '*'); // Adicionar targetOrigin em prod
             }
         }
 
+        // Refatoração: Objeto de Configuração de Módulos (DRY Principle)
+        const modulesConfig = {
+            financas: {
+                title: 'Controle Financeiro',
+                url: 'financas.html',
+                colorClass: 'emerald',
+                icon: 'wallet',
+                appName: 'GonçaFinances'
+            },
+            invest: {
+                title: 'Gestão de Portfólio',
+                url: 'invest.html',
+                colorClass: 'cyan',
+                icon: 'trending-up',
+                appName: 'GonçaInvest'
+            }
+        };
+
         // Lógica: Navegação e Skeleton Loader
-        function navigate(module) {
+        function navigate(moduleKey) {
+            // Fecha menu mobile ao navegar
+            if(isMobileSidebarOpen) toggleMobileSidebar();
+
             const homeView = document.getElementById('view-home');
             const appView = document.getElementById('view-app');
             const frame = document.getElementById('app-frame');
             const title = document.getElementById('page-title');
             const popoutBtn = document.getElementById('popout-btn');
             const skeleton = document.getElementById('skeleton-loader');
+            const activeBtn = document.getElementById(`nav-${moduleKey}`);
 
             // Resetar estilos dos botões
             document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -620,9 +661,7 @@
                 btn.classList.add('text-gray-400');
             });
 
-            const activeBtn = document.getElementById(`nav-${module}`);
-            
-            if (module === 'home') {
+            if (moduleKey === 'home') {
                 homeView.classList.remove('hidden');
                 appView.classList.add('hidden');
                 frame.src = 'about:blank';
@@ -634,68 +673,57 @@
                 }
                 popoutBtn.classList.add('hidden');
                 currentAppUrl = '';
-            } else {
-                homeView.classList.add('hidden');
-                appView.classList.remove('hidden');
-                
-                // Exibe o Splash Screen Dinâmico
-                skeleton.classList.remove('hidden');
-                skeleton.style.opacity = '1';
-                frame.classList.remove('loaded');
-                
-                const glow = document.getElementById('module-glow');
-                const iconBox = document.getElementById('module-icon-box');
-                const loadingTitle = document.getElementById('module-loading-title');
-                
-                if (module === 'financas') {
-                    frame.src = 'financas.html'; 
-                    title.innerText = 'Controle Financeiro';
-                    currentAppUrl = 'financas.html';
-                    glow.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-brand-emerald/20 rounded-full blur-[80px] animate-pulse';
-                    iconBox.innerHTML = '<div class="absolute inset-0 bg-gradient-to-br from-brand-emerald/10 to-transparent opacity-50"></div><i data-lucide="wallet" class="w-12 h-12 text-brand-emerald animate-pulse"></i>';
-                    loadingTitle.innerText = 'GonçaFinances';
-                } else if (module === 'invest') {
-                    frame.src = 'invest.html';   
-                    title.innerText = 'Gestão de Portfólio';
-                    currentAppUrl = 'invest.html';
-                    glow.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-brand-cyan/20 rounded-full blur-[80px] animate-pulse';
-                    iconBox.innerHTML = '<div class="absolute inset-0 bg-gradient-to-br from-brand-cyan/10 to-transparent opacity-50"></div><i data-lucide="trending-up" class="w-12 h-12 text-brand-cyan animate-pulse"></i>';
-                    loadingTitle.innerText = 'GonçaInvest';
-                }
-                lucide.createIcons();
-                
-                if (activeBtn) {
-                    activeBtn.classList.remove('text-gray-400');
-                    activeBtn.classList.add('bg-dark-700', 'text-white');
-                }
-                popoutBtn.classList.remove('hidden');
-
-                // Quando o Iframe concluir o carregamento
-                frame.onload = () => {
-                    // Delay artificial (1000ms) para dar tempo à animação deslumbrar o utilizador
-                    setTimeout(() => {
-                        skeleton.style.opacity = '0'; // Fade out do Loader
-                        
-                        // Aguarda a transição terminar para ocultar do DOM
-                        setTimeout(() => skeleton.classList.add('hidden'), 500);
-                        
-                        // Ativa o Scale-in e Fade-in do Iframe simultaneamente
-                        frame.classList.add('loaded');
-                        
-                        // Aplica o estado de privacidade ao iframe
-                        frame.contentWindow.postMessage({ 
-                            action: 'togglePrivacy', 
-                            state: isPrivacyMode 
-                        }, '*');
-                    }, 1000); 
-                };
+                return; // Early return
             }
+
+            // Lógica para Módulos (usando o Dicionário de Configuração)
+            const config = modulesConfig[moduleKey];
+            if (!config) return;
+
+            homeView.classList.add('hidden');
+            appView.classList.remove('hidden');
+            
+            skeleton.classList.remove('hidden');
+            skeleton.style.opacity = '1';
+            frame.classList.remove('loaded');
+            
+            const glow = document.getElementById('module-glow');
+            const iconBox = document.getElementById('module-icon-box');
+            const loadingTitle = document.getElementById('module-loading-title');
+            
+            frame.src = config.url; 
+            title.innerText = config.title;
+            currentAppUrl = config.url;
+            
+            // Injeção dinâmica de classes baseada na configuração
+            glow.className = `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 bg-brand-${config.colorClass}/20 rounded-full blur-[80px] animate-pulse`;
+            iconBox.innerHTML = `<div class="absolute inset-0 bg-gradient-to-br from-brand-${config.colorClass}/10 to-transparent opacity-50"></div><i data-lucide="${config.icon}" class="w-10 h-10 sm:w-12 sm:h-12 text-brand-${config.colorClass} animate-pulse"></i>`;
+            loadingTitle.innerText = config.appName;
+            
+            lucide.createIcons();
+            
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('bg-dark-700', 'text-white');
+            }
+            popoutBtn.classList.remove('hidden');
+
+            frame.onload = () => {
+                setTimeout(() => {
+                    skeleton.style.opacity = '0';
+                    setTimeout(() => skeleton.classList.add('hidden'), 500);
+                    frame.classList.add('loaded');
+                    
+                    frame.contentWindow.postMessage({ 
+                        action: 'togglePrivacy', 
+                        state: isPrivacyMode 
+                    }, '*'); // Adicionar targetOrigin em prod
+                }, 1000); 
+            };
         }
 
         function openExternal() {
-            if(currentAppUrl) {
-                window.open(currentAppUrl, '_blank');
-            }
+            if(currentAppUrl) window.open(currentAppUrl, '_blank');
         }
 
         // Gráfico Dummy
