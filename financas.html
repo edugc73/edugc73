@@ -243,13 +243,13 @@
                 <div class="card" style="border-left: 4px solid var(--secondary);">
                     <h3 style="font-size: 0.85rem; margin-bottom: 15px; display: flex; align-items: center;">
                         <i data-lucide="receipt" size="16" color="var(--secondary)" style="margin-right: 8px;"></i>
-                        Raio-X Outros (Top 5)
+                        Raio-X Débitos (Top 5)
                     </h3>
                     <div id="outros-details-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
                         <!-- Preenchido via JS -->
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; font-weight: 700; font-size: 0.8rem;">
-                        <span style="color: var(--text-muted);">Total Outros</span>
+                        <span style="color: var(--text-muted);">Total Débitos</span>
                         <span id="outros-total" class="value-to-blur" style="color: var(--secondary);">R$ 0,00</span>
                     </div>
                 </div>
@@ -377,9 +377,9 @@
     function getStats(row) {
         if(!row) return null;
         const receita = parseVal(getVal(row, "Salario Aposentadoria")) + parseVal(getVal(row, "Salario PTTC"));
-        const fixos = parseVal(getVal(row, "Luz")) + parseVal(getVal(row, "Agua")) + parseVal(getVal(row, "DESKTOP")) + parseVal(getVal(row, "Internet Mae")) + parseVal(getVal(row, "IPTU")) + parseVal(getVal(row, "Celular"));
+        const fixos = parseVal(getVal(row, "Luz")) + parseVal(getVal(row, "Agua")) + parseVal(getVal(row, "DESKTOP")) + parseVal(getVal(row, "Internet Mae")) + parseVal(getVal(row, "IPTU")) + parseVal(getVal(row, "Celular")) + parseVal(getVal(row, "IPVA")) + parseVal(getVal(row, "Cancao Nova"));
         const cartoes = parseVal(getVal(row, "Cartao C6")) + parseVal(getVal(row, "Cartao ML"));
-        const outros = parseVal(getVal(row, "Outros Gastos")) + parseVal(getVal(row, "IPVA")) + parseVal(getVal(row, "Cancao Nova"));
+        const outros = parseVal(getVal(row, "Outros Gastos"));
         const gastos = fixos + cartoes + outros;
         return { 
             mes: getVal(row, "Mes"), r: receita, g: gastos, i: parseVal(getVal(row, "Investimentos")), 
