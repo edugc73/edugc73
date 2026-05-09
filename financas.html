@@ -239,15 +239,33 @@
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
-                <div class="card">
-                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="pie-chart" size="16" style="margin-right: 8px;"></i>Alocação de Capital</h3>
-                    <div style="height: 220px; position: relative;">
-                        <canvas id="allocationChart"></canvas>
+                <!-- NOVO CARD: Raio-X Outros Gastos Substituindo a Rosca -->
+                <div class="card" style="border-left: 4px solid var(--secondary);">
+                    <h3 style="font-size: 0.85rem; margin-bottom: 15px; display: flex; align-items: center;">
+                        <i data-lucide="receipt" size="16" color="var(--secondary)" style="margin-right: 8px;"></i>
+                        Raio-X Outros (Top 5)
+                    </h3>
+                    <div id="outros-details-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Preenchido via JS -->
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; font-weight: 700; font-size: 0.8rem;">
+                        <span style="color: var(--text-muted);">Total Outros</span>
+                        <span id="outros-total" class="value-to-blur" style="color: var(--secondary);">R$ 0,00</span>
                     </div>
                 </div>
-                <div class="card">
-                    <h3 style="font-size: 0.85rem; margin-bottom: 15px;"><i data-lucide="list-checks" size="16" style="margin-right: 8px;"></i>Detalhamento de Saídas</h3>
-                    <div id="composition-list" style="margin-top: 10px;"></div>
+
+                <div class="card" style="border-left: 4px solid var(--warning);">
+                    <h3 style="font-size: 0.85rem; margin-bottom: 15px; display: flex; align-items: center;">
+                        <i data-lucide="credit-card" size="16" color="var(--warning)" style="margin-right: 8px;"></i>
+                        Raio-X do Cartão (Top 5)
+                    </h3>
+                    <div id="card-details-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Preenchido via JS -->
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; font-weight: 700; font-size: 0.8rem;">
+                        <span style="color: var(--text-muted);">Total Fatura</span>
+                        <span id="card-total" class="value-to-blur" style="color: var(--warning);">R$ 0,00</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -298,19 +316,10 @@
                 </div>
             </div>
 
-            <!-- NOVA SEÇÃO: Fatura do Cartão -->
-            <div class="card" style="margin-top: 16px; border-left: 4px solid var(--warning);">
-                <h3 style="font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center;">
-                    <i data-lucide="credit-card" size="16" color="var(--warning)" style="margin-right: 8px;"></i>
-                    Raio-X do Cartão (Top 5)
-                </h3>
-                <div id="card-details-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
-                    <!-- Preenchido via JS -->
-                </div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; font-weight: 700; font-size: 0.8rem;">
-                    <span style="color: var(--text-muted);">Total Fatura</span>
-                    <span id="card-total" class="value-to-blur" style="color: var(--warning);">R$ 0,00</span>
-                </div>
+            <!-- SEÇÃO: Detalhamento de Saídas -->
+            <div class="card" style="margin-top: 16px;">
+                <h3 style="font-size: 0.9rem; margin-bottom: 15px;"><i data-lucide="list-checks" size="16" style="margin-right: 8px;"></i>Detalhamento de Saídas</h3>
+                <div id="composition-list" style="margin-top: 10px;"></div>
             </div>
         </div>
     </div>
@@ -322,11 +331,10 @@
         '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv'
     };
 
-    // Nova fonte de dados dos cartões
     const CARD_SOURCE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=1333505159&single=true&output=csv';
+    const OUTROS_SOURCE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2144460095&single=true&output=csv';
 
     let currentData = [];
-    let currentCardData = [];
     let charts = {};
     let activeIdx = 0;
     let prevKpiValues = { r: 0, g: 0, i: 0, s: 0 };
@@ -379,7 +387,6 @@
         };
     }
 
-    // Função auxiliar para buscar CSV via Promise (Atualizada para lidar com tabelas sem cabeçalho padrão)
     function fetchCSV(url, useHeader = true) {
         return new Promise((resolve, reject) => {
             Papa.parse(url, {
@@ -393,14 +400,16 @@
     async function loadYearData(year) {
         document.getElementById('loader').style.display = 'flex';
         try {
-            // Busca dados gerais (formato padrão) e dados do cartão (como matriz de linhas/colunas)
-            const [mainData, cardDataRaw] = await Promise.all([
+            // Agora carregamos as três planilhas simultaneamente
+            const [mainData, cardDataRaw, outrosDataRaw] = await Promise.all([
                 fetchCSV(SOURCES[year], true),
-                fetchCSV(CARD_SOURCE, false)
+                fetchCSV(CARD_SOURCE, false),
+                fetchCSV(OUTROS_SOURCE, false)
             ]);
 
             currentData = mainData.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
-            window.currentCardDataRaw = cardDataRaw; // Guardamos os dados brutos do cartão
+            window.currentCardDataRaw = cardDataRaw;
+            window.currentOutrosDataRaw = outrosDataRaw; 
 
             renderUI();
             document.getElementById('loader').style.display = 'none';
@@ -438,20 +447,19 @@
         selectMonth(autoSelectIdx, chipToSelect);
     }
 
-    // --- NOVA LÓGICA: Processar Dados em Blocos de Colunas (A1, C1, E1...) ---
-    function getCardDetails(mesNome) {
+    // --- NOVA LÓGICA GENERALIZADA: Processar Dados em Matriz (A1, C1, E1...) ---
+    // Serve tanto para Cartões quanto para Outros Gastos
+    function getDetailsFromRawData(mesNome, dataRaw) {
         let details = [];
-        let cardDataRaw = window.currentCardDataRaw || [];
-        if (cardDataRaw.length === 0) return details;
+        if (!dataRaw || dataRaw.length === 0) return details;
 
-        // Encontrar a linha onde os meses estão escritos e mapear em qual coluna estão
         let monthRowIdx = -1;
-        let monthMap = {}; // Exemplo: { 'janeiro': 0 (Col A), 'fevereiro': 2 (Col C), 'marco': 4 (Col E) }
+        let monthMap = {}; 
 
-        for (let r = 0; r < Math.min(10, cardDataRaw.length); r++) {
+        for (let r = 0; r < Math.min(10, dataRaw.length); r++) {
             let found = 0;
-            for (let c = 0; c < cardDataRaw[r].length; c++) {
-                let val = normalize(cardDataRaw[r][c]);
+            for (let c = 0; c < dataRaw[r].length; c++) {
+                let val = normalize(dataRaw[r][c]);
                 if (MESES.includes(val)) {
                     monthMap[val] = c;
                     found++;
@@ -463,51 +471,35 @@
             }
         }
 
-        if (monthRowIdx === -1) return details; // Não encontrou a linha de meses
+        if (monthRowIdx === -1) return details; 
 
-        if (mesNome === 'annual') {
-            let aggregated = {};
-            MESES.forEach(m => {
-                let c = monthMap[m];
-                if (c !== undefined) {
-                    for (let r = monthRowIdx + 1; r < cardDataRaw.length; r++) {
-                        let cat = cardDataRaw[r][c];
-                        let val = cardDataRaw[r][c+1]; // O valor está sempre na coluna imediatamente ao lado
-                        
-                        if (!cat) continue;
-                        let nCat = normalize(cat);
-                        // Ignora palavras-chave comuns de cabeçalhos ou totais
-                        if (nCat === '' || nCat.includes('total') || nCat.includes('categoria') || nCat.includes('valor')) continue;
-                        
-                        let parsedV = parseVal(val);
-                        if (parsedV > 0) {
-                            aggregated[cat] = (aggregated[cat] || 0) + parsedV;
-                        }
-                    }
-                }
-            });
-            Object.keys(aggregated).forEach(k => details.push({ name: k, value: aggregated[k] }));
-        } else {
-            let c = monthMap[normalize(mesNome)];
-            if (c !== undefined) {
-                for (let r = monthRowIdx + 1; r < cardDataRaw.length; r++) {
-                    let cat = cardDataRaw[r][c];
-                    let val = cardDataRaw[r][c+1]; // O valor está sempre na coluna imediatamente ao lado
-                    
-                    if (!cat) continue;
-                    let nCat = normalize(cat);
-                    // Ignora palavras-chave comuns de cabeçalhos ou totais
-                    if (nCat === '' || nCat.includes('total') || nCat.includes('categoria') || nCat.includes('valor')) continue;
-                    
-                    let parsedV = parseVal(val);
-                    if (parsedV > 0) {
-                        details.push({ name: cat, value: parsedV });
-                    }
+        // Função interna para extrair valores de uma coluna específica
+        const extractFromColumn = (colIdx) => {
+            for (let r = monthRowIdx + 1; r < dataRaw.length; r++) {
+                let cat = dataRaw[r][colIdx];
+                let val = dataRaw[r][colIdx + 1]; 
+                
+                if (!cat) continue;
+                let nCat = normalize(cat);
+                if (nCat === '' || nCat.includes('total') || nCat.includes('categoria') || nCat.includes('valor')) continue;
+                
+                let parsedV = parseVal(val);
+                if (parsedV > 0) {
+                    details.push({ name: cat, value: parsedV });
                 }
             }
+        };
+
+        if (mesNome === 'annual') {
+            MESES.forEach(m => {
+                let c = monthMap[m];
+                if (c !== undefined) extractFromColumn(c);
+            });
+        } else {
+            let c = monthMap[normalize(mesNome)];
+            if (c !== undefined) extractFromColumn(c);
         }
 
-        // Agrupar categorias com o mesmo nome para evitar duplicados
         let consolidated = {};
         details.forEach(d => { consolidated[d.name] = (consolidated[d.name] || 0) + d.value; });
         let finalDetails = Object.keys(consolidated).map(k => ({ name: k, value: consolidated[k] }));
@@ -515,24 +507,24 @@
         return finalDetails.sort((a, b) => b.value - a.value);
     }
 
-    function renderCardUI(details) {
-        const listContainer = document.getElementById('card-details-list');
-        const totalEl = document.getElementById('card-total');
+    // Função generalizada para renderizar listas de progresso (Top 5)
+    function renderListUI(details, listId, totalId, colorVar) {
+        const listContainer = document.getElementById(listId);
+        const totalEl = document.getElementById(totalId);
 
         if (!details || details.length === 0) {
-            listContainer.innerHTML = '<p style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 10px 0;">Sem dados do cartão processados.</p>';
+            listContainer.innerHTML = '<p style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 10px 0;">Sem dados processados.</p>';
             totalEl.innerText = 'R$ 0,00';
             return;
         }
 
-        const totalCard = details.reduce((acc, curr) => acc + curr.value, 0);
-        totalEl.innerText = fmt.format(totalCard);
+        const totalValue = details.reduce((acc, curr) => acc + curr.value, 0);
+        totalEl.innerText = fmt.format(totalValue);
 
-        // Pegar apenas o Top 5
         const top5 = details.slice(0, 5);
 
         listContainer.innerHTML = top5.map(item => {
-            const percentage = (item.value / totalCard) * 100;
+            const percentage = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
             return `
                 <div style="position: relative;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 600; margin-bottom: 6px;">
@@ -540,7 +532,7 @@
                         <span class="value-to-blur">${fmt.format(item.value)}</span>
                     </div>
                     <div class="progress-bar-bg" style="height: 5px;">
-                        <div class="progress-bar-fill" style="width: ${percentage}%; background: var(--warning);"></div>
+                        <div class="progress-bar-fill" style="width: ${percentage}%; background: ${colorVar};"></div>
                     </div>
                 </div>
             `;
@@ -642,11 +634,15 @@
         else if(pG > 75) analysis.innerText = "Atenção aos custos variáveis. Os seus gastos consumiram mais de 75% da renda, o que reduz a sua margem para imprevistos.";
         else analysis.innerText = "Equilíbrio mantido. O fluxo de caixa está a operar dentro dos parâmetros normais para a sua média histórica.";
 
+        // Atualizar Gráfico principal e a composição
         updateCharts(idx, current, allStats, avgGastos);
         
-        // Chamada da nova função de cartões
-        const cardDetails = getCardDetails(mesNome);
-        renderCardUI(cardDetails);
+        // --- Renderizar Seções Dinâmicas (Cartão e Outros Gastos) ---
+        const cardDetails = getDetailsFromRawData(mesNome, window.currentCardDataRaw);
+        renderListUI(cardDetails, 'card-details-list', 'card-total', 'var(--warning)');
+
+        const outrosDetails = getDetailsFromRawData(mesNome, window.currentOutrosDataRaw);
+        renderListUI(outrosDetails, 'outros-details-list', 'outros-total', 'var(--secondary)');
 
         lucide.createIcons();
     }
@@ -656,7 +652,6 @@
         const colors = isDark ? { text: '#9ca3af', grid: 'rgba(255,255,255,0.05)', line: '#f59e0b' } : { text: '#4b5563', grid: 'rgba(0,0,0,0.1)', line: '#d97706' };
 
         if(charts.main) charts.main.destroy();
-        if(charts.allocation) charts.allocation.destroy();
 
         const averageData = new Array(allStats.length).fill(avgGastosValue);
         const ctxMain = document.getElementById('mainChart').getContext('2d');
@@ -733,38 +728,7 @@
             }
         });
 
-        const ctxAlloc = document.getElementById('allocationChart').getContext('2d');
-        charts.allocation = new Chart(ctxAlloc, {
-            type: 'doughnut',
-            data: {
-                labels: ['Investimentos', 'Fixos', 'Cartões', 'Outros'],
-                datasets: [{
-                    data: [current.i, current.fixos, current.cartoes, current.outros],
-                    backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6'],
-                    borderColor: isDark ? '#111827' : '#ffffff',
-                    borderWidth: 3,
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                cutout: '78%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { color: colors.text, font: { size: 11 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed !== null) label += fmt.format(context.parsed);
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
+        // Montar a lista de Detalhamento de Saídas (que agora ocupa a metade direita do bloco inferior)
         const list = document.getElementById('composition-list');
         const totalOut = current.r || 1;
         const items = [
