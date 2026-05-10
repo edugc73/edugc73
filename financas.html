@@ -239,7 +239,6 @@
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
-                <!-- NOVO CARD: Raio-X Outros Gastos Substituindo a Rosca -->
                 <div class="card" style="border-left: 4px solid var(--secondary);">
                     <h3 style="font-size: 0.85rem; margin-bottom: 15px; display: flex; align-items: center;">
                         <i data-lucide="receipt" size="16" color="var(--secondary)" style="margin-right: 8px;"></i>
@@ -326,13 +325,24 @@
 </div>
 
 <script>
+    // --- CORREÇÃO APLICADA AQUI ---
     const SOURCES = {
         '2025': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=256105834&single=true&output=csv',
         '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2110660311&single=true&output=csv'
     };
 
-    const CARD_SOURCE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=1333505159&single=true&output=csv';
-    const OUTROS_SOURCE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2144460095&single=true&output=csv';
+    // Agora os Cartões também são separados por ano
+    const CARD_SOURCES = {
+        '2025': 'COLOQUE_O_LINK_DE_OUTROS_2026_AQUI',
+        '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=1333505159&single=true&output=csv' // <-- Você precisará colocar o link do CSV da aba Cartão 2026 aqui
+    };
+
+    // Agora os Outros Gastos também são separados por ano
+    const OUTROS_SOURCES = {
+        '2025': 'COLOQUE_O_LINK_DE_OUTROS_2026_AQUI',
+        '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-8UNFqiVrLeH2TjtmBtOIYXumGcnlkWCXIRFDq12RQJwPDJUUQnYKhv4SCkncm45vD4AOWExyc__X/pub?gid=2144460095&single=true&output=csv' // <-- Você precisará colocar o link do CSV da aba Outros 2026 aqui
+    };
+    // ---------------------------------
 
     let currentData = [];
     let charts = {};
@@ -389,6 +399,11 @@
 
     function fetchCSV(url, useHeader = true) {
         return new Promise((resolve, reject) => {
+            if (!url || !url.startsWith('http')) {
+                console.warn('URL inválida ou placeholder ignorado:', url);
+                resolve([]);
+                return;
+            }
             Papa.parse(url, {
                 download: true, header: useHeader, skipEmptyLines: true,
                 complete: (res) => resolve(res.data),
@@ -400,11 +415,11 @@
     async function loadYearData(year) {
         document.getElementById('loader').style.display = 'flex';
         try {
-            // Agora carregamos as três planilhas simultaneamente
+            // CORREÇÃO: Agora ele busca os links corretos de acordo com o ano selecionado
             const [mainData, cardDataRaw, outrosDataRaw] = await Promise.all([
                 fetchCSV(SOURCES[year], true),
-                fetchCSV(CARD_SOURCE, false),
-                fetchCSV(OUTROS_SOURCE, false)
+                fetchCSV(CARD_SOURCES[year], false),
+                fetchCSV(OUTROS_SOURCES[year], false)
             ]);
 
             currentData = mainData.filter(r => MESES.includes(normalize(getVal(r, "Mes"))));
@@ -416,7 +431,7 @@
             document.getElementById('main-content').style.display = 'block';
         } catch (error) {
             console.error("Erro ao carregar planilhas:", error);
-            alert("Erro ao sincronizar dados do Google Sheets.");
+            alert("Erro ao sincronizar dados do Google Sheets. Verifique se os links das abas de Cartões e Outros Gastos do ano selecionado estão corretos no código.");
             document.getElementById('loader').style.display = 'none';
         }
     }
@@ -447,8 +462,6 @@
         selectMonth(autoSelectIdx, chipToSelect);
     }
 
-    // --- NOVA LÓGICA GENERALIZADA: Processar Dados em Matriz (A1, C1, E1...) ---
-    // Serve tanto para Cartões quanto para Outros Gastos
     function getDetailsFromRawData(mesNome, dataRaw) {
         let details = [];
         if (!dataRaw || dataRaw.length === 0) return details;
@@ -473,7 +486,6 @@
 
         if (monthRowIdx === -1) return details; 
 
-        // Função interna para extrair valores de uma coluna específica
         const extractFromColumn = (colIdx) => {
             for (let r = monthRowIdx + 1; r < dataRaw.length; r++) {
                 let cat = dataRaw[r][colIdx];
@@ -507,7 +519,6 @@
         return finalDetails.sort((a, b) => b.value - a.value);
     }
 
-    // Função generalizada para renderizar listas de progresso (Top 5)
     function renderListUI(details, listId, totalId, colorVar) {
         const listContainer = document.getElementById(listId);
         const totalEl = document.getElementById(totalId);
@@ -634,10 +645,8 @@
         else if(pG > 75) analysis.innerText = "Atenção aos custos variáveis. Os seus gastos consumiram mais de 75% da renda, o que reduz a sua margem para imprevistos.";
         else analysis.innerText = "Equilíbrio mantido. O fluxo de caixa está a operar dentro dos parâmetros normais para a sua média histórica.";
 
-        // Atualizar Gráfico principal e a composição
         updateCharts(idx, current, allStats, avgGastos);
         
-        // --- Renderizar Seções Dinâmicas (Cartão e Outros Gastos) ---
         const cardDetails = getDetailsFromRawData(mesNome, window.currentCardDataRaw);
         renderListUI(cardDetails, 'card-details-list', 'card-total', 'var(--warning)');
 
@@ -728,7 +737,6 @@
             }
         });
 
-        // Montar a lista de Detalhamento de Saídas (que agora ocupa a metade direita do bloco inferior)
         const list = document.getElementById('composition-list');
         const totalOut = current.r || 1;
         const items = [
