@@ -467,22 +467,23 @@
         Chart.defaults.color = '#94a3b8';
 
         // --- FUNÇÃO DO TICKER ANIMADO (NOVO) ---
-        const TICKER_ASSETS = ['HGRU11'];
+        const TICKER_ASSETS = ['BBAS3', 'PETR4'];
 
         async function initTicker() {
             const container = document.getElementById('ticker-content');
             if (!container) return;
 
             try {
-                // Junta a lista de ativos separados por vírgula para a chamada da API
-                const response = await fetch(`https://brapi.dev/api/quote/${TICKER_ASSETS.join(',')}?token=${BRAPI_TOKEN}`);
+                // Montar query URL encoding os ativos para segurança máxima
+                const query = TICKER_ASSETS.map(t => encodeURIComponent(t)).join(',');
+                const response = await fetch(`https://brapi.dev/api/quote/${query}?token=${BRAPI_TOKEN}`);
                 const data = await response.json();
 
                 if (data.results && data.results.length > 0) {
                     let html = '';
                     
                     data.results.forEach(asset => {
-                        const symbol = asset.symbol === '^BVSP' ? 'IBOV' : asset.symbol; // Corrige nome do indice
+                        const symbol = asset.symbol; 
                         const price = asset.regularMarketPrice || 0;
                         const change = asset.regularMarketChangePercent || 0;
                         const isPos = change >= 0;
@@ -503,10 +504,13 @@
 
                     // Duplica o HTML dentro do container para criar o efeito contínuo sem quebras no CSS
                     container.innerHTML = html + html;
+                } else {
+                    // Se não tiver data.results lança o erro para cair no catch
+                    throw new Error(data.message || data.error || "Erro desconhecido na resposta da Brapi");
                 }
             } catch (error) {
                 console.error("Erro ao carregar o ticker:", error);
-                container.innerHTML = `<div class="ticker-item"><span class="text-xs font-bold text-rose-500">Falha ao buscar cotações da bolsa.</span></div>`;
+                container.innerHTML = `<div class="ticker-item"><span class="text-xs font-bold text-rose-500">Falha na Sincronização do Ticker: ${error.message}</span></div>`;
             }
         }
 
