@@ -310,7 +310,7 @@
         </div>
 
         <!-- NOVO: Ticker de Cotações em Tempo Real (Estilo ClubeFII) -->
-        <div class="glass-card mb-6 py-2.5 overflow-hidden relative animate-fade-in delay-500 rounded-xl" title="Passe o mouse para pausar">
+        <div class="glass-card mb-6 py-2.5 overflow-hidden relative animate-fade-in delay-300 rounded-xl" title="Passe o mouse para pausar">
             <div class="ticker-wrap cursor-default">
                 <div id="ticker-content" class="ticker-content">
                     <div class="ticker-item">
@@ -467,7 +467,7 @@
         Chart.defaults.color = '#94a3b8';
 
         // --- FUNÇÃO DO TICKER ANIMADO (NOVO) ---
-        const TICKER_ASSETS = ['IBOV', 'BBAS3', 'PETR4', 'VALE3', 'BBSE3', 'CMIG4', 'TRXF11', 'HGRE11', 'LVBI11', 'BTCI11', 'GARE11', 'KNCA11', 'CDII11', 'BTLG11', 'GGRC11', 'AFHI11', 'HSLG11', 'IFRA11','HGRU11', 'QQQI11', 'HGCR11','FATN11'];
+        const TICKER_ASSETS = ['IBOV', 'BBAS3', 'PETR4', 'VALE3', 'BBSE3', 'CMIG4', 'TRXF11', 'HGRE11', 'BTCI11', 'GARE11', 'KNCA11', 'CDII11', 'BTLG11', 'GGRC11', 'AFHI11', 'HSLG11', 'IFRA11','HGRU11', 'HGCR11','FATN11'];
 
         async function initTicker() {
             const container = document.getElementById('ticker-content');
